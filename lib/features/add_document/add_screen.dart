@@ -1,6 +1,7 @@
 // lib/features/add_document/add_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
@@ -11,17 +12,39 @@ class AddScreen extends StatelessWidget {
   const AddScreen({super.key});
 
   Future<void> _pickPDFFile(BuildContext context) async {
-    // Simulate file picking delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (!context.mounted) return;
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+        allowMultiple: false,
+      );
 
-    // Navigate to category selector with mock file data
-    context.push('/dashboard/add/select-category', extra: {
-      'source': 'file',
-      'fileName': 'Document_${DateTime.now().millisecond}.pdf',
-      'fileSize': 2457600, // mock 2.4MB
-      'pageCount': 45, // mock
-    });
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        if (!context.mounted) return;
+
+        // Navigate to category selector with actual file data
+        context.push(
+          '/dashboard/add/select-category',
+          extra: {
+            'source': 'file',
+            'fileName': file.name,
+            'fileSize': file.size,
+            'filePath': file.path,
+            'pageCount':
+                45, // Default estimate (would need PDF parsing for accuracy)
+          },
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error picking file: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -60,10 +83,9 @@ class AddScreen extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(
-            child: _buildHeroBanner(width)
-                .animate()
-                .fadeIn(duration: 400.ms)
-                .slideY(begin: -0.03, end: 0),
+            child: _buildHeroBanner(
+              width,
+            ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.03, end: 0),
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -84,28 +106,34 @@ class AddScreen extends StatelessWidget {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 _buildMethodCard(
-                  context: context,
-                  isDark: isDark,
-                  title: "Scan Document",
-                  subtitle: "Use camera to scan physical documents",
-                  icon: Icons.document_scanner_rounded,
-                  gradient: const [AppColors.catBoard, Color(0xFF1A3A6B)],
-                  onTap: () => context.push('/dashboard/add/scanner'),
-                  isRecommended: true,
-                  features: const [
-                    _Feature(Icons.auto_fix_high, "Auto Edge Detect"),
-                    _Feature(Icons.brightness_6, "Auto Enhance"),
-                    _Feature(Icons.filter_none, "Multi-Page"),
-                    _Feature(Icons.picture_as_pdf, "Export PDF"),
-                  ],
-                  actionLabel: "Open Scanner",
-                ).animate(delay: 150.ms).fadeIn(duration: 400.ms).slideX(begin: 0.04, end: 0),
+                      context: context,
+                      isDark: isDark,
+                      title: "Scan Document",
+                      subtitle: "Use camera to scan physical documents",
+                      icon: Icons.document_scanner_rounded,
+                      gradient: const [AppColors.catBoard, Color(0xFF1A3A6B)],
+                      onTap: () => context.push('/dashboard/add/scanner'),
+                      isRecommended: true,
+                      features: const [
+                        _Feature(Icons.auto_fix_high, "Auto Edge Detect"),
+                        _Feature(Icons.brightness_6, "Auto Enhance"),
+                        _Feature(Icons.filter_none, "Multi-Page"),
+                        _Feature(Icons.picture_as_pdf, "Export PDF"),
+                      ],
+                      actionLabel: "Open Scanner",
+                    )
+                    .animate(delay: 150.ms)
+                    .fadeIn(duration: 400.ms)
+                    .slideX(begin: 0.04, end: 0),
                 AppSpacing.vertical(14),
                 _buildFileImportCard(
-                  context: context,
-                  isDark: isDark,
-                  onTap: () => _pickPDFFile(context),
-                ).animate(delay: 250.ms).fadeIn(duration: 400.ms).slideX(begin: 0.04, end: 0),
+                      context: context,
+                      isDark: isDark,
+                      onTap: () => _pickPDFFile(context),
+                    )
+                    .animate(delay: 250.ms)
+                    .fadeIn(duration: 400.ms)
+                    .slideX(begin: 0.04, end: 0),
                 AppSpacing.vertical(32),
               ]),
             ),
@@ -163,7 +191,10 @@ class AddScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.gold.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(20),
@@ -171,7 +202,11 @@ class AddScreen extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.upload_file, size: 12, color: AppColors.gold),
+                            const Icon(
+                              Icons.upload_file,
+                              size: 12,
+                              color: AppColors.gold,
+                            ),
                             AppSpacing.horizontal(6),
                             Text(
                               "DOCUMENT UPLOAD",
@@ -280,7 +315,9 @@ class AddScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: Center(child: Icon(icon, size: 28, color: Colors.white)),
+                      child: Center(
+                        child: Icon(icon, size: 28, color: Colors.white),
+                      ),
                     ),
                     AppSpacing.horizontal(14),
                     Expanded(
@@ -295,12 +332,17 @@ class AddScreen extends StatelessWidget {
                                 style: AppTextStyles.dmSans.copyWith(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  color: isDark ? AppColors.darkText : AppColors.charcoal,
+                                  color: isDark
+                                      ? AppColors.darkText
+                                      : AppColors.charcoal,
                                 ),
                               ),
                               if (isRecommended)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.gdaGreen.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(20),
@@ -322,7 +364,9 @@ class AddScreen extends StatelessWidget {
                             subtitle,
                             style: AppTextStyles.dmSans.copyWith(
                               fontSize: 12,
-                              color: isDark ? Colors.white.withOpacity(0.5) : AppColors.charcoal.withOpacity(0.5),
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.5)
+                                  : AppColors.charcoal.withOpacity(0.5),
                             ),
                           ),
                         ],
@@ -334,7 +378,9 @@ class AddScreen extends StatelessWidget {
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: features.map((f) => _buildFeaturePill(f.icon, f.text)).toList(),
+                    children: features
+                        .map((f) => _buildFeaturePill(f.icon, f.text))
+                        .toList(),
                   ),
                 ),
                 AppSpacing.vertical(16),
@@ -443,7 +489,11 @@ class AddScreen extends StatelessWidget {
                         ],
                       ),
                       child: const Center(
-                        child: Icon(Icons.upload_file_rounded, size: 28, color: Colors.white),
+                        child: Icon(
+                          Icons.upload_file_rounded,
+                          size: 28,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                     AppSpacing.horizontal(14),
@@ -456,7 +506,9 @@ class AddScreen extends StatelessWidget {
                             style: AppTextStyles.dmSans.copyWith(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: isDark ? AppColors.darkText : AppColors.charcoal,
+                              color: isDark
+                                  ? AppColors.darkText
+                                  : AppColors.charcoal,
                             ),
                           ),
                           AppSpacing.vertical(4),
@@ -464,7 +516,9 @@ class AddScreen extends StatelessWidget {
                             "Import existing PDF files",
                             style: AppTextStyles.dmSans.copyWith(
                               fontSize: 12,
-                              color: isDark ? Colors.white.withOpacity(0.5) : AppColors.charcoal.withOpacity(0.5),
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.5)
+                                  : AppColors.charcoal.withOpacity(0.5),
                             ),
                           ),
                         ],
@@ -504,7 +558,11 @@ class AddScreen extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.folder_open_rounded, size: 18, color: Colors.white),
+                        const Icon(
+                          Icons.folder_open_rounded,
+                          size: 18,
+                          color: Colors.white,
+                        ),
                         AppSpacing.horizontal(8),
                         Text(
                           "Browse Files",
@@ -563,7 +621,9 @@ class AddScreen extends StatelessWidget {
                     subtitle,
                     style: AppTextStyles.dmSans.copyWith(
                       fontSize: 8,
-                      color: isDark ? Colors.white.withOpacity(0.45) : AppColors.charcoal.withOpacity(0.45),
+                      color: isDark
+                          ? Colors.white.withOpacity(0.45)
+                          : AppColors.charcoal.withOpacity(0.45),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -595,7 +655,10 @@ class AddScreen extends StatelessWidget {
             onPressed: () {},
             child: Text(
               "See All",
-              style: AppTextStyles.dmSans.copyWith(fontSize: 12, color: AppColors.gold),
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 12,
+                color: AppColors.gold,
+              ),
             ),
           ),
         ],
@@ -673,7 +736,11 @@ class AddScreen extends StatelessWidget {
                 const Spacer(),
                 Row(
                   children: [
-                    const Icon(Icons.picture_as_pdf, size: 11, color: AppColors.catBoard),
+                    const Icon(
+                      Icons.picture_as_pdf,
+                      size: 11,
+                      color: AppColors.catBoard,
+                    ),
                     AppSpacing.horizontal(4),
                     Text(
                       "${12 + index * 5}pp",

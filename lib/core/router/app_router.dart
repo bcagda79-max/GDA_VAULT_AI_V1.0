@@ -9,6 +9,7 @@ import 'package:gda_vault_ai/features/categories/year_list_screen.dart';
 import 'package:gda_vault_ai/features/categories/pdf_viewer_screen.dart';
 import 'package:gda_vault_ai/features/add_document/add_screen.dart';
 import 'package:gda_vault_ai/features/add_document/scanner_screen.dart';
+import 'package:gda_vault_ai/features/add_document/camera_scanner_screen.dart';
 import 'package:gda_vault_ai/features/add_document/scan_review_screen.dart';
 import 'package:gda_vault_ai/features/add_document/category_selector_screen.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/home_tab.dart';
@@ -113,13 +114,22 @@ class AppRouter {
         builder: (context, state) => const ScannerScreen(),
       ),
       GoRoute(
+        path: '/dashboard/add/camera-scanner',
+        name: 'camera-scanner',
+        builder: (context, state) => const CameraScannerScreen(),
+      ),
+      GoRoute(
         path: '/dashboard/add/review',
         name: 'review',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>;
+          final imagePaths =
+              (extra['imagePaths'] as List<dynamic>?)?.cast<String>() ??
+              const <String>[];
           return ScanReviewScreen(
             pageCount: extra['pageCount'] as int,
             source: extra['source'] as String,
+            imagePaths: imagePaths,
           );
         },
       ),

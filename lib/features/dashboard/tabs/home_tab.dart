@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/data/mock_data.dart';
+import 'package:gda_vault_ai/features/add_document/add_document_modal.dart';
 import 'package:intl/intl.dart';
 
 /// The home tab of the dashboard, showing a summary and quick actions.
@@ -37,10 +37,9 @@ class HomeTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildGreetingCard(isDark)
-              .animate()
-              .fadeIn(duration: 400.ms)
-              .slideY(begin: -0.04, end: 0),
+          _buildGreetingCard(
+            isDark,
+          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.04, end: 0),
           const SizedBox(height: 16),
           _buildStatsRow(isDark)
               .animate()
@@ -58,29 +57,34 @@ class HomeTab extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _buildBigButton(
-            context: context,
-            title: "Categories",
-            subtitle: "All document archives",
-            badge: "1,284 files",
-            icon: Icons.folder_open_rounded,
-            onTap: () => context.push('/categories'),
-            isPrimary: true,
-          ).animate().fadeIn(delay: 250.ms, duration: 350.ms).slideX(
-            begin: 0.03,
-            end: 0,
-          ),
+                context: context,
+                title: "Categories",
+                subtitle: "All document archives",
+                badge: "1,284 files",
+                icon: Icons.folder_open_rounded,
+                onTap: () => context.push('/categories'),
+                isPrimary: true,
+              )
+              .animate()
+              .fadeIn(delay: 250.ms, duration: 350.ms)
+              .slideX(begin: 0.03, end: 0),
           const SizedBox(height: 12),
           _buildBigButton(
-            context: context,
-            title: "Add New File",
-            subtitle: "Add new record or document",
-            icon: Icons.add_circle_outline_rounded,
-            onTap: () => context.push('/dashboard/add/scanner'),
-            isPrimary: true, // Matching categories style
-          ).animate().fadeIn(delay: 320.ms, duration: 350.ms).slideX(
-            begin: 0.03,
-            end: 0,
-          ),
+                context: context,
+                title: "Add New File",
+                subtitle: "Add new record or document",
+                icon: Icons.add_circle_outline_rounded,
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => const AddDocumentModal(),
+                  );
+                },
+                isPrimary: true, // Matching categories style
+              )
+              .animate()
+              .fadeIn(delay: 320.ms, duration: 350.ms)
+              .slideX(begin: 0.03, end: 0),
         ],
       ),
     );
@@ -244,19 +248,21 @@ class HomeTab extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: isPrimary
               ? const LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [AppColors.navyDark, Color(0xFF1A3A6B)],
-              )
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [AppColors.navyDark, Color(0xFF1A3A6B)],
+                )
               : null,
-          color: isPrimary ? null : (isDark ? AppColors.darkCard : Colors.white),
+          color: isPrimary
+              ? null
+              : (isDark ? AppColors.darkCard : Colors.white),
           borderRadius: BorderRadius.circular(16),
           border: isPrimary
               ? null
               : Border.all(
-                color: AppColors.gdaGreen.withOpacity(0.4),
-                width: 1.5,
-              ),
+                  color: AppColors.gdaGreen.withOpacity(0.4),
+                  width: 1.5,
+                ),
           boxShadow: [
             if (isPrimary)
               BoxShadow(
@@ -282,14 +288,12 @@ class HomeTab extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: isPrimary
-                        ? Colors.white.withOpacity(0.12)
-                        : null,
+                    color: isPrimary ? Colors.white.withOpacity(0.12) : null,
                     gradient: isPrimary
                         ? null
                         : const LinearGradient(
-                          colors: [AppColors.gdaGreen, Color(0xFF1A8A4A)],
-                        ),
+                            colors: [AppColors.gdaGreen, Color(0xFF1A8A4A)],
+                          ),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -310,7 +314,9 @@ class HomeTab extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                         color: isPrimary
                             ? Colors.white
-                            : (isDark ? AppColors.darkText : AppColors.charcoal),
+                            : (isDark
+                                  ? AppColors.darkText
+                                  : AppColors.charcoal),
                       ),
                     ),
                     Text(
@@ -330,8 +336,10 @@ class HomeTab extends StatelessWidget {
               children: [
                 if (badge != null)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -359,7 +367,6 @@ class HomeTab extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _StatBox extends StatelessWidget {
@@ -408,9 +415,11 @@ class _StatBox extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             number,
-            style: (isDark ? AppTextStyles.statNumberDark : AppTextStyles.statNumber).copyWith(
-              fontSize: 20,
-            ),
+            style:
+                (isDark
+                        ? AppTextStyles.statNumberDark
+                        : AppTextStyles.statNumber)
+                    .copyWith(fontSize: 20),
           ),
           const SizedBox(height: 2),
           Text(
