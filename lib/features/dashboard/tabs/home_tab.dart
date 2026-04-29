@@ -75,7 +75,7 @@ class HomeTab extends StatelessWidget {
             title: "Add New File",
             subtitle: "Add new record or document",
             icon: Icons.add_circle_outline_rounded,
-            onTap: () => context.push('/add'),
+            onTap: () => context.push('/dashboard/add/scanner'),
             isPrimary: true, // Matching categories style
           ).animate().fadeIn(delay: 320.ms, duration: 350.ms).slideX(
             begin: 0.03,

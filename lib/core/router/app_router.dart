@@ -9,9 +9,9 @@ import 'package:gda_vault_ai/features/categories/year_list_screen.dart';
 import 'package:gda_vault_ai/features/categories/pdf_viewer_screen.dart';
 import 'package:gda_vault_ai/features/add_document/add_screen.dart';
 import 'package:gda_vault_ai/features/add_document/scanner_screen.dart';
+import 'package:gda_vault_ai/features/add_document/scan_review_screen.dart';
 import 'package:gda_vault_ai/features/add_document/category_selector_screen.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/home_tab.dart';
-import 'package:gda_vault_ai/features/dashboard/tabs/scan_tab.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/chat_tab.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/settings_tab.dart';
 import 'package:gda_vault_ai/features/ai_chat/chat_screen.dart';
@@ -38,9 +38,9 @@ class AppRouter {
             builder: (context, state) => const HomeTab(),
           ),
           GoRoute(
-            path: '/dashboard/scan',
-            name: 'scan',
-            builder: (context, state) => const ScanTab(),
+            path: '/dashboard/add',
+            name: 'add',
+            builder: (context, state) => const AddScreen(),
           ),
           GoRoute(
             path: '/dashboard/chat',
@@ -106,31 +106,35 @@ class AppRouter {
         ],
       ),
 
-      // Add document flow
+      // Add document flow (Full Screen)
       GoRoute(
-        path: '/add',
-        name: 'add',
-        builder: (context, state) => const AddDocumentScreen(),
-        routes: [
-          GoRoute(
-            path: 'scanner',
-            name: 'scanner',
-            builder: (context, state) => const ScannerScreen(),
-          ),
-          GoRoute(
-            path: 'select-category',
-            name: 'select-category',
-            builder: (context, state) {
-              final extra = state.extra as Map<String, dynamic>;
-              return CategorySelectorScreen(
-                source: extra['source'] as String,
-                pageCount: extra['pageCount'] as int? ?? 1,
-                fileName: extra['fileName'] as String,
-                fileSize: extra['fileSize'] as int?,
-              );
-            },
-          ),
-        ],
+        path: '/dashboard/add/scanner',
+        name: 'scanner',
+        builder: (context, state) => const ScannerScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard/add/review',
+        name: 'review',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return ScanReviewScreen(
+            pageCount: extra['pageCount'] as int,
+            source: extra['source'] as String,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/dashboard/add/select-category',
+        name: 'select-category',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return CategorySelectorScreen(
+            source: extra['source'] as String,
+            pageCount: extra['pageCount'] as int? ?? 1,
+            fileName: extra['fileName'] as String,
+            fileSize: extra['fileSize'] as int?,
+          );
+        },
       ),
       // Chat screen as full screen if accessed directly from home FAB
       GoRoute(

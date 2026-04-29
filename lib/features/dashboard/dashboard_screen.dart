@@ -6,7 +6,6 @@ import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/chat_tab.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/home_tab.dart';
-import 'package:gda_vault_ai/features/dashboard/tabs/scan_tab.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/settings_tab.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/ai_chat_fab.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/gda_bottom_nav.dart';
@@ -24,7 +23,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _getCurrentIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    if (location.startsWith('/dashboard/scan')) return 1;
+    if (location.startsWith('/dashboard/add')) return 1;
     if (location.startsWith('/dashboard/chat')) return 2;
     if (location.startsWith('/dashboard/settings')) return 3;
     return 0;
@@ -36,7 +35,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         context.go('/dashboard');
         break;
       case 1:
-        context.go('/dashboard/scan');
+        context.go('/dashboard/add');
         break;
       case 2:
         context.go('/dashboard/chat');
