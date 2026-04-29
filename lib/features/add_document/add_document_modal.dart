@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gda_vault_ai/features/add_document/providers/scan_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
@@ -7,7 +9,7 @@ import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 
 /// Modal popup for adding new documents with 2 quick options
-class AddDocumentModal extends StatelessWidget {
+class AddDocumentModal extends ConsumerWidget {
   const AddDocumentModal({super.key});
 
   Future<void> _pickPDFFile(BuildContext context) async {
@@ -49,7 +51,7 @@ class AddDocumentModal extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Dialog(
@@ -129,6 +131,7 @@ class AddDocumentModal extends StatelessWidget {
                       subtitle: "Use camera to scan physical documents",
                       badge: "RECOMMENDED",
                       onTap: () {
+                        ref.read(scanImagesProvider.notifier).clear();
                         Navigator.pop(context);
                         context.push('/dashboard/add/camera-scanner');
                       },

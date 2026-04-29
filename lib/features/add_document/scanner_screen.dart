@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
@@ -6,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
-import 'package:gda_vault_ai/features/add_document/widgets/scanner_frame_painter.dart';
+import 'package:gda_vault_ai/features/add_document/providers/scan_provider.dart';
 
 /// A full-screen immersive scanner UI simulating a document scanner.
 class ScannerScreen extends ConsumerStatefulWidget {
@@ -17,16 +18,11 @@ class ScannerScreen extends ConsumerStatefulWidget {
 }
 
 class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _scanController;
-  late Animation<double> _scanAnimation;
   CameraController? _cameraController;
   bool _isCameraInitialized = false;
   bool _isFlashOn = false;
-  bool _isAutoMode = true;
   bool _isCapturing = false;
-  final bool _isDocumentDetected = true; 
-  String _selectedFilter = 'Auto';
-  final List<String> _scannedPages = [];
+  bool _showFlashEffect = false;
 
   @override
   void initState() {
@@ -35,15 +31,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
   }
 
   Future<void> _initScanner() async {
-    _scanController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    )..repeat(reverse: false);
-
-    _scanAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _scanController, curve: Curves.easeInOut),
-    );
-
     // Initialize camera
     try {
       final cameras = await availableCameras();
@@ -70,7 +57,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
 
   @override
   void dispose() {
-    _scanController.dispose();
     _cameraController?.dispose();
     super.dispose();
   }
@@ -78,32 +64,41 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
   Future<void> _startScan() async {
     if (_cameraController == null || !_isCameraInitialized || _isCapturing) return;
 
-    setState(() => _isCapturing = true);
+    setState(() {
+      _isCapturing = true;
+      _showFlashEffect = true;
+    });
     HapticFeedback.mediumImpact();
 
     try {
       final XFile photo = await _cameraController!.takePicture();
+      // Add to provider
+      ref.read(scanImagesProvider.notifier).add(photo.path);
+      
       setState(() {
-        _scannedPages.add(photo.path);
         _isCapturing = false;
+        _showFlashEffect = false;
       });
       
-      // Auto review for single page if in auto mode
-      if (_isAutoMode && _scannedPages.length == 1) {
-        _proceedToReview();
-      }
+      _proceedToReview(); // Go to review immediately for now to make it feel "real"
     } catch (e) {
       debugPrint("Capture Error: $e");
-      if (mounted) setState(() => _isCapturing = false);
+      if (mounted) {
+        setState(() {
+          _isCapturing = false;
+          _showFlashEffect = false;
+        });
+      }
     }
   }
 
   void _proceedToReview() {
-    if (_scannedPages.isEmpty) return;
+    final scannedPages = ref.read(scanImagesProvider);
+    if (scannedPages.isEmpty) return;
     context.push('/dashboard/add/review', extra: {
-      'pageCount': _scannedPages.length,
+      'pageCount': scannedPages.length,
       'source': 'scanner',
-      'imagePaths': _scannedPages,
+      'imagePaths': scannedPages,
     });
   }
 
@@ -115,8 +110,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
     });
   }
   
-  void _toggleMode() => setState(() => _isAutoMode = !_isAutoMode);
 
+  @override
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -125,17 +120,187 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // 1. Camera Viewfinder Mock
+          // 1. Live Camera Preview
           _buildCameraMock(size),
 
-          // 2. Scanning Overlay
-          _buildScannerOverlay(size),
+          // 2. Flash Effect
+          if (_showFlashEffect)
+            Container(color: Colors.white.withValues(alpha: 0.8)),
 
-          // 3. Top Toolbar
-          _buildTopToolbar(context),
+          // 3. Camera UI Overlay
+          Column(
+            children: [
+              // Top Bar
+              _buildTopBar(context),
+              
+              const Spacer(),
+              
+              // Bottom UI Area
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black.withOpacity(0.9)],
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Capture Controls
+                    _buildCaptureControls(context, size),
+                    AppSpacing.vertical(32),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-          // 4. Bottom Controls
-          _buildBottomControls(context, size),
+
+  Widget _buildTopBar(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 8,
+        left: 16,
+        right: 16,
+        bottom: 12,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.navyDark,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+                onPressed: () => context.pop(),
+              ),
+              Text(
+                "Document Scanner",
+                style: AppTextStyles.playfairDisplay.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(
+                  _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                  color: _isFlashOn ? AppColors.gold : Colors.white,
+                ),
+                onPressed: _toggleFlash,
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.hd_outlined, 
+                  color: _isHighRes ? AppColors.gold : Colors.white
+                ),
+                onPressed: _toggleHighRes,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _isHighRes = true;
+  Future<void> _toggleHighRes() async {
+    if (_cameraController == null) return;
+    setState(() => _isHighRes = !_isHighRes);
+    
+    final currentFlash = _isFlashOn;
+    await _cameraController!.dispose();
+    
+    final cameras = await availableCameras();
+    _cameraController = CameraController(
+      cameras.first,
+      _isHighRes ? ResolutionPreset.max : ResolutionPreset.high,
+      enableAudio: false,
+    );
+    
+    await _cameraController!.initialize();
+    if (currentFlash) {
+      await _cameraController!.setFlashMode(FlashMode.torch);
+    }
+    
+    if (mounted) setState(() {});
+  }
+
+  Widget _buildCaptureControls(BuildContext context, Size size) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Spacer(),
+          
+          // Main Capture Button (Double Ring)
+          GestureDetector(
+            onTap: _startScan,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 84,
+                  height: 84,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.3), width: 4),
+                  ),
+                ),
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
+                  child: _isCapturing 
+                    ? const Center(child: CircularProgressIndicator(color: AppColors.navyDark, strokeWidth: 3))
+                    : null,
+                ),
+              ],
+            ),
+          ),
+          
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () {
+                  final scannedPages = ref.read(scanImagesProvider);
+                  if (scannedPages.isNotEmpty) _showScannedPagesSheet();
+                },
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    color: Colors.white.withOpacity(0.05),
+                  ),
+                  child: ref.watch(scanImagesProvider).isEmpty 
+                    ? const Icon(Icons.image_outlined, color: Colors.white, size: 24)
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(7),
+                        child: Image.file(File(ref.watch(scanImagesProvider).last), fit: BoxFit.cover),
+                      ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -168,330 +333,20 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
   }
 
 
-  Widget _buildScannerOverlay(Size size) {
-    const frameLeft = 0.1;
-    const frameTop = 0.15;
-    const frameRight = 0.9;
-    const frameBottom = 0.78;
 
-    return Stack(
-      children: [
-        CustomPaint(
-          size: Size.infinite,
-          painter: ScannerFramePainter(),
-        ),
-        // Animated Scan Line
-        AnimatedBuilder(
-          animation: _scanAnimation,
-          builder: (context, child) {
-            final top = size.height * (frameTop + (frameBottom - frameTop) * _scanAnimation.value);
-            return Positioned(
-              top: top,
-              left: size.width * frameLeft,
-              child: Stack(
-                children: [
-                  Container(
-                    height: 2,
-                    width: size.width * (frameRight - frameLeft),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          AppColors.gold,
-                          AppColors.gold,
-                          AppColors.gold,
-                          Colors.transparent,
-                        ],
-                        stops: [0.0, 0.2, 0.5, 0.8, 1.0],
-                      ),
-                    ),
-                  ),
-                  Container(
-                    height: 40,
-                    width: size.width * (frameRight - frameLeft),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppColors.gold.withValues(alpha: 0.15),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-        // Detected Badge
-        if (_isDocumentDetected)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 70,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.gdaGreen.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.check_circle, size: 14, color: Colors.white),
-                    AppSpacing.horizontal(6),
-                    Text(
-                      "Document Detected",
-                      style: AppTextStyles.dmSans.copyWith(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildTopToolbar(BuildContext context) {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top + 8,
-          bottom: 12,
-          left: 16,
-          right: 16,
-        ),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.black.withValues(alpha: 0.7), Colors.transparent],
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            GestureDetector(
-              onTap: () => context.pop(),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), shape: BoxShape.circle),
-                child: const Icon(Icons.close_rounded, size: 20, color: Colors.white),
-              ),
-            ),
-            Column(
-              children: [
-                Text("Scanner", style: AppTextStyles.dmSans.copyWith(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text("Page ${_scannedPages.length + 1}", style: AppTextStyles.dmSans.copyWith(fontSize: 10, color: Colors.white.withValues(alpha: 0.6))),
-              ],
-            ),
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: _toggleFlash,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), shape: BoxShape.circle),
-                    child: Icon(
-                      _isFlashOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
-                      size: 20,
-                      color: _isFlashOn ? AppColors.gold : Colors.white,
-                    ),
-                  ),
-                ),
-                AppSpacing.horizontal(8),
-                GestureDetector(
-                  onTap: _toggleMode,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(20)),
-                    child: Text(
-                      _isAutoMode ? "AUTO" : "MANUAL",
-                      style: AppTextStyles.dmSans.copyWith(fontSize: 10, fontWeight: FontWeight.bold, color: _isAutoMode ? AppColors.gold : Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomControls(BuildContext context, Size size) {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).padding.bottom + 16,
-          top: 20,
-          left: 20,
-          right: 20,
-        ),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-            colors: [Colors.black.withValues(alpha: 0.85), Colors.transparent],
-          ),
-        ),
-        child: Column(
-          children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: ['Original', 'Auto', 'B&W', 'Grayscale', 'Lighten'].map((mode) {
-                  final isSelected = _selectedFilter == mode;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedFilter = mode),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppColors.gold : Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
-                        border: isSelected ? null : Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                      ),
-                      child: Text(
-                        mode,
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 11,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isSelected ? AppColors.navyDark : Colors.white,
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            AppSpacing.vertical(20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {}, // Gallery mock
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                    ),
-                    child: const Icon(Icons.photo_library_rounded, size: 24, color: Colors.white),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: _startScan,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 3),
-                        ),
-                      ),
-                      AnimatedContainer(
-                        width: 68,
-                        height: 68,
-                        duration: const Duration(milliseconds: 150),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(color: Colors.white.withValues(alpha: 0.3), blurRadius: 12, spreadRadius: 2),
-                          ],
-                        ),
-                        child: const Center(child: Icon(Icons.camera_alt_rounded, color: AppColors.navyDark, size: 30)),
-                      ),
-                    ],
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    if (_scannedPages.isNotEmpty) _showScannedPagesSheet();
-                  },
-                  child: Stack(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                        ),
-                        child: _scannedPages.isEmpty
-                            ? Icon(Icons.photo_outlined, size: 24, color: Colors.white.withValues(alpha: 0.5))
-                            : Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF0EDE4),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(Icons.description_rounded, size: 20, color: AppColors.charcoal.withValues(alpha: 0.3)),
-                              ),
-                      ),
-                      if (_scannedPages.isNotEmpty)
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: Container(
-                            width: 18,
-                            height: 18,
-                            decoration: const BoxDecoration(color: AppColors.gold, shape: BoxShape.circle),
-                            child: Center(
-                              child: Text(
-                                "${_scannedPages.length}",
-                                style: AppTextStyles.dmSans.copyWith(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.navyDark),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            AppSpacing.vertical(12),
-            Center(
-              child: Text(
-                _isDocumentDetected ? "Document detected — tap to capture" : "Align document within the frame",
-                style: AppTextStyles.dmSans.copyWith(fontSize: 11, color: Colors.white.withValues(alpha: 0.6)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _showScannedPagesSheet() {
+    final scannedPages = ref.read(scanImagesProvider);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => _ScannedPagesSheet(
-        scannedPages: _scannedPages,
+        scannedPages: scannedPages,
         onDone: _proceedToReview,
         onDelete: (index) {
-          setState(() => _scannedPages.removeAt(index));
-          if (_scannedPages.isEmpty) Navigator.pop(context);
+          ref.read(scanImagesProvider.notifier).removeAt(index);
+          if (ref.read(scanImagesProvider).isEmpty) Navigator.pop(context);
         },
       ),
     );
