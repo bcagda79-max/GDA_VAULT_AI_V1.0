@@ -45,7 +45,7 @@ class SettingsTab extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: AppTextStyles.labelSmall.copyWith(
                 color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                    .withOpacity(0.35),
+                    .withValues(alpha: 0.35),
               ),
             ),
             const SizedBox(height: AppSpacing.xs),
@@ -55,7 +55,7 @@ class SettingsTab extends ConsumerWidget {
               style: AppTextStyles.labelSmall.copyWith(
                 fontSize: 9,
                 color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                    .withOpacity(0.25),
+                    .withValues(alpha: 0.25),
               ),
             ),
           ],
@@ -70,7 +70,7 @@ class SettingsTab extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.gold.withOpacity(0.2)),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.2)),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -112,7 +112,7 @@ class SettingsTab extends ConsumerWidget {
                 Text(
                   "Senior Archivist",
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.white.withOpacity(0.6),
+                    color: AppColors.white.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -120,7 +120,7 @@ class SettingsTab extends ConsumerWidget {
                   "Authority HQ · Abbottabad",
                   style: AppTextStyles.bodySmall.copyWith(
                     fontSize: 11,
-                    color: AppColors.white.withOpacity(0.45),
+                    color: AppColors.white.withValues(alpha: 0.45),
                   ),
                 ),
               ],
@@ -155,7 +155,7 @@ class SettingsTab extends ConsumerWidget {
                 "42.6 GB used of 100 GB",
                 style: AppTextStyles.bodySmall.copyWith(
                   color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                      .withOpacity(0.6),
+                      .withValues(alpha: 0.6),
                 ),
               ),
               const Spacer(),
@@ -195,20 +195,20 @@ class SettingsTab extends ConsumerWidget {
           _SettingsListItem(
             isDark: isDark,
             icon: Icons.brightness_6,
-            iconBgColor: AppColors.gold.withOpacity(0.1),
+            iconBgColor: AppColors.gold.withValues(alpha: 0.1),
             iconColor: AppColors.gold,
             title: "Dark Mode",
             trailing: CupertinoSwitch(
               value: isDark,
               onChanged: (value) =>
                   ref.read(themeProvider.notifier).toggleTheme(),
-              activeColor: AppColors.gold,
+              activeTrackColor: AppColors.gold,
             ),
           ),
           _SettingsListItem(
             isDark: isDark,
             icon: Icons.folder_shared_rounded,
-            iconBgColor: AppColors.catBoard.withOpacity(0.1),
+            iconBgColor: AppColors.catBoard.withValues(alpha: 0.1),
             iconColor: AppColors.catBoard,
             title: "Manage Categories",
             trailing: const Icon(Icons.chevron_right, color: Colors.grey),
@@ -216,7 +216,7 @@ class SettingsTab extends ConsumerWidget {
           _SettingsListItem(
             isDark: isDark,
             icon: Icons.sync,
-            iconBgColor: AppColors.gdaGreen.withOpacity(0.1),
+            iconBgColor: AppColors.gdaGreen.withValues(alpha: 0.1),
             iconColor: AppColors.gdaGreen,
             title: "Sync & Backup",
             trailing: const Icon(Icons.chevron_right, color: Colors.grey),
@@ -224,7 +224,7 @@ class SettingsTab extends ConsumerWidget {
           _SettingsListItem(
             isDark: isDark,
             icon: Icons.language,
-            iconBgColor: AppColors.catAdmin.withOpacity(0.1),
+            iconBgColor: AppColors.catAdmin.withValues(alpha: 0.1),
             iconColor: AppColors.catAdmin,
             title: "Language",
             trailing: Row(
@@ -246,14 +246,14 @@ class SettingsTab extends ConsumerWidget {
             icon: Icons.info_outline,
             iconBgColor: isDark ? AppColors.darkSurface : AppColors.slate,
             iconColor: (isDark ? AppColors.darkText : AppColors.charcoal)
-                .withOpacity(0.6),
+                .withValues(alpha: 0.6),
             title: "About GDA Vault AI",
             trailing: const Icon(Icons.chevron_right, color: Colors.grey),
           ),
           _SettingsListItem(
             isDark: isDark,
             icon: Icons.logout,
-            iconBgColor: AppColors.catPrivate.withOpacity(0.1),
+            iconBgColor: AppColors.catPrivate.withValues(alpha: 0.1),
             iconColor: AppColors.catPrivate,
             title: "Sign Out",
             hasDivider: false,
@@ -313,6 +313,7 @@ class _SettingsListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final trailingWidget = trailing;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -326,7 +327,7 @@ class _SettingsListItem extends StatelessWidget {
             border: hasDivider
                 ? Border(
                     bottom: BorderSide(
-                      color: AppColors.divider.withOpacity(isDark ? 0.1 : 0.5),
+                      color: AppColors.divider.withValues(alpha: isDark ? 0.1 : 0.5),
                       width: 0.5,
                     ),
                   )
@@ -352,7 +353,7 @@ class _SettingsListItem extends StatelessWidget {
                   ),
                 ),
               ),
-              if (trailing != null) trailing!,
+              ?trailingWidget,
             ],
           ),
         ),

@@ -1,6 +1,5 @@
 // lib/features/categories/pdf_viewer_screen.dart
 
-/// Displays a realistic mock PDF viewer UI.
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -52,7 +51,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                 "${widget.document.pageCount} pages · ${widget.document.yearLabel}",
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 9,
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -187,7 +186,7 @@ class _ThumbnailRail extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isSelected
                     ? Colors.white
-                    : Colors.white.withOpacity(0.2),
+                    : Colors.white.withValues(alpha: 0.2),
                 border: isSelected
                     ? Border.all(color: categoryColor, width: 1.5)
                     : null,
@@ -200,7 +199,7 @@ class _ThumbnailRail extends StatelessWidget {
                     fontSize: 8,
                     color: isSelected
                         ? Colors.black
-                        : Colors.white.withOpacity(0.5),
+                        : Colors.white.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -233,7 +232,7 @@ class _MainPdfMockArea extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withValues(alpha: 0.4),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -261,7 +260,7 @@ class _MainPdfMockArea extends StatelessWidget {
                       "ABBOTTABAD, KPK, PAKISTAN",
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 7,
-                        color: AppColors.charcoal.withOpacity(0.5),
+                        color: AppColors.charcoal.withValues(alpha: 0.5),
                         letterSpacing: 1.0,
                       ),
                     ),
@@ -301,7 +300,7 @@ class _MainPdfMockArea extends StatelessWidget {
                     document.yearLabel,
                     style: AppTextStyles.dmSans.copyWith(
                       fontSize: 11,
-                      color: AppColors.charcoal.withOpacity(0.5),
+                      color: AppColors.charcoal.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -333,7 +332,7 @@ class _MainPdfMockArea extends StatelessWidget {
                 "Page $currentPage of ${document.pageCount}",
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 9,
-                  color: AppColors.charcoal.withOpacity(0.4),
+                  color: AppColors.charcoal.withValues(alpha: 0.4),
                 ),
               ),
             ),
@@ -350,13 +349,13 @@ class _MainPdfMockArea extends StatelessWidget {
     return Container(
       height: 8,
       decoration: BoxDecoration(
-        color: AppColors.charcoal.withOpacity(opacity),
+        color: AppColors.charcoal.withValues(alpha: opacity),
         borderRadius: BorderRadius.circular(4),
       ),
       child: FractionallySizedBox(
         widthFactor: widthFactor,
         alignment: Alignment.centerLeft,
-        child: Container(color: AppColors.charcoal.withOpacity(opacity)),
+        child: Container(color: AppColors.charcoal.withValues(alpha: opacity)),
       ),
     );
   }
@@ -386,9 +385,9 @@ class _BottomPageControls extends StatelessWidget {
       child: Container(
         height: 72,
         decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1E).withOpacity(0.95),
+          color: const Color(0xFF1C1C1E).withValues(alpha: 0.95),
           border: Border(
-            top: BorderSide(color: Colors.white.withOpacity(0.08)),
+            top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
           ),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -417,7 +416,7 @@ class _BottomPageControls extends StatelessWidget {
                   width: 120,
                   height: 3,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(2),
                   ),
                   child: FractionallySizedBox(
@@ -473,7 +472,7 @@ class _NavButton extends StatelessWidget {
               label,
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 9,
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -505,12 +504,12 @@ class _FloatingAskAIButton extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: AppColors.gdaGold.withOpacity(0.4),
+              color: AppColors.gdaGold.withValues(alpha: 0.4),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.gdaGold.withOpacity(0.2),
+                color: AppColors.gdaGold.withValues(alpha: 0.2),
                 blurRadius: 12,
                 spreadRadius: 2,
               ),

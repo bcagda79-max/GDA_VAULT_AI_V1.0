@@ -22,7 +22,7 @@ class GdaBottomNav extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : AppColors.navyDark,
         border: Border(
-          top: BorderSide(color: AppColors.gold.withOpacity(0.2), width: 1),
+          top: BorderSide(color: AppColors.gold.withValues(alpha: 0.2), width: 1),
         ),
       ),
       child: Row(
@@ -39,7 +39,7 @@ class GdaBottomNav extends StatelessWidget {
 
   Widget _buildNavItem(int index, IconData icon, String label) {
     final bool isSelected = currentIndex == index;
-    final color = isSelected ? AppColors.gold : Colors.white.withOpacity(0.4);
+    final color = isSelected ? AppColors.gold : Colors.white.withValues(alpha: 0.4);
 
     return GestureDetector(
       onTap: () => onTap(index),

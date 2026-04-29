@@ -4,7 +4,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/features/add_document/add_document_modal.dart';
 import 'package:intl/intl.dart';
 
 /// The home tab of the dashboard, showing a summary and quick actions.
@@ -51,7 +50,7 @@ class HomeTab extends StatelessWidget {
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: AppColors.charcoal.withOpacity(0.4),
+              color: AppColors.charcoal.withValues(alpha: 0.4),
               letterSpacing: 1.0,
             ),
           ),
@@ -74,12 +73,7 @@ class HomeTab extends StatelessWidget {
                 title: "Add New File",
                 subtitle: "Add new record or document",
                 icon: Icons.add_circle_outline_rounded,
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => const AddDocumentModal(),
-                  );
-                },
+                onTap: () => context.push('/dashboard/add/camera-scanner'),
                 isPrimary: true, // Matching categories style
               )
               .animate()
@@ -101,10 +95,9 @@ class HomeTab extends StatelessWidget {
           colors: [AppColors.navyDark, Color(0xFF1E3A6E)],
         ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.gold.withOpacity(0.2), width: 1),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withOpacity(0.25),
+            color: AppColors.navyDark.withValues(alpha: 0.25),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -138,7 +131,7 @@ class HomeTab extends StatelessWidget {
                   "Digital Archive Management",
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 9,
-                    color: AppColors.gold.withOpacity(0.7),
+                    color: AppColors.gold.withValues(alpha: 0.7),
                     letterSpacing: 0.5,
                     fontWeight: FontWeight.w500,
                   ),
@@ -149,14 +142,14 @@ class HomeTab extends StatelessWidget {
                     Icon(
                       Icons.calendar_today_rounded,
                       size: 11,
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                     ),
                     const SizedBox(width: 5),
                     Text(
                       _getFormattedDate(),
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 11,
-                        color: Colors.white.withOpacity(0.55),
+                        color: Colors.white.withValues(alpha: 0.55),
                       ),
                     ),
                   ],
@@ -170,8 +163,8 @@ class HomeTab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(
-                width: 80,
-                height: 80,
+                width: 100,
+                height: 100,
                 child: Image.asset(
                   'assets/images/gda_logo.png',
                   fit: BoxFit.contain,
@@ -257,22 +250,16 @@ class HomeTab extends StatelessWidget {
               ? null
               : (isDark ? AppColors.darkCard : Colors.white),
           borderRadius: BorderRadius.circular(16),
-          border: isPrimary
-              ? null
-              : Border.all(
-                  color: AppColors.gdaGreen.withOpacity(0.4),
-                  width: 1.5,
-                ),
           boxShadow: [
             if (isPrimary)
               BoxShadow(
-                color: AppColors.navyDark.withOpacity(0.3),
+                color: AppColors.navyDark.withValues(alpha: 0.3),
                 blurRadius: 14,
                 offset: const Offset(0, 5),
               )
             else
               BoxShadow(
-                color: AppColors.gdaGreen.withOpacity(0.08),
+                color: AppColors.gdaGreen.withValues(alpha: 0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -288,7 +275,7 @@ class HomeTab extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: isPrimary ? Colors.white.withOpacity(0.12) : null,
+                    color: isPrimary ? Colors.white.withValues(alpha: 0.12) : null,
                     gradient: isPrimary
                         ? null
                         : const LinearGradient(
@@ -324,8 +311,8 @@ class HomeTab extends StatelessWidget {
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 10,
                         color: isPrimary
-                            ? Colors.white.withOpacity(0.55)
-                            : AppColors.charcoal.withOpacity(0.5),
+                            ? Colors.white.withValues(alpha: 0.55)
+                            : AppColors.charcoal.withValues(alpha: 0.5),
                       ),
                     ),
                   ],
@@ -341,14 +328,14 @@ class HomeTab extends StatelessWidget {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       badge,
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 10,
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
@@ -357,8 +344,8 @@ class HomeTab extends StatelessWidget {
                   Icons.arrow_forward_ios_rounded,
                   size: 14,
                   color: isPrimary
-                      ? Colors.white.withOpacity(0.6)
-                      : AppColors.charcoal.withOpacity(0.3),
+                      ? Colors.white.withValues(alpha: 0.6)
+                      : AppColors.charcoal.withValues(alpha: 0.3),
                 ),
               ],
             ),
@@ -394,7 +381,7 @@ class _StatBox extends StatelessWidget {
         border: Border.all(color: AppColors.divider, width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withOpacity(0.05),
+            color: AppColors.navyDark.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -407,7 +394,7 @@ class _StatBox extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 16, color: iconColor),
@@ -427,7 +414,7 @@ class _StatBox extends StatelessWidget {
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 9,
               color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                  .withOpacity(0.45),
+                  .withValues(alpha: 0.45),
               fontWeight: FontWeight.w500,
               letterSpacing: 0.3,
             ),

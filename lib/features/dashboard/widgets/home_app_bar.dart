@@ -25,14 +25,7 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
       flexibleSpace: SafeArea(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.gold.withOpacity(0.25),
-                width: 0.8,
-              ),
-            ),
-          ),
+          decoration: const BoxDecoration(),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -40,8 +33,8 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
               Row(
                 children: [
                   SizedBox(
-                    width: 42,
-                    height: 42,
+                    width: 50,
+                    height: 50,
                     child: Image.asset(
                       'assets/images/gda_logo.png',
                       fit: BoxFit.contain,
@@ -75,7 +68,7 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         "Galiyat Development Authority",
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 9,
-                          color: Colors.white.withOpacity(0.55),
+                          color: Colors.white.withValues(alpha: 0.55),
                           letterSpacing: 0.8,
                         ),
                       ),
@@ -90,7 +83,7 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(

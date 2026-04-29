@@ -21,7 +21,7 @@ class AiChatFab extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.gold.withOpacity(0.3),
+                color: AppColors.gold.withValues(alpha: 0.3),
                 width: 1.5,
               ),
             ),
@@ -46,17 +46,17 @@ class AiChatFab extends StatelessWidget {
                 colors: [Color(0xFF1A3A6B), AppColors.navyDark],
               ),
               border: Border.all(
-                color: AppColors.gold.withOpacity(0.5),
+                color: AppColors.gold.withValues(alpha: 0.5),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.gold.withOpacity(0.25),
+                  color: AppColors.gold.withValues(alpha: 0.25),
                   blurRadius: 16,
                   spreadRadius: 2,
                 ),
                 BoxShadow(
-                  color: AppColors.navyDark.withOpacity(0.4),
+                  color: AppColors.navyDark.withValues(alpha: 0.4),
                   blurRadius: 8,
                 ),
               ],

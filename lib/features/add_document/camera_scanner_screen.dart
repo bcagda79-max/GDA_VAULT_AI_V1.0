@@ -196,7 +196,7 @@ class _CameraScannerScreenState extends State<CameraScannerScreen>
                       textAlign: TextAlign.center,
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 12,
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                       ),
                     ),
                   ),
@@ -246,7 +246,7 @@ class _CameraScannerScreenState extends State<CameraScannerScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+            colors: [Colors.black.withValues(alpha: 0.7), Colors.transparent],
           ),
         ),
         child: Row(
@@ -258,7 +258,7 @@ class _CameraScannerScreenState extends State<CameraScannerScreen>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.4),
+                  color: Colors.black.withValues(alpha: 0.4),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -282,7 +282,7 @@ class _CameraScannerScreenState extends State<CameraScannerScreen>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.4),
+                  color: Colors.black.withValues(alpha: 0.4),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -307,7 +307,7 @@ class _CameraScannerScreenState extends State<CameraScannerScreen>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: AppColors.navyDark.withOpacity(0.8),
+            color: AppColors.navyDark.withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
@@ -339,7 +339,7 @@ class _CameraScannerScreenState extends State<CameraScannerScreen>
           gradient: LinearGradient(
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
-            colors: [Colors.black.withOpacity(0.85), Colors.transparent],
+            colors: [Colors.black.withValues(alpha: 0.85), Colors.transparent],
           ),
         ),
         child: Column(
@@ -350,7 +350,7 @@ class _CameraScannerScreenState extends State<CameraScannerScreen>
                 '${_scannedImagePaths.length} page${_scannedImagePaths.length > 1 ? 's' : ''} scanned',
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 12,
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                 ),
               ),
               AppSpacing.vertical(16),
@@ -369,8 +369,8 @@ class _CameraScannerScreenState extends State<CameraScannerScreen>
                       gradient: _isCapturing
                           ? LinearGradient(
                               colors: [
-                                AppColors.gold.withOpacity(0.5),
-                                AppColors.gold.withOpacity(0.5),
+                                AppColors.gold.withValues(alpha: 0.5),
+                                AppColors.gold.withValues(alpha: 0.5),
                               ],
                             )
                           : const LinearGradient(
@@ -378,7 +378,7 @@ class _CameraScannerScreenState extends State<CameraScannerScreen>
                             ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.gold.withOpacity(0.4),
+                          color: AppColors.gold.withValues(alpha: 0.4),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
@@ -415,7 +415,7 @@ class _CameraScannerScreenState extends State<CameraScannerScreen>
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.gdaGreen.withOpacity(0.3),
+                            color: AppColors.gdaGreen.withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),

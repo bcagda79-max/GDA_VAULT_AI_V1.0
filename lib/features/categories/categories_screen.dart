@@ -38,7 +38,7 @@ class CategoriesScreen extends StatelessWidget {
                 "All Files",
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 9,
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                   letterSpacing: 1.0,
                 ),
               ),
@@ -47,7 +47,7 @@ class CategoriesScreen extends StatelessWidget {
           centerTitle: true,
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(0.8),
-            child: Container(color: AppColors.gold.withOpacity(0.25), height: 0.8),
+            child: Container(color: AppColors.gold.withValues(alpha: 0.25), height: 0.8),
           ),
         ),
         body: Column(
@@ -77,7 +77,7 @@ class CategoriesScreen extends StatelessWidget {
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 12,
                           color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                              .withOpacity(0.55),
+                              .withValues(alpha: 0.55),
                         ),
                       ),
                     ],
@@ -86,7 +86,7 @@ class CategoriesScreen extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.catBoard.withOpacity(0.08),
+                      color: AppColors.catBoard.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -131,7 +131,7 @@ class CategoriesScreen extends StatelessWidget {
         border: Border.all(color: AppColors.divider, width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withOpacity(0.05),
+            color: AppColors.navyDark.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -142,7 +142,7 @@ class CategoriesScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          splashColor: category.color.withOpacity(0.08),
+          splashColor: category.color.withValues(alpha: 0.08),
           onTap: () => _navigateToCategory(context, category),
           child: IntrinsicHeight(
             child: Row(
@@ -166,7 +166,7 @@ class CategoriesScreen extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: category.color.withOpacity(0.1),
+                      color: category.color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(category.iconData, size: 22, color: category.color),
@@ -209,7 +209,7 @@ class CategoriesScreen extends StatelessWidget {
                                         vertical: 3,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: AppColors.gold.withOpacity(0.1),
+                                        color: AppColors.gold.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
@@ -223,7 +223,7 @@ class CategoriesScreen extends StatelessWidget {
                                   Icon(
                                     Icons.arrow_forward_ios_rounded,
                                     size: 13,
-                                    color: AppColors.charcoal.withOpacity(0.3),
+                                    color: AppColors.charcoal.withValues(alpha: 0.3),
                                   ),
                                 ],
                               ),
@@ -238,7 +238,7 @@ class CategoriesScreen extends StatelessWidget {
                               category.yearRange ?? "N/A",
                               style: AppTextStyles.dmSans.copyWith(
                                 fontSize: 11,
-                                color: AppColors.charcoal.withOpacity(0.4),
+                                color: AppColors.charcoal.withValues(alpha: 0.4),
                               ),
                             ),
                             Container(
@@ -246,7 +246,7 @@ class CategoriesScreen extends StatelessWidget {
                               height: 3,
                               margin: const EdgeInsets.symmetric(horizontal: 6),
                               decoration: BoxDecoration(
-                                color: AppColors.charcoal.withOpacity(0.2),
+                                color: AppColors.charcoal.withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -254,7 +254,7 @@ class CategoriesScreen extends StatelessWidget {
                               "${category.docCount} files",
                               style: AppTextStyles.dmSans.copyWith(
                                 fontSize: 11,
-                                color: AppColors.charcoal.withOpacity(0.4),
+                                color: AppColors.charcoal.withValues(alpha: 0.4),
                               ),
                             ),
                           ],
@@ -266,10 +266,10 @@ class CategoriesScreen extends StatelessWidget {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(2),
                             child: LinearProgressIndicator(
-                              value: category.docCount / 500.0,
-                              backgroundColor: category.color.withOpacity(0.08),
+                              value: (category.docCount / 500.0).clamp(0.0, 1.0),
+                              backgroundColor: category.color.withValues(alpha: 0.08),
                               valueColor: AlwaysStoppedAnimation(
-                                category.color.withOpacity(0.4),
+                                category.color.withValues(alpha: 0.4),
                               ),
                               minHeight: 2.5,
                             ),

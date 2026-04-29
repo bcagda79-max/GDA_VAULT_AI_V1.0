@@ -18,8 +18,8 @@ class ScanTab extends StatelessWidget {
             Icons.document_scanner,
             size: 64,
             color: isDark
-                ? AppColors.darkText.withOpacity(0.5)
-                : AppColors.navyDark.withOpacity(0.7),
+                ? AppColors.darkText.withValues(alpha: 0.5)
+                : AppColors.navyDark.withValues(alpha: 0.7),
           ),
           const SizedBox(height: 20),
           Text(

@@ -10,6 +10,15 @@ import 'package:uuid/uuid.dart';
 class MockData {
   static final _uuid = Uuid();
 
+  static const List<String> suggestedQuestions = [
+    'When was the land trust formed?',
+    'What does Resolution 47 say?',
+    'Show Plot 47-A records',
+    'Latest board resolutions 2024',
+    'Admin orders about staff transfers',
+    'Private property transfers in 2008',
+  ];
+
   static final List<CategoryModel> categories = [
     CategoryModel(
       id: 'board-authority',

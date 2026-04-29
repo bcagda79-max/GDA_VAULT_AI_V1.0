@@ -4,9 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/features/dashboard/tabs/chat_tab.dart';
-import 'package:gda_vault_ai/features/dashboard/tabs/home_tab.dart';
-import 'package:gda_vault_ai/features/dashboard/tabs/settings_tab.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/ai_chat_fab.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/gda_bottom_nav.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/home_app_bar.dart';
@@ -66,7 +63,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         content: Text(
           "Are you sure you want to exit GDA Vault AI?",
           style: AppTextStyles.bodyLarge.copyWith(
-            color: AppColors.charcoal.withOpacity(0.6),
+            color: AppColors.charcoal.withValues(alpha: 0.6),
           ),
         ),
         actions: [
@@ -74,7 +71,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               "Cancel",
-              style: TextStyle(color: AppColors.charcoal.withOpacity(0.5)),
+              style: TextStyle(color: AppColors.charcoal.withValues(alpha: 0.5)),
             ),
           ),
           TextButton(

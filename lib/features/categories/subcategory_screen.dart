@@ -1,7 +1,5 @@
 // lib/features/categories/subcategory_screen.dart
 
-/// Displays sub-categories for a parent category.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +39,7 @@ class SubcategoryScreen extends StatelessWidget {
                 "Select sub-category",
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 9,
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -65,7 +63,7 @@ class SubcategoryScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: Theme.of(
                       context,
-                    ).textTheme.bodySmall?.color?.withOpacity(0.5),
+                    ).textTheme.bodySmall?.color?.withValues(alpha: 0.5),
                     letterSpacing: 0.8,
                   ),
                 ),
@@ -143,7 +141,7 @@ class _ParentCategoryHeroBanner extends StatelessWidget {
           colors: [AppColors.catBoard, Color(0xFF0D1B3E)],
         ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.gdaGold.withOpacity(0.2), width: 1),
+        border: Border.all(color: AppColors.gdaGold.withValues(alpha: 0.2), width: 1),
       ),
       child: Row(
         children: [
@@ -184,7 +182,7 @@ class _ParentCategoryHeroBanner extends StatelessWidget {
                   "Tap a sub-category below to browse documents",
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 11,
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                   ),
                 ),
               ],
@@ -194,13 +192,13 @@ class _ParentCategoryHeroBanner extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
               Icons.gavel_rounded,
               size: 28,
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.white.withValues(alpha: 0.6),
             ),
           ),
         ],
@@ -245,7 +243,7 @@ class _SubCategoryCard extends StatelessWidget {
         border: Border.all(color: theme.dividerColor, width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withOpacity(0.07),
+            color: AppColors.navyDark.withValues(alpha: 0.07),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -293,7 +291,7 @@ class _SubCategoryCard extends StatelessWidget {
                             style: AppTextStyles.dmSans.copyWith(
                               fontSize: 12,
                               color: theme.textTheme.bodySmall?.color
-                                  ?.withOpacity(0.5),
+                                  ?.withValues(alpha: 0.5),
                             ),
                             maxLines: 2,
                           ),
@@ -304,7 +302,7 @@ class _SubCategoryCard extends StatelessWidget {
                                 Icons.folder_copy_rounded,
                                 size: 13,
                                 color: theme.textTheme.bodySmall?.color
-                                    ?.withOpacity(0.4),
+                                    ?.withValues(alpha: 0.4),
                               ),
                               AppSpacing.horizontal(4),
                               Text(
@@ -312,7 +310,7 @@ class _SubCategoryCard extends StatelessWidget {
                                 style: AppTextStyles.dmSans.copyWith(
                                   fontSize: 11,
                                   color: theme.textTheme.bodySmall?.color
-                                      ?.withOpacity(0.5),
+                                      ?.withValues(alpha: 0.5),
                                 ),
                               ),
                               AppSpacing.horizontal(16),
@@ -320,7 +318,7 @@ class _SubCategoryCard extends StatelessWidget {
                                 Icons.calendar_today_rounded,
                                 size: 13,
                                 color: theme.textTheme.bodySmall?.color
-                                    ?.withOpacity(0.4),
+                                    ?.withValues(alpha: 0.4),
                               ),
                               AppSpacing.horizontal(4),
                               Text(
@@ -328,7 +326,7 @@ class _SubCategoryCard extends StatelessWidget {
                                 style: AppTextStyles.dmSans.copyWith(
                                   fontSize: 11,
                                   color: theme.textTheme.bodySmall?.color
-                                      ?.withOpacity(0.5),
+                                      ?.withValues(alpha: 0.5),
                                 ),
                               ),
                             ],
@@ -341,7 +339,7 @@ class _SubCategoryCard extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: categoryColor.withOpacity(0.1),
+                        color: categoryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -357,10 +355,10 @@ class _SubCategoryCard extends StatelessWidget {
                 margin: const EdgeInsets.fromLTRB(18, 0, 18, 18),
                 height: 36,
                 decoration: BoxDecoration(
-                  color: categoryColor.withOpacity(0.05),
+                  color: categoryColor.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: categoryColor.withOpacity(0.1),
+                    color: categoryColor.withValues(alpha: 0.1),
                     width: 0.8,
                   ),
                 ),
@@ -372,23 +370,19 @@ class _SubCategoryCard extends StatelessWidget {
                       "Earliest: $firstYear",
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 11,
-                        color: theme.textTheme.bodySmall?.color?.withOpacity(
-                          0.5,
-                        ),
+                        color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
                       ),
                     ),
                     Icon(
                       Icons.timeline_rounded,
                       size: 14,
-                      color: categoryColor.withOpacity(0.4),
+                      color: categoryColor.withValues(alpha: 0.4),
                     ),
                     Text(
                       "Latest: $lastYear",
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 11,
-                        color: theme.textTheme.bodySmall?.color?.withOpacity(
-                          0.5,
-                        ),
+                        color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
                       ),
                     ),
                   ],
@@ -414,7 +408,7 @@ class _Tag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isLight ? color.withOpacity(0.1) : color.withOpacity(0.12),
+        color: isLight ? color.withValues(alpha: 0.1) : color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

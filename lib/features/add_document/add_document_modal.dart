@@ -61,7 +61,7 @@ class AddDocumentModal extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 24,
               offset: const Offset(0, 8),
             ),
@@ -95,7 +95,7 @@ class AddDocumentModal extends StatelessWidget {
                           "Choose method",
                           style: AppTextStyles.dmSans.copyWith(
                             fontSize: 11,
-                            color: AppColors.charcoal.withOpacity(0.5),
+                            color: AppColors.charcoal.withValues(alpha: 0.5),
                           ),
                         ),
                       ],
@@ -106,7 +106,7 @@ class AddDocumentModal extends StatelessWidget {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: AppColors.charcoal.withOpacity(0.08),
+                          color: AppColors.charcoal.withValues(alpha: 0.08),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -180,7 +180,7 @@ class AddDocumentModal extends StatelessWidget {
             border: Border.all(color: AppColors.divider, width: 0.8),
             boxShadow: [
               BoxShadow(
-                color: AppColors.navyDark.withOpacity(0.04),
+                color: AppColors.navyDark.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -206,7 +206,7 @@ class AddDocumentModal extends StatelessWidget {
                           (badge != null
                                   ? AppColors.catBoard
                                   : AppColors.gdaGreen)
-                              .withOpacity(0.25),
+                              .withValues(alpha: 0.25),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -239,7 +239,7 @@ class AddDocumentModal extends StatelessWidget {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.gdaGreen.withOpacity(0.12),
+                              color: AppColors.gdaGreen.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -260,7 +260,7 @@ class AddDocumentModal extends StatelessWidget {
                       subtitle,
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 11,
-                        color: AppColors.charcoal.withOpacity(0.5),
+                        color: AppColors.charcoal.withValues(alpha: 0.5),
                       ),
                     ),
                   ],
@@ -269,7 +269,7 @@ class AddDocumentModal extends StatelessWidget {
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 14,
-                color: AppColors.charcoal.withOpacity(0.3),
+                color: AppColors.charcoal.withValues(alpha: 0.3),
               ),
             ],
           ),

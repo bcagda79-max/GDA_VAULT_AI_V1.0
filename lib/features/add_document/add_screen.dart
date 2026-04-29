@@ -72,7 +72,7 @@ class AddScreen extends StatelessWidget {
               "Scan or import a file",
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 9,
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
               ),
             ),
           ],
@@ -95,7 +95,7 @@ class AddScreen extends StatelessWidget {
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.charcoal.withOpacity(0.45),
+                  color: AppColors.charcoal.withValues(alpha: 0.45),
                   letterSpacing: 1.0,
                 ),
               ),
@@ -154,7 +154,7 @@ class AddScreen extends StatelessWidget {
           colors: [AppColors.navyDark, Color(0xFF1A3A6B), Color(0xFF0D2B5E)],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.gold.withOpacity(0.25), width: 1),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.25), width: 1),
       ),
       child: Stack(
         children: [
@@ -166,7 +166,7 @@ class AddScreen extends StatelessWidget {
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.03),
+                color: Colors.white.withValues(alpha: 0.03),
               ),
             ),
           ),
@@ -178,7 +178,7 @@ class AddScreen extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.gold.withOpacity(0.05),
+                color: AppColors.gold.withValues(alpha: 0.05),
               ),
             ),
           ),
@@ -196,7 +196,7 @@ class AddScreen extends StatelessWidget {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.gold.withOpacity(0.15),
+                          color: AppColors.gold.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -234,7 +234,7 @@ class AddScreen extends StatelessWidget {
                         "Scan physical documents or\nimport PDF files from device",
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 11,
-                          color: Colors.white.withOpacity(0.55),
+                          color: Colors.white.withValues(alpha: 0.55),
                         ),
                         maxLines: 2,
                       ),
@@ -245,15 +245,15 @@ class AddScreen extends StatelessWidget {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.12)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
                   ),
                   child: Center(
                     child: Icon(
                       Icons.add_photo_alternate_rounded,
                       size: 32,
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -284,7 +284,7 @@ class AddScreen extends StatelessWidget {
         border: Border.all(color: AppColors.divider, width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withOpacity(0.08),
+            color: AppColors.navyDark.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -309,7 +309,7 @@ class AddScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: gradient[0].withOpacity(0.3),
+                            color: gradient[0].withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -344,7 +344,7 @@ class AddScreen extends StatelessWidget {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.gdaGreen.withOpacity(0.1),
+                                    color: AppColors.gdaGreen.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
@@ -365,8 +365,8 @@ class AddScreen extends StatelessWidget {
                             style: AppTextStyles.dmSans.copyWith(
                               fontSize: 12,
                               color: isDark
-                                  ? Colors.white.withOpacity(0.5)
-                                  : AppColors.charcoal.withOpacity(0.5),
+                                  ? Colors.white.withValues(alpha: 0.5)
+                                  : AppColors.charcoal.withValues(alpha: 0.5),
                             ),
                           ),
                         ],
@@ -422,20 +422,20 @@ class AddScreen extends StatelessWidget {
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.catBoard.withOpacity(0.07),
+        color: AppColors.catBoard.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.catBoard.withOpacity(0.15)),
+        border: Border.all(color: AppColors.catBoard.withValues(alpha: 0.15)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: AppColors.catBoard.withOpacity(0.7)),
+          Icon(icon, size: 12, color: AppColors.catBoard.withValues(alpha: 0.7)),
           AppSpacing.horizontal(4),
           Text(
             text,
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 10,
-              color: AppColors.charcoal.withOpacity(0.6),
+              color: AppColors.charcoal.withValues(alpha: 0.6),
             ),
           ),
         ],
@@ -455,7 +455,7 @@ class AddScreen extends StatelessWidget {
         border: Border.all(color: AppColors.divider, width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withOpacity(0.08),
+            color: AppColors.navyDark.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -482,7 +482,7 @@ class AddScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.gdaGreen.withOpacity(0.3),
+                            color: AppColors.gdaGreen.withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -517,8 +517,8 @@ class AddScreen extends StatelessWidget {
                             style: AppTextStyles.dmSans.copyWith(
                               fontSize: 12,
                               color: isDark
-                                  ? Colors.white.withOpacity(0.5)
-                                  : AppColors.charcoal.withOpacity(0.5),
+                                  ? Colors.white.withValues(alpha: 0.5)
+                                  : AppColors.charcoal.withValues(alpha: 0.5),
                             ),
                           ),
                         ],
@@ -595,9 +595,9 @@ class AddScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
@@ -622,8 +622,8 @@ class AddScreen extends StatelessWidget {
                     style: AppTextStyles.dmSans.copyWith(
                       fontSize: 8,
                       color: isDark
-                          ? Colors.white.withOpacity(0.45)
-                          : AppColors.charcoal.withOpacity(0.45),
+                          ? Colors.white.withValues(alpha: 0.45)
+                          : AppColors.charcoal.withValues(alpha: 0.45),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -634,128 +634,6 @@ class AddScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildRecentUploadsHeader(BuildContext context, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "Recent Uploads",
-            style: AppTextStyles.playfairDisplay.copyWith(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: isDark ? AppColors.darkText : AppColors.charcoal,
-            ),
-          ),
-          TextButton(
-            onPressed: () {},
-            child: Text(
-              "See All",
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 12,
-                color: AppColors.gold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecentUploadsList(bool isDark) {
-    return SizedBox(
-      height: 110,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        scrollDirection: Axis.horizontal,
-        itemCount: 5,
-        physics: const BouncingScrollPhysics(),
-        itemBuilder: (context, index) {
-          return Container(
-            width: 160,
-            margin: const EdgeInsets.only(right: 10),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkCard : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.divider, width: 0.8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.catBoard,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    AppSpacing.horizontal(6),
-                    Text(
-                      "202${4 - index}",
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.charcoal,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      "${index + 1}d ago",
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 9,
-                        color: AppColors.charcoal.withOpacity(0.4),
-                      ),
-                    ),
-                  ],
-                ),
-                AppSpacing.vertical(8),
-                Text(
-                  "Archive_Doc_00${index + 1}.pdf",
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 11,
-                    color: isDark ? AppColors.darkText : AppColors.charcoal,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const Spacer(),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.picture_as_pdf,
-                      size: 11,
-                      color: AppColors.catBoard,
-                    ),
-                    AppSpacing.horizontal(4),
-                    Text(
-                      "${12 + index * 5}pp",
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 9,
-                        color: AppColors.charcoal.withOpacity(0.45),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      ).animate(delay: 350.ms).fadeIn(duration: 400.ms),
     );
   }
 }

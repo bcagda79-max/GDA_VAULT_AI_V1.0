@@ -1,6 +1,5 @@
 // lib/features/categories/year_list_screen.dart
 
-/// Displays a list of documents for a given category/sub-category, grouped by year.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -82,7 +81,7 @@ class _YearListScreenState extends State<YearListScreen> {
                 "Select a year to browse",
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 9,
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -173,7 +172,7 @@ class _CategoryInfoHeader extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [categoryColor, categoryColor.withOpacity(0.7)],
+          colors: [categoryColor, categoryColor.withValues(alpha: 0.7)],
         ),
         borderRadius: BorderRadius.circular(16),
       ),
@@ -196,7 +195,7 @@ class _CategoryInfoHeader extends StatelessWidget {
                   "$yearFrom – ${yearTo ?? 'Ongoing'}",
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 12,
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                   ),
                 ),
                 AppSpacing.vertical(10),
@@ -214,11 +213,11 @@ class _CategoryInfoHeader extends StatelessWidget {
             ),
           ),
           Icon(
-            MockData.categories
-                .firstWhere((c) => c.name == categoryName)
-                .iconData,
+            MockData.categories.any((c) => c.name == categoryName)
+                ? MockData.categories.firstWhere((c) => c.name == categoryName).iconData
+                : Icons.folder_rounded,
             size: 36,
-            color: Colors.white.withOpacity(0.4),
+            color: Colors.white.withValues(alpha: 0.4),
           ),
         ],
       ),
@@ -229,7 +228,7 @@ class _CategoryInfoHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -273,7 +272,7 @@ class _SortAndFilterBar extends StatelessWidget {
             "$yearListLength Years Available",
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 12,
-              color: theme.textTheme.bodySmall?.color?.withOpacity(0.55),
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.55),
             ),
           ),
           GestureDetector(
@@ -320,7 +319,7 @@ class _YearListItem extends StatelessWidget {
         border: Border.all(color: theme.dividerColor, width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withOpacity(0.05),
+            color: AppColors.navyDark.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -375,13 +374,13 @@ class _LeftYearBand extends StatelessWidget {
     return Container(
       width: 72,
       decoration: BoxDecoration(
-        color: categoryColor.withOpacity(0.1),
+        color: categoryColor.withValues(alpha: 0.1),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(14),
           bottomLeft: Radius.circular(14),
         ),
         border: Border(
-          right: BorderSide(color: categoryColor.withOpacity(0.2), width: 0.8),
+          right: BorderSide(color: categoryColor.withValues(alpha: 0.2), width: 0.8),
         ),
       ),
       child: Center(
@@ -400,14 +399,14 @@ class _LeftYearBand extends StatelessWidget {
               Container(
                 height: 16,
                 width: 1.5,
-                color: categoryColor.withOpacity(0.3),
+                color: categoryColor.withValues(alpha: 0.3),
                 margin: const EdgeInsets.symmetric(vertical: 2),
               ),
               Text(
                 yearEnd.toString(),
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 10,
-                  color: categoryColor.withOpacity(0.6),
+                  color: categoryColor.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -442,7 +441,7 @@ class _Content extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.gdaGreen.withOpacity(0.12),
+                      color: AppColors.gdaGreen.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -490,28 +489,28 @@ class _Content extends StatelessWidget {
                 Icon(
                   Icons.description_rounded,
                   size: 12,
-                  color: theme.textTheme.bodySmall?.color?.withOpacity(0.4),
+                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
                 ),
                 AppSpacing.horizontal(4),
                 Text(
                   "${document.pageCount} pages",
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 11,
-                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.45),
+                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.45),
                   ),
                 ),
                 AppSpacing.horizontal(14),
                 Icon(
                   Icons.upload_rounded,
                   size: 12,
-                  color: theme.textTheme.bodySmall?.color?.withOpacity(0.4),
+                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
                 ),
                 AppSpacing.horizontal(4),
                 Text(
                   DateFormat("dd MMM yyyy").format(document.uploadedAt),
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 11,
-                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.45),
+                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.45),
                   ),
                 ),
               ],
@@ -521,7 +520,7 @@ class _Content extends StatelessWidget {
               height: 3,
               width: 80,
               decoration: BoxDecoration(
-                color: categoryColor.withOpacity(0.08),
+                color: categoryColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(2),
               ),
               child: FractionallySizedBox(
@@ -552,7 +551,7 @@ class _RightPdfBadge extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: categoryColor.withOpacity(0.1),
+          color: categoryColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
@@ -586,14 +585,14 @@ class _EmptyState extends StatelessWidget {
           Icon(
             Icons.folder_open,
             size: 64,
-            color: theme.textTheme.bodySmall?.color?.withOpacity(0.2),
+            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.2),
           ),
           AppSpacing.vertical(16),
           Text(
             "No documents yet",
             style: AppTextStyles.playfairDisplay.copyWith(
               fontSize: 18,
-              color: theme.textTheme.bodySmall?.color?.withOpacity(0.4),
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
             ),
           ),
           Text(
@@ -601,7 +600,7 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 13,
-              color: theme.textTheme.bodySmall?.color?.withOpacity(0.35),
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.35),
             ),
           ),
         ],

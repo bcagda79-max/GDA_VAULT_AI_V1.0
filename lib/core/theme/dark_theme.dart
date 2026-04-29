@@ -20,12 +20,10 @@ final ThemeData darkTheme = ThemeData(
     primary: AppColors.navyMid,
     secondary: AppColors.gold,
     surface: AppColors.darkSurface,
-    background: AppColors.darkBg,
     error: Colors.redAccent,
     onPrimary: AppColors.darkText,
     onSecondary: AppColors.darkText,
     onSurface: AppColors.darkText,
-    onBackground: AppColors.darkText,
     onError: AppColors.darkText,
   ),
   cardTheme: CardThemeData(

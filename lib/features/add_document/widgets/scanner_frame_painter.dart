@@ -7,7 +7,7 @@ class ScannerFramePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     // Semi-transparent mask for the area outside the document frame
-    final Paint maskPaint = Paint()..color = Colors.black.withOpacity(0.5);
+    final Paint maskPaint = Paint()..color = Colors.black.withValues(alpha: 0.5);
 
     final double frameLeft = size.width * 0.1;
     final double frameTop = size.height * 0.15;
@@ -58,7 +58,7 @@ class ScannerFramePainter extends CustomPainter {
 
     // Thin frame border
     final Paint framePaint = Paint()
-      ..color = AppColors.gold.withOpacity(0.2)
+      ..color = AppColors.gold.withValues(alpha: 0.2)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
     

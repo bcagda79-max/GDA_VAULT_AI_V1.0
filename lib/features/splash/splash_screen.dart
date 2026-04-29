@@ -40,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 center: const Alignment(0, -0.3),
                 radius: 1.2,
                 colors: [
-                  const Color(0xFF1A3A6B).withOpacity(0.6),
+                  const Color(0xFF1A3A6B).withValues(alpha: 0.6),
                   Colors.transparent,
                 ],
               ),
@@ -55,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.white.withOpacity(0.08),
+                            color: Colors.white.withValues(alpha: 0.08),
                             blurRadius: 60,
                             spreadRadius: 20,
                           ),
@@ -89,7 +89,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 Text(
                       "GALIYAT DEVELOPMENT AUTHORITY",
                       style: AppTextStyles.bodyLarge.copyWith(
-                        color: Colors.white.withOpacity(0.65),
+                        color: Colors.white.withValues(alpha: 0.65),
                         fontSize: 13,
                         letterSpacing: 2.5,
                       ),
@@ -112,7 +112,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 Text(
                       "Official Document Archive System",
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: Colors.white.withOpacity(0.45),
+                        color: Colors.white.withValues(alpha: 0.45),
                         fontSize: 11,
                         letterSpacing: 1.0,
                       ),

@@ -13,7 +13,6 @@ import 'package:gda_vault_ai/features/add_document/camera_scanner_screen.dart';
 import 'package:gda_vault_ai/features/add_document/scan_review_screen.dart';
 import 'package:gda_vault_ai/features/add_document/category_selector_screen.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/home_tab.dart';
-import 'package:gda_vault_ai/features/dashboard/tabs/chat_tab.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/settings_tab.dart';
 import 'package:gda_vault_ai/features/ai_chat/chat_screen.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
@@ -46,7 +45,7 @@ class AppRouter {
           GoRoute(
             path: '/dashboard/chat',
             name: 'chatTab',
-            builder: (context, state) => const ChatTab(),
+            builder: (context, state) => const ChatScreen(isPushed: false),
           ),
           GoRoute(
             path: '/dashboard/settings',
@@ -146,11 +145,17 @@ class AppRouter {
           );
         },
       ),
-      // Chat screen as full screen if accessed directly from home FAB
+      // Chat screen as full screen if accessed directly from home FAB or PDF viewer
       GoRoute(
         path: '/chat',
-        name: 'chat',
-        builder: (context, state) => const ChatScreen(),
+        name: 'chat-fullscreen',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ChatScreen(
+            isPushed: true,
+            initialDocumentId: extra?['documentId'] as String?,
+          );
+        },
       ),
     ],
   );
