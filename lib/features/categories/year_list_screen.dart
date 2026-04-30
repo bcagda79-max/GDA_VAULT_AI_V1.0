@@ -1,15 +1,14 @@
-// lib/features/categories/year_list_screen.dart
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/data/mock_data.dart';
+import 'package:gda_vault_ai/core/services/supabase_service.dart';
+import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
-import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 
 class YearListScreen extends StatefulWidget {
   final String categoryId;
@@ -34,30 +33,140 @@ class YearListScreen extends StatefulWidget {
 }
 
 class _YearListScreenState extends State<YearListScreen> {
-  late List<DocumentModel> _documents;
+  final _supa = SupabaseService.instance;
+  bool _isLoading = true;
   bool _isDescending = true;
+  bool _isDownloading = false;
+  double _downloadProgress = 0.0;
+  String _downloadStatus = '';
+  List<DocumentModel> _documents = const [];
+  List<int> _availableYears = const [];
+  List<int> _yearFolders = const [];
+  int? _selectedYear;
 
   @override
   void initState() {
     super.initState();
-    _documents = MockData.getDocumentsForCategory(widget.categoryId);
-    _sortDocuments();
+    _loadDocuments();
+  }
+
+  Future<void> _loadDocuments() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final resolvedCategoryId =
+          await _supa.resolveCategoryId(widget.categoryId) ?? widget.categoryId;
+      final rows = await _supa.getDocumentsByCategory(widget.categoryId);
+      List<DocumentModel> docs = rows.map(DocumentModel.fromMap).toList();
+
+      if (docs.isEmpty) {
+        final offline = await PdfViewerService.instance.getOfflineDocuments();
+        docs = offline
+            .where(
+              (record) =>
+                  record.categoryId == resolvedCategoryId ||
+                  record.categorySlug == widget.categoryId,
+            )
+            .map((record) => record.toDocumentModel())
+            .toList();
+      }
+
+      final years = docs.map((d) => d.yearStart).toSet().toList()
+        ..sort((a, b) => b.compareTo(a));
+
+      final startYear = widget.yearFrom;
+      final endYear =
+          widget.yearTo ??
+          (years.isNotEmpty ? years.first : DateTime.now().year);
+      final folders = <int>[];
+      for (var year = endYear; year >= startYear; year--) {
+        folders.add(year);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _documents = docs;
+        _availableYears = years;
+        _yearFolders = folders;
+        _selectedYear = folders.isNotEmpty ? folders.first : null;
+        _isLoading = false;
+      });
+      _sortDocuments();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _documents = const [];
+        _availableYears = const [];
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to load documents'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _sortDocuments() {
-    _documents.sort((a, b) {
-      if (_isDescending) {
-        return b.yearStart.compareTo(a.yearStart);
-      } else {
-        return a.yearStart.compareTo(b.yearStart);
-      }
+    setState(() {
+      _documents = [..._documents]
+        ..sort(
+          (a, b) => _isDescending
+              ? b.yearStart.compareTo(a.yearStart)
+              : a.yearStart.compareTo(b.yearStart),
+        );
     });
+  }
+
+  List<DocumentModel> get _visibleDocuments {
+    if (_selectedYear == null) return _documents;
+    return _documents.where((doc) => doc.yearStart == _selectedYear).toList();
+  }
+
+  Future<void> _downloadDocument(DocumentModel document) async {
+    setState(() {
+      _isDownloading = true;
+      _downloadProgress = 0.05;
+      _downloadStatus = 'Preparing download...';
+    });
+
+    final file = await PdfViewerService.instance.downloadDocument(
+      document,
+      onProgress: (progress, status) {
+        if (!mounted) return;
+        setState(() {
+          _downloadProgress = progress;
+          _downloadStatus = status;
+        });
+      },
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _isDownloading = false;
+    });
+
+    if (file != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${document.fileName} saved offline')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Download failed'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final totalDocs = _documents.length;
-    final totalYears = _documents.map((d) => d.yearStart).toSet().length;
+    final totalYears = _yearFolders.length;
 
     return PopScope(
       canPop: true,
@@ -78,7 +187,7 @@ class _YearListScreenState extends State<YearListScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
-                "Select a year to browse",
+                'Select a year to browse',
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 9,
                   color: Colors.white.withValues(alpha: 0.5),
@@ -91,56 +200,133 @@ class _YearListScreenState extends State<YearListScreen> {
             IconButton(
               icon: const Icon(Icons.sort, color: Colors.white),
               onPressed: () {
-                setState(() {
-                  _isDescending = !_isDescending;
-                  _sortDocuments();
-                });
+                setState(() => _isDescending = !_isDescending);
+                _sortDocuments();
               },
             ),
           ],
         ),
-        body: Column(
+        body: Stack(
           children: [
-            _CategoryInfoHeader(
-              categoryName: widget.categoryName,
-              categoryColor: widget.categoryColor,
-              yearFrom: widget.yearFrom,
-              yearTo: widget.yearTo,
-              totalDocs: totalDocs,
-              totalYears: totalYears,
+            Column(
+              children: [
+                _CategoryInfoHeader(
+                  categoryName: widget.categoryName,
+                  categoryColor: widget.categoryColor,
+                  yearFrom: widget.yearFrom,
+                  yearTo: widget.yearTo,
+                  totalDocs: totalDocs,
+                  totalYears: totalYears,
+                ),
+                _SortAndFilterBar(
+                  yearListLength: _availableYears.length,
+                  isDescending: _isDescending,
+                  onSortTap: () {
+                    setState(() => _isDescending = !_isDescending);
+                    _sortDocuments();
+                  },
+                ),
+                _YearFolderStrip(
+                  yearFolders: _yearFolders,
+                  selectedYear: _selectedYear,
+                  onSelected: (year) {
+                    setState(() => _selectedYear = year);
+                  },
+                ),
+                Expanded(
+                  child: _isLoading
+                      ? _YearListLoading(
+                          isDark:
+                              Theme.of(context).brightness == Brightness.dark,
+                        )
+                      : _yearFolders.isEmpty
+                      ? _EmptyState(onRetry: _loadDocuments)
+                      : _visibleDocuments.isEmpty
+                      ? _EmptyState(
+                          onRetry: _loadDocuments,
+                          message:
+                              'No documents in ${_selectedYear ?? widget.yearFrom} yet',
+                        )
+                      : RefreshIndicator(
+                          color: AppColors.gold,
+                          onRefresh: _loadDocuments,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            itemCount: _visibleDocuments.length,
+                            itemBuilder: (context, index) {
+                              final document = _visibleDocuments[index];
+                              return _YearListItem(
+                                    document: document,
+                                    categoryColor: widget.categoryColor,
+                                    categoryName: widget.categoryName,
+                                    onDownload: () =>
+                                        _downloadDocument(document),
+                                  )
+                                  .animate(
+                                    delay: Duration(milliseconds: index * 50),
+                                  )
+                                  .fadeIn()
+                                  .slideX(begin: 0.04);
+                            },
+                          ),
+                        ),
+                ),
+              ],
             ),
-            _SortAndFilterBar(
-              yearListLength: _documents.length,
-              isDescending: _isDescending,
-              onSortTap: () {
-                setState(() {
-                  _isDescending = !_isDescending;
-                  _sortDocuments();
-                });
-              },
-            ),
-            Expanded(
-              child: _documents.isEmpty
-                  ? _EmptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      itemCount: _documents.length,
-                      itemBuilder: (context, index) {
-                        final document = _documents[index];
-                        return _YearListItem(
-                              document: document,
-                              categoryColor: widget.categoryColor,
-                              categoryName: widget.categoryName,
-                            )
-                            .animate(delay: Duration(milliseconds: index * 50))
-                            .fadeIn()
-                            .slideX(begin: 0.04);
-                      },
+            if (_isDownloading)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: Material(
+                  elevation: 8,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.divider),
                     ),
-            ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _downloadStatus,
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: _downloadProgress,
+                            minHeight: 5,
+                            backgroundColor: AppColors.divider,
+                            valueColor: const AlwaysStoppedAnimation(
+                              AppColors.gold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${(_downloadProgress * 100).clamp(0, 100).toStringAsFixed(0)}%',
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 11,
+                            color: AppColors.charcoal.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -192,7 +378,7 @@ class _CategoryInfoHeader extends StatelessWidget {
                 ),
                 AppSpacing.vertical(4),
                 Text(
-                  "$yearFrom – ${yearTo ?? 'Ongoing'}",
+                  '$yearFrom – ${yearTo ?? 'Ongoing'}',
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 12,
                     color: Colors.white.withValues(alpha: 0.7),
@@ -202,20 +388,18 @@ class _CategoryInfoHeader extends StatelessWidget {
                 Row(
                   children: [
                     _buildChip(
-                      "$totalDocs Documents",
+                      '$totalDocs Documents',
                       Icons.folder_copy_rounded,
                     ),
                     AppSpacing.horizontal(8),
-                    _buildChip("$totalYears Years", Icons.date_range_rounded),
+                    _buildChip('$totalYears Years', Icons.date_range_rounded),
                   ],
                 ),
               ],
             ),
           ),
           Icon(
-            MockData.categories.any((c) => c.name == categoryName)
-                ? MockData.categories.firstWhere((c) => c.name == categoryName).iconData
-                : Icons.folder_rounded,
+            Icons.folder_rounded,
             size: 36,
             color: Colors.white.withValues(alpha: 0.4),
           ),
@@ -269,7 +453,7 @@ class _SortAndFilterBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            "$yearListLength Years Available",
+            '$yearListLength Years Available',
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 12,
               color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.55),
@@ -282,7 +466,7 @@ class _SortAndFilterBar extends StatelessWidget {
                 const Icon(Icons.sort, size: 16, color: AppColors.gdaGold),
                 AppSpacing.horizontal(4),
                 Text(
-                  isDescending ? "Newest First" : "Oldest First",
+                  isDescending ? 'Newest First' : 'Oldest First',
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 11,
                     color: AppColors.gdaGold,
@@ -297,15 +481,89 @@ class _SortAndFilterBar extends StatelessWidget {
   }
 }
 
+class _YearFolderStrip extends StatelessWidget {
+  final List<int> yearFolders;
+  final int? selectedYear;
+  final ValueChanged<int> onSelected;
+
+  const _YearFolderStrip({
+    required this.yearFolders,
+    required this.selectedYear,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (yearFolders.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      height: 86,
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 6),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: yearFolders.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          final year = yearFolders[index];
+          final isSelected = selectedYear == year;
+          return GestureDetector(
+            onTap: () => onSelected(year),
+            child: Container(
+              width: 94,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.navyDark : Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isSelected ? AppColors.navyDark : AppColors.divider,
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.folder_rounded,
+                    color: isSelected ? Colors.white : AppColors.gold,
+                    size: 20,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '$year',
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : AppColors.charcoal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _YearListItem extends StatelessWidget {
   final DocumentModel document;
   final Color categoryColor;
   final String categoryName;
+  final VoidCallback onDownload;
 
   const _YearListItem({
     required this.document,
     required this.categoryColor,
     required this.categoryName,
+    required this.onDownload,
   });
 
   @override
@@ -348,7 +606,11 @@ class _YearListItem extends StatelessWidget {
                   categoryColor: categoryColor,
                 ),
                 _Content(document: document, categoryColor: categoryColor),
-                _RightPdfBadge(categoryColor: categoryColor),
+                _RightPdfMenu(
+                  document: document,
+                  categoryColor: categoryColor,
+                  onDownload: onDownload,
+                ),
               ],
             ),
           ),
@@ -380,7 +642,10 @@ class _LeftYearBand extends StatelessWidget {
           bottomLeft: Radius.circular(14),
         ),
         border: Border(
-          right: BorderSide(color: categoryColor.withValues(alpha: 0.2), width: 0.8),
+          right: BorderSide(
+            color: categoryColor.withValues(alpha: 0.2),
+            width: 0.8,
+          ),
         ),
       ),
       child: Center(
@@ -456,7 +721,7 @@ class _Content extends StatelessWidget {
                         ),
                         AppSpacing.horizontal(4),
                         Text(
-                          "ONGOING",
+                          'ONGOING',
                           style: AppTextStyles.dmSans.copyWith(
                             fontSize: 8,
                             fontWeight: FontWeight.bold,
@@ -489,28 +754,39 @@ class _Content extends StatelessWidget {
                 Icon(
                   Icons.description_rounded,
                   size: 12,
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
+                  color: theme.textTheme.bodySmall?.color?.withValues(
+                    alpha: 0.4,
+                  ),
                 ),
                 AppSpacing.horizontal(4),
                 Text(
-                  "${document.pageCount} pages",
+                  '${document.pageCount ?? 0} pages',
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 11,
-                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.45),
+                    color: theme.textTheme.bodySmall?.color?.withValues(
+                      alpha: 0.45,
+                    ),
                   ),
                 ),
                 AppSpacing.horizontal(14),
                 Icon(
                   Icons.upload_rounded,
                   size: 12,
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
+                  color: theme.textTheme.bodySmall?.color?.withValues(
+                    alpha: 0.4,
+                  ),
                 ),
                 AppSpacing.horizontal(4),
                 Text(
-                  DateFormat("dd MMM yyyy").format(document.uploadedAt),
+                  DateTime.tryParse(document.uploadedAt.toIso8601String()) ==
+                          null
+                      ? ''
+                      : DateFormat('dd MMM yyyy').format(document.uploadedAt),
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 11,
-                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.45),
+                    color: theme.textTheme.bodySmall?.color?.withValues(
+                      alpha: 0.45,
+                    ),
                   ),
                 ),
               ],
@@ -558,7 +834,7 @@ class _RightPdfBadge extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "PDF",
+              'PDF',
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 8,
                 fontWeight: FontWeight.bold,
@@ -574,7 +850,90 @@ class _RightPdfBadge extends StatelessWidget {
   }
 }
 
+class _RightPdfMenu extends StatelessWidget {
+  final DocumentModel document;
+  final Color categoryColor;
+  final VoidCallback onDownload;
+
+  const _RightPdfMenu({
+    required this.document,
+    required this.categoryColor,
+    required this.onDownload,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert_rounded, color: categoryColor),
+            onSelected: (value) {
+              if (value == 'open') {
+                context.push(
+                  '/categories/sub/${document.categoryId}/years/pdf',
+                  extra: {
+                    'document': document,
+                    'categoryColor': categoryColor,
+                    'categoryName': document.categoryName ?? 'Documents',
+                  },
+                );
+                return;
+              }
+              if (value == 'download') {
+                onDownload();
+              }
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem<String>(value: 'open', child: Text('Open')),
+              const PopupMenuItem<String>(
+                value: 'download',
+                child: Text('Download'),
+              ),
+            ],
+          ),
+          _RightPdfBadge(categoryColor: categoryColor),
+        ],
+      ),
+    );
+  }
+}
+
+class _YearListLoading extends StatelessWidget {
+  final bool isDark;
+  const _YearListLoading({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: isDark
+          ? AppColors.darkCard.withValues(alpha: 0.9)
+          : AppColors.divider.withValues(alpha: 0.55),
+      highlightColor: isDark ? AppColors.darkSurface : Colors.white,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount: 6,
+        itemBuilder: (context, index) => Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          height: 94,
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _EmptyState extends StatelessWidget {
+  final Future<void> Function() onRetry;
+  final String? message;
+
+  const _EmptyState({required this.onRetry, this.message});
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -589,18 +948,30 @@ class _EmptyState extends StatelessWidget {
           ),
           AppSpacing.vertical(16),
           Text(
-            "No documents yet",
+            message ?? 'No documents yet',
             style: AppTextStyles.playfairDisplay.copyWith(
               fontSize: 18,
               color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
             ),
           ),
           Text(
-            "Documents added via Scan or Upload\nwill appear here",
+            'Documents added via Scan or Upload\nwill appear here',
             textAlign: TextAlign.center,
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 13,
               color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.35),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(
+              'Retry',
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 13,
+                color: AppColors.gold,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

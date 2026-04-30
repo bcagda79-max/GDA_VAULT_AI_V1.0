@@ -1,3 +1,4 @@
+// ignore_for_file: unused_element
 import 'dart:io';
 import 'package:flutter/material.dart';
 
@@ -43,7 +44,6 @@ class ScanReviewScreen extends ConsumerStatefulWidget {
 
 class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
     with TickerProviderStateMixin {
-
   late PageController _pageController;
   int _currentPage = 0;
   bool _isProcessing = false;
@@ -69,7 +69,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
     super.initState();
     _pageController = PageController(initialPage: 0);
     _fileName =
-      'GDA_Scan_${DateFormat('dd_MM_yyyy_HHmm').format(DateTime.now())}.pdf';
+        'GDA_Scan_${DateFormat('dd_MM_yyyy_HHmm').format(DateTime.now())}.pdf';
 
     // Post-crop zoom animation
     _cropZoomController = AnimationController(
@@ -78,13 +78,17 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
     );
     _cropZoomAnim = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 1.18)
-          .chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween(
+          begin: 1.0,
+          end: 1.18,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 50,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 1.18, end: 1.0)
-          .chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween(
+          begin: 1.18,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeIn)),
         weight: 50,
       ),
     ]).animate(_cropZoomController);
@@ -98,12 +102,16 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
     final provider = ref.read(scannedPagesProvider);
     if (provider.isEmpty && widget.imagePaths.isNotEmpty) {
       for (final path in widget.imagePaths) {
-        ref.read(scannedPagesProvider.notifier).addPage(ScannedPage(
-          id: UniqueKey().toString(),
-          originalPath: path,
-          currentPath: path,
-          activeFilter: 'bw',
-        ));
+        ref
+            .read(scannedPagesProvider.notifier)
+            .addPage(
+              ScannedPage(
+                id: UniqueKey().toString(),
+                originalPath: path,
+                currentPath: path,
+                activeFilter: 'bw',
+              ),
+            );
       }
     }
     _preGenerateAllPreviews(0);
@@ -117,8 +125,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
   }
 
   // ── Improved Filter Algorithms (C8) ──
-  Future<String?> _generatePreview(
-      String sourcePath, String filterId) async {
+  Future<String?> _generatePreview(String sourcePath, String filterId) async {
     try {
       final bytes = await File(sourcePath).readAsBytes();
       img.Image? image = img.decodeImage(bytes);
@@ -134,7 +141,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
 
       final tempDir = await getTemporaryDirectory();
       final path =
-        '${tempDir.path}/prev_${filterId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          '${tempDir.path}/prev_${filterId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       await File(path).writeAsBytes(img.encodeJpg(image, quality: 72));
       return path;
     } catch (e) {
@@ -149,10 +156,16 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
 
       case 'magic':
         // Magic Color: enhance document clarity + color
-        image = img.adjustColor(image,
-          contrast: 1.55, brightness: 1.08, saturation: 0.65);
-        image = img.convolution(image,
-          filter: [0, -1, 0, -1, 5.5, -1, 0, -1, 0]);
+        image = img.adjustColor(
+          image,
+          contrast: 1.55,
+          brightness: 1.08,
+          saturation: 0.65,
+        );
+        image = img.convolution(
+          image,
+          filter: [0, -1, 0, -1, 5.5, -1, 0, -1, 0],
+        );
         return image;
 
       case 'bw':
@@ -160,29 +173,35 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
         image = img.grayscale(image);
         image = img.contrast(image, contrast: 190);
         image = img.adjustColor(image, brightness: 1.18);
-        image = img.convolution(image,
-          filter: [0, -0.8, 0, -0.8, 4.2, -0.8, 0, -0.8, 0]);
+        image = img.convolution(
+          image,
+          filter: [0, -0.8, 0, -0.8, 4.2, -0.8, 0, -0.8, 0],
+        );
         return image;
 
       case 'gray':
         // Soft grayscale — readable, less harsh than B&W
         image = img.grayscale(image);
-        image = img.adjustColor(image,
-          brightness: 1.08, contrast: 1.25);
+        image = img.adjustColor(image, brightness: 1.08, contrast: 1.25);
         return image;
 
       case 'lighten':
         // Lighten: bright background, clear text
-        image = img.adjustColor(image,
-          brightness: 1.45, contrast: 1.15, saturation: 0.8);
+        image = img.adjustColor(
+          image,
+          brightness: 1.45,
+          contrast: 1.15,
+          saturation: 0.8,
+        );
         return image;
 
       case 'darken':
         // Darken: high contrast, dramatic
-        image = img.adjustColor(image,
-          brightness: 0.72, contrast: 1.45);
-        image = img.convolution(image,
-          filter: [0, -0.5, 0, -0.5, 3.0, -0.5, 0, -0.5, 0]);
+        image = img.adjustColor(image, brightness: 0.72, contrast: 1.45);
+        image = img.convolution(
+          image,
+          filter: [0, -0.5, 0, -0.5, 3.0, -0.5, 0, -0.5, 0],
+        );
         return image;
 
       default:
@@ -200,8 +219,8 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
 
     for (final filter in kScanFilters) {
       final path = filter.id == 'original'
-        ? page.originalPath
-        : await _generatePreview(page.originalPath, filter.id);
+          ? page.originalPath
+          : await _generatePreview(page.originalPath, filter.id);
       if (mounted) {
         setState(() {
           _filterCache[pageIndex]![filter.id] = path;
@@ -219,7 +238,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
     setState(() {
       _isProcessing = true;
       _processingLabel =
-        'Applying ${kScanFilters.firstWhere((f) => f.id == filterId).label}...';
+          'Applying ${kScanFilters.firstWhere((f) => f.id == filterId).label}...';
     });
 
     try {
@@ -232,17 +251,19 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
         if (filtered != null) {
           final tempDir = await getTemporaryDirectory();
           resultPath =
-            '${tempDir.path}/filter_${filterId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-          await File(resultPath)
-            .writeAsBytes(img.encodeJpg(filtered, quality: 94));
+              '${tempDir.path}/filter_${filterId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          await File(
+            resultPath,
+          ).writeAsBytes(img.encodeJpg(filtered, quality: 94));
         }
       }
 
-      ref.read(scannedPagesProvider.notifier).updatePage(
-        page.id,
-        page.copyWith(currentPath: resultPath, activeFilter: filterId),
-      );
-
+      ref
+          .read(scannedPagesProvider.notifier)
+          .updatePage(
+            page.id,
+            page.copyWith(currentPath: resultPath, activeFilter: filterId),
+          );
     } catch (e) {
       debugPrint('Filter error: $e');
     } finally {
@@ -264,10 +285,9 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
     );
 
     if (croppedPath != null && mounted) {
-      ref.read(scannedPagesProvider.notifier).updatePage(
-        page.id,
-        page.copyWith(currentPath: croppedPath),
-      );
+      ref
+          .read(scannedPagesProvider.notifier)
+          .updatePage(page.id, page.copyWith(currentPath: croppedPath));
       _filterCache.remove(currentIdx);
       await _preGenerateAllPreviews(currentIdx);
 
@@ -292,16 +312,17 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
       img.Image? image = img.decodeImage(bytes);
       if (image != null) {
         image = clockwise
-          ? img.copyRotate(image, angle: 90)
-          : img.copyRotate(image, angle: -90);
+            ? img.copyRotate(image, angle: 90)
+            : img.copyRotate(image, angle: -90);
 
         final tempDir = await getTemporaryDirectory();
         final outPath =
-          '${tempDir.path}/rot_${DateTime.now().millisecondsSinceEpoch}.jpg';
+            '${tempDir.path}/rot_${DateTime.now().millisecondsSinceEpoch}.jpg';
         await File(outPath).writeAsBytes(img.encodeJpg(image, quality: 95));
 
-        ref.read(scannedPagesProvider.notifier).updatePage(
-          page.id, page.copyWith(currentPath: outPath));
+        ref
+            .read(scannedPagesProvider.notifier)
+            .updatePage(page.id, page.copyWith(currentPath: outPath));
 
         _filterCache.remove(_currentPage);
         _preGenerateAllPreviews(_currentPage);
@@ -323,10 +344,11 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
       final pdf = pw.Document();
       for (final page in pages) {
         final image = pw.MemoryImage(
-          await File(page.currentPath).readAsBytes());
-        pdf.addPage(pw.Page(
-          build: (pw.Context ctx) =>
-            pw.Center(child: pw.Image(image))));
+          await File(page.currentPath).readAsBytes(),
+        );
+        pdf.addPage(
+          pw.Page(build: (pw.Context ctx) => pw.Center(child: pw.Image(image))),
+        );
       }
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/$_fileName');
@@ -344,12 +366,15 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
     final pages = ref.read(scannedPagesProvider);
     if (pages.isEmpty) return;
     // ── C12: Navigate to PDF preview screen ──
-    context.push('/dashboard/add/pdf-preview', extra: {
-      'imagePaths': pages.map((p) => p.currentPath).toList(),
-      'fileName': _fileName,
-      'source': widget.source,
-      'pageCount': pages.length,
-    });
+    context.push(
+      '/dashboard/add/pdf-preview',
+      extra: {
+        'imagePaths': pages.map((p) => p.currentPath).toList(),
+        'fileName': _fileName,
+        'source': widget.source,
+        'pageCount': pages.length,
+      },
+    );
   }
 
   void _showRenameDialog() {
@@ -364,25 +389,29 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
       backgroundColor: Colors.black,
       appBar: _buildAppBar(pages),
       body: pages.isEmpty
-        ? Center(
-            child: Text('No pages',
-              style: AppTextStyles.dmSans.copyWith(
-                color: Colors.white54)))
-        : Column(children: [
-          // Page view
+          ? Center(
+              child: Text(
+                'No pages',
+                style: AppTextStyles.dmSans.copyWith(color: Colors.white54),
+              ),
+            )
+          : Column(
+              children: [
+                // Page view
 
-          // Page view
-          Expanded(child: _buildPageView(pages)),
+                // Page view
+                Expanded(child: _buildPageView(pages)),
 
-          // Thumbnail strip (C10: only navigation method)
-          _buildThumbnailStrip(pages),
+                // Thumbnail strip (C10: only navigation method)
+                _buildThumbnailStrip(pages),
 
-          // Filter strip
-          _buildFilterStrip(pages),
+                // Filter strip
+                _buildFilterStrip(pages),
 
-          // Action toolbar
-          _buildActionBar(pages),
-        ]),
+                // Action toolbar
+                _buildActionBar(pages),
+              ],
+            ),
     );
   }
 
@@ -391,25 +420,37 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
       backgroundColor: AppColors.navyDark,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new,
-          color: Colors.white, size: 19),
+        icon: const Icon(
+          Icons.arrow_back_ios_new,
+          color: Colors.white,
+          size: 19,
+        ),
         onPressed: () => context.pop(),
       ),
-      title: Column(children: [
-        Text('Review & Edit',
-          style: AppTextStyles.playfairDisplay.copyWith(
-            fontSize: 17, fontWeight: FontWeight.bold,
-            color: Colors.white)),
-        Text(_fileName,
-          overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.dmSans.copyWith(
-            fontSize: 9, color: AppColors.gold)),
-      ]),
+      title: Column(
+        children: [
+          Text(
+            'Review & Edit',
+            style: AppTextStyles.playfairDisplay.copyWith(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            _fileName,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 9,
+              color: AppColors.gold,
+            ),
+          ),
+        ],
+      ),
       centerTitle: true,
       actions: [
         IconButton(
-          icon: const Icon(Icons.share_outlined,
-            color: Colors.white, size: 20),
+          icon: const Icon(Icons.share_outlined, color: Colors.white, size: 20),
           onPressed: _shareAsPdf,
           tooltip: 'Share as PDF',
         ),
@@ -419,12 +460,11 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
         preferredSize: const Size.fromHeight(0.8),
         child: Container(
           height: 0.8,
-          color: AppColors.gold.withValues(alpha: 0.25)),
+          color: AppColors.gold.withValues(alpha: 0.25),
+        ),
       ),
     );
   }
-
-
 
   Future<void> _saveToDevice() async {
     setState(() {
@@ -438,41 +478,55 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
       for (final page in pages) {
         final imgBytes = await File(page.currentPath).readAsBytes();
         final pdfImage = pw.MemoryImage(imgBytes);
-        pdf.addPage(pw.Page(
-          build: (pw.Context ctx) =>
-            pw.Center(child: pw.Image(pdfImage))));
+        pdf.addPage(
+          pw.Page(
+            build: (pw.Context ctx) => pw.Center(child: pw.Image(pdfImage)),
+          ),
+        );
       }
 
       // Try external storage, fall back to documents dir
-      final dir = await getExternalStorageDirectory()
-        ?? await getApplicationDocumentsDirectory();
+      final dir =
+          await getExternalStorageDirectory() ??
+          await getApplicationDocumentsDirectory();
 
       final file = File('${dir.path}/$_fileName');
       await file.writeAsBytes(await pdf.save());
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Row(children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 16),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text('Saved to ${file.path}',
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 11, color: Colors.white),
-                maxLines: 2, overflow: TextOverflow.ellipsis),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Saved to ${file.path}',
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontSize: 11,
+                      color: Colors.white,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
-          ]),
-          backgroundColor: AppColors.gdaGreen,
-          duration: const Duration(seconds: 4),
-        ));
+            backgroundColor: AppColors.gdaGreen,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     } catch (e) {
       debugPrint('Save error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Save failed: $e'),
-          backgroundColor: Colors.red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Save failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isProcessing = false);
@@ -480,204 +534,282 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
   }
 
   Widget _buildPageView(List<ScannedPage> pages) {
-    return Stack(children: [
-      PageView.builder(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: pages.length,
-        onPageChanged: (i) {
-          setState(() => _currentPage = i);
-          _preGenerateAllPreviews(i);
-        },
-        itemBuilder: (_, i) {
-          final page = pages[i];
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: AnimatedBuilder(
-                animation: _cropZoomAnim,
-                builder: (_, child) {
-                  final scale = (_showCropZoom && i == _currentPage)
-                    ? _cropZoomAnim.value : 1.0;
-                  return Transform.scale(scale: scale, child: child);
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.55), blurRadius: 24, offset: const Offset(0, 8))],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: GestureDetector(
-                      onPanUpdate: _isDrawingMode ? (d) {
-                        setState(() {
-                          final strokes = _drawingStrokes[i] ?? [];
-                          if (strokes.isEmpty || strokes.last.isEmpty) {
-                            strokes.add([d.localPosition]);
-                          } else {
-                            strokes.last.add(d.localPosition);
-                          }
-                          _drawingStrokes[i] = strokes;
-                        });
-                      } : null,
-                      onPanEnd: _isDrawingMode ? (_) {
-                        setState(() {
-                          _drawingStrokes[i] = [...(_drawingStrokes[i] ?? []), []];
-                        });
-                      } : null,
-                      child: CustomPaint(
-                        foregroundPainter: _DrawingPainter(_drawingStrokes[i] ?? []),
-                        child: Image.file(
-                          File(page.currentPath),
-                          fit: BoxFit.contain,
-                          gaplessPlayback: true,
+    return Stack(
+      children: [
+        PageView.builder(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: pages.length,
+          onPageChanged: (i) {
+            setState(() => _currentPage = i);
+            _preGenerateAllPreviews(i);
+          },
+          itemBuilder: (_, i) {
+            final page = pages[i];
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: AnimatedBuilder(
+                  animation: _cropZoomAnim,
+                  builder: (_, child) {
+                    final scale = (_showCropZoom && i == _currentPage)
+                        ? _cropZoomAnim.value
+                        : 1.0;
+                    return Transform.scale(scale: scale, child: child);
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.55),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: GestureDetector(
+                        onPanUpdate: _isDrawingMode
+                            ? (d) {
+                                setState(() {
+                                  final strokes = _drawingStrokes[i] ?? [];
+                                  if (strokes.isEmpty || strokes.last.isEmpty) {
+                                    strokes.add([d.localPosition]);
+                                  } else {
+                                    strokes.last.add(d.localPosition);
+                                  }
+                                  _drawingStrokes[i] = strokes;
+                                });
+                              }
+                            : null,
+                        onPanEnd: _isDrawingMode
+                            ? (_) {
+                                setState(() {
+                                  _drawingStrokes[i] = [
+                                    ...(_drawingStrokes[i] ?? []),
+                                    [],
+                                  ];
+                                });
+                              }
+                            : null,
+                        child: CustomPaint(
+                          foregroundPainter: _DrawingPainter(
+                            _drawingStrokes[i] ?? [],
+                          ),
+                          child: Image.file(
+                            File(page.currentPath),
+                            fit: BoxFit.contain,
+                            gaplessPlayback: true,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
-      ),
-
-      // Processing overlay
-      if (_isProcessing)
-        Container(
-          color: Colors.black.withValues(alpha: 0.65),
-          child: Center(child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(
-                width: 40, height: 40,
-                child: CircularProgressIndicator(color: AppColors.gold, strokeWidth: 2.5)),
-              const SizedBox(height: 14),
-              Text(_processingLabel,
-                style: AppTextStyles.dmSans.copyWith(fontSize: 13, color: Colors.white)),
-            ],
-          )),
+            );
+          },
         ),
 
-      // Drawing mode indicator overlay
-      if (_isDrawingMode)
-        Positioned(
-          top: 12, right: 12,
-          child: Column(children: [
-            _DrawControlBtn(
-              icon: Icons.undo_rounded,
-              label: 'Undo',
-              onTap: () {
-                setState(() {
-                  final strokes = _drawingStrokes[_currentPage];
-                  if (strokes != null && strokes.isNotEmpty) {
-                    strokes.removeLast();
-                    if (strokes.isNotEmpty && strokes.last.isEmpty) {
-                      strokes.removeLast();
-                    }
-                  }
-                });
-              },
+        // Processing overlay
+        if (_isProcessing)
+          Container(
+            color: Colors.black.withValues(alpha: 0.65),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: CircularProgressIndicator(
+                      color: AppColors.gold,
+                      strokeWidth: 2.5,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    _processingLabel,
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontSize: 13,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            _DrawControlBtn(
-              icon: Icons.check_rounded,
-              label: 'Done',
-              color: AppColors.gdaGreen,
-              onTap: () => setState(() => _isDrawingMode = false),
-            ),
-          ]),
-        ),
-
-      // Drawing mode banner
-      if (_isDrawingMode)
-        Positioned(
-          top: 12, left: 12,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.75),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.edit_rounded, size: 12, color: Colors.orange),
-              const SizedBox(width: 5),
-              Text('Markup Mode', style: AppTextStyles.dmSans.copyWith(fontSize: 10, color: Colors.orange)),
-            ]),
           ),
-        ),
-    ]);
+
+        // Drawing mode indicator overlay
+        if (_isDrawingMode)
+          Positioned(
+            top: 12,
+            right: 12,
+            child: Column(
+              children: [
+                _DrawControlBtn(
+                  icon: Icons.undo_rounded,
+                  label: 'Undo',
+                  onTap: () {
+                    setState(() {
+                      final strokes = _drawingStrokes[_currentPage];
+                      if (strokes != null && strokes.isNotEmpty) {
+                        strokes.removeLast();
+                        if (strokes.isNotEmpty && strokes.last.isEmpty) {
+                          strokes.removeLast();
+                        }
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                _DrawControlBtn(
+                  icon: Icons.check_rounded,
+                  label: 'Done',
+                  color: AppColors.gdaGreen,
+                  onTap: () => setState(() => _isDrawingMode = false),
+                ),
+              ],
+            ),
+          ),
+
+        // Drawing mode banner
+        if (_isDrawingMode)
+          Positioned(
+            top: 12,
+            left: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.75),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.edit_rounded,
+                    size: 12,
+                    color: Colors.orange,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Markup Mode',
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontSize: 10,
+                      color: Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _buildThumbnailStrip(List<ScannedPage> pages) {
     return Container(
       height: 96,
       color: const Color(0xFF0D0D0D),
-      child: Column(children: [
-        Container(height: 0.5, color: Colors.white.withValues(alpha: 0.08)),
-        Expanded(
-          child: ReorderableListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            itemCount: pages.length,
-            onReorder: (oldIdx, newIdx) =>
-              ref.read(scannedPagesProvider.notifier).reorderPages(oldIdx, newIdx),
-            proxyDecorator: (child, index, animation) =>
-              Material(color: Colors.transparent, child: child),
-            itemBuilder: (_, i) {
-              final page = pages[i];
-              final isActive = i == _currentPage;
-              return GestureDetector(
-                key: ValueKey(page.id),
-                onTap: () {
-                  _pageController.animateToPage(
-                    i,
-                    duration: const Duration(milliseconds: 280),
-                    curve: Curves.easeInOut,
-                  );
-                  setState(() => _currentPage = i);
-                  _preGenerateAllPreviews(i);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  width: isActive ? 60 : 50,
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: isActive ? AppColors.gold : Colors.white.withValues(alpha: 0.2),
-                      width: isActive ? 2 : 0.8),
-                    boxShadow: isActive ? [BoxShadow(color: AppColors.gold.withValues(alpha: 0.35), blurRadius: 8)] : null,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(5),
-                    child: Stack(children: [
-                      Image.file(
-                        File(page.currentPath),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                        gaplessPlayback: true,
+      child: Column(
+        children: [
+          Container(height: 0.5, color: Colors.white.withValues(alpha: 0.08)),
+          Expanded(
+            child: ReorderableListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              itemCount: pages.length,
+              onReorder: (oldIdx, newIdx) => ref
+                  .read(scannedPagesProvider.notifier)
+                  .reorderPages(oldIdx, newIdx),
+              proxyDecorator: (child, index, animation) =>
+                  Material(color: Colors.transparent, child: child),
+              itemBuilder: (_, i) {
+                final page = pages[i];
+                final isActive = i == _currentPage;
+                return GestureDetector(
+                  key: ValueKey(page.id),
+                  onTap: () {
+                    _pageController.animateToPage(
+                      i,
+                      duration: const Duration(milliseconds: 280),
+                      curve: Curves.easeInOut,
+                    );
+                    setState(() => _currentPage = i);
+                    _preGenerateAllPreviews(i);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    width: isActive ? 60 : 50,
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: isActive
+                            ? AppColors.gold
+                            : Colors.white.withValues(alpha: 0.2),
+                        width: isActive ? 2 : 0.8,
                       ),
-                      Positioned(bottom: 2, right: 2,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: AppColors.navyDark.withValues(alpha: 0.85),
-                            borderRadius: BorderRadius.circular(3)),
-                          child: Text('${i+1}',
-                            style: AppTextStyles.dmSans.copyWith(fontSize: 7, color: Colors.white)),
-                        ),
+                      boxShadow: isActive
+                          ? [
+                              BoxShadow(
+                                color: AppColors.gold.withValues(alpha: 0.35),
+                                blurRadius: 8,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(5),
+                      child: Stack(
+                        children: [
+                          Image.file(
+                            File(page.currentPath),
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                            gaplessPlayback: true,
+                          ),
+                          Positioned(
+                            bottom: 2,
+                            right: 2,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 3,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.navyDark.withValues(
+                                  alpha: 0.85,
+                                ),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              child: Text(
+                                '${i + 1}',
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 7,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ]),
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
@@ -689,68 +821,93 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
     return Container(
       height: 104,
       color: const Color(0xFF111111),
-      child: Column(children: [
-        Container(height: 0.5, color: Colors.white.withValues(alpha: 0.06)),
-        Expanded(
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            itemCount: kScanFilters.length,
-            itemBuilder: (_, i) {
-              final filter = kScanFilters[i];
-              final isSelected = currentActiveFilter == filter.id;
-              final previewPath = previewCache[filter.id];
+      child: Column(
+        children: [
+          Container(height: 0.5, color: Colors.white.withValues(alpha: 0.06)),
+          Expanded(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              itemCount: kScanFilters.length,
+              itemBuilder: (_, i) {
+                final filter = kScanFilters[i];
+                final isSelected = currentActiveFilter == filter.id;
+                final previewPath = previewCache[filter.id];
 
-              return GestureDetector(
-                onTap: () => _applyFilter(filter.id),
-                child: Container(
-                  margin: const EdgeInsets.only(right: 14),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: isSelected ? 58 : 50,
-                        height: isSelected ? 68 : 60,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: isSelected ? AppColors.gold : Colors.white.withValues(alpha: 0.2),
-                            width: isSelected ? 2 : 0.8),
-                          boxShadow: isSelected ? [BoxShadow(color: AppColors.gold.withValues(alpha: 0.4), blurRadius: 8)] : null,
+                return GestureDetector(
+                  onTap: () => _applyFilter(filter.id),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 14),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: isSelected ? 58 : 50,
+                          height: isSelected ? 68 : 60,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.gold
+                                  : Colors.white.withValues(alpha: 0.2),
+                              width: isSelected ? 2 : 0.8,
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.gold.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                      blurRadius: 8,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(5),
+                            child: previewPath != null
+                                ? Image.file(
+                                    File(previewPath),
+                                    fit: BoxFit.cover,
+                                    gaplessPlayback: true,
+                                  )
+                                : Container(
+                                    color: const Color(0xFF2A2A2A),
+                                    child: Center(
+                                      child: Icon(
+                                        filter.icon,
+                                        size: 20,
+                                        color: Colors.white.withValues(
+                                          alpha: 0.25,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                          ),
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(5),
-                          child: previewPath != null
-                            ? Image.file(
-                                File(previewPath),
-                                fit: BoxFit.cover,
-                                gaplessPlayback: true,
-                              )
-                            : Container(
-                                color: const Color(0xFF2A2A2A),
-                                child: Center(
-                                  child: Icon(filter.icon,
-                                    size: 20,
-                                    color: Colors.white.withValues(alpha: 0.25)),
-                                )),
+                        const SizedBox(height: 5),
+                        Text(
+                          filter.label,
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 9,
+                            color: isSelected
+                                ? AppColors.gold
+                                : Colors.white.withValues(alpha: 0.5),
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(filter.label,
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 9,
-                          color: isSelected ? AppColors.gold : Colors.white.withValues(alpha: 0.5),
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        )),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
@@ -759,7 +916,8 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
       padding: EdgeInsets.only(
         top: 10,
         bottom: MediaQuery.of(context).padding.bottom + 10,
-        left: 8, right: 8,
+        left: 8,
+        right: 8,
       ),
       decoration: const BoxDecoration(
         color: AppColors.navyDark,
@@ -790,7 +948,9 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
             onTap: _openManualCrop,
           ),
           _ActionBtn(
-            icon: _isDrawingMode ? Icons.check_circle_rounded : Icons.edit_rounded,
+            icon: _isDrawingMode
+                ? Icons.check_circle_rounded
+                : Icons.edit_rounded,
             label: _isDrawingMode ? 'Done' : 'Markup',
             isActive: _isDrawingMode,
             onTap: () => setState(() => _isDrawingMode = !_isDrawingMode),
@@ -804,22 +964,46 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
                 final page = pages[_currentPage];
                 ref.read(scannedPagesProvider.notifier).removePage(page.id);
                 if (_currentPage >= pages.length - 1) {
-                  setState(() => _currentPage = (pages.length - 2).clamp(0, 999));
+                  setState(
+                    () => _currentPage = (pages.length - 2).clamp(0, 999),
+                  );
                 }
               } else {
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: Text('Discard Scan', style: AppTextStyles.dmSans.copyWith(fontWeight: FontWeight.bold)),
-                    content: Text('Are you sure you want to discard this scan entirely?', style: AppTextStyles.dmSans),
+                    title: Text(
+                      'Discard Scan',
+                      style: AppTextStyles.dmSans.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    content: Text(
+                      'Are you sure you want to discard this scan entirely?',
+                      style: AppTextStyles.dmSans,
+                    ),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel', style: AppTextStyles.dmSans.copyWith(color: AppColors.charcoal))),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text(
+                          'Cancel',
+                          style: AppTextStyles.dmSans.copyWith(
+                            color: AppColors.charcoal,
+                          ),
+                        ),
+                      ),
                       TextButton(
                         onPressed: () {
                           Navigator.pop(ctx);
                           context.go('/dashboard');
                         },
-                        child: Text('Discard', style: AppTextStyles.dmSans.copyWith(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'Discard',
+                          style: AppTextStyles.dmSans.copyWith(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -832,16 +1016,37 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [AppColors.gold, Color(0xFFDFB84A)]),
+                gradient: const LinearGradient(
+                  colors: [AppColors.gold, Color(0xFFDFB84A)],
+                ),
                 borderRadius: BorderRadius.circular(10),
-                boxShadow: [BoxShadow(color: AppColors.gold.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 3))],
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.gold.withValues(alpha: 0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.picture_as_pdf_rounded, color: AppColors.navyDark, size: 22),
-                const SizedBox(height: 2),
-                Text('Preview',
-                  style: AppTextStyles.dmSans.copyWith(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.navyDark)),
-              ]),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.picture_as_pdf_rounded,
+                    color: AppColors.navyDark,
+                    size: 22,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Preview',
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.navyDark,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -900,11 +1105,20 @@ class _ActionBtn extends StatelessWidget {
       onTap: onTap,
       child: Opacity(
         opacity: onTap == null ? 0.25 : 1.0,
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, color: c, size: 21),
-          const SizedBox(height: 3),
-          Text(label, style: AppTextStyles.dmSans.copyWith(fontSize: 8.5, color: c.withValues(alpha: 0.8))),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: c, size: 21),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 8.5,
+                color: c.withValues(alpha: 0.8),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -934,11 +1148,17 @@ class _DrawControlBtn extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color.withValues(alpha: 0.4)),
         ),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(height: 2),
-          Text(label, style: AppTextStyles.dmSans.copyWith(fontSize: 8, color: color)),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: AppTextStyles.dmSans.copyWith(fontSize: 8, color: color),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -960,7 +1180,7 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
     super.initState();
     _loadImage();
   }
-  
+
   Future<void> _loadImage() async {
     final bytes = await File(widget.imagePath).readAsBytes();
     final decoded = await decodeImageFromList(bytes);
@@ -975,10 +1195,22 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
     setState(() {
       double dx = delta.dx / size.width;
       double dy = delta.dy / size.height;
-      if (corner == 0) { left += dx; top += dy; }
-      if (corner == 1) { right += dx; top += dy; }
-      if (corner == 2) { left += dx; bottom += dy; }
-      if (corner == 3) { right += dx; bottom += dy; }
+      if (corner == 0) {
+        left += dx;
+        top += dy;
+      }
+      if (corner == 1) {
+        right += dx;
+        top += dy;
+      }
+      if (corner == 2) {
+        left += dx;
+        bottom += dy;
+      }
+      if (corner == 3) {
+        right += dx;
+        bottom += dy;
+      }
       left = left.clamp(0.0, right - 0.05);
       top = top.clamp(0.0, bottom - 0.05);
       right = right.clamp(left + 0.05, 1.0);
@@ -990,11 +1222,19 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
     setState(() {
       double dx = delta.dx / size.width;
       double dy = delta.dy / size.height;
-      if (edge == 0) { top += dy; } // Top
-      if (edge == 1) { bottom += dy; } // Bottom
-      if (edge == 2) { left += dx; } // Left
-      if (edge == 3) { right += dx; } // Right
-      
+      if (edge == 0) {
+        top += dy;
+      } // Top
+      if (edge == 1) {
+        bottom += dy;
+      } // Bottom
+      if (edge == 2) {
+        left += dx;
+      } // Left
+      if (edge == 3) {
+        right += dx;
+      } // Right
+
       left = left.clamp(0.0, right - 0.05);
       top = top.clamp(0.0, bottom - 0.05);
       right = right.clamp(left + 0.05, 1.0);
@@ -1011,17 +1251,20 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
           _update(d.delta, box.size, idx);
         },
         child: Container(
-          width: 44, height: 44, color: Colors.transparent,
+          width: 44,
+          height: 44,
+          color: Colors.transparent,
           child: Center(
             child: Container(
-              width: 16, height: 16, 
+              width: 16,
+              height: 16,
               decoration: const BoxDecoration(
                 color: AppColors.gold,
                 shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 4)]
-              )
-            )
-          )
+                boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 4)],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -1046,39 +1289,45 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
               decoration: BoxDecoration(
                 color: AppColors.gold,
                 borderRadius: BorderRadius.circular(2),
-                boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 4)]
+                boxShadow: const [
+                  BoxShadow(color: Colors.black54, blurRadius: 4),
+                ],
               ),
-            )
-          )
-        )
-      )
+            ),
+          ),
+        ),
+      ),
     );
   }
 
   Future<void> _crop() async {
-    showDialog(context: context, barrierDismissible: false, 
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(color: AppColors.gold)));
-    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) =>
+          const Center(child: CircularProgressIndicator(color: AppColors.gold)),
+    );
+
     try {
       final bytes = await File(widget.imagePath).readAsBytes();
       final image = img.decodeImage(bytes);
       if (image != null) {
-         int x = (left * image.width).round();
-         int y = (top * image.height).round();
-         int w = ((right - left) * image.width).round();
-         int h = ((bottom - top) * image.height).round();
-         
-         final cropped = img.copyCrop(image, x: x, y: y, width: w, height: h);
-         final tempDir = await getTemporaryDirectory();
-         final path = '${tempDir.path}/crop_${DateTime.now().millisecondsSinceEpoch}.jpg';
-         await File(path).writeAsBytes(img.encodeJpg(cropped, quality: 96));
-         
-         if (mounted) Navigator.pop(context);
-         if (mounted) Navigator.pop(context, path);
+        int x = (left * image.width).round();
+        int y = (top * image.height).round();
+        int w = ((right - left) * image.width).round();
+        int h = ((bottom - top) * image.height).round();
+
+        final cropped = img.copyCrop(image, x: x, y: y, width: w, height: h);
+        final tempDir = await getTemporaryDirectory();
+        final path =
+            '${tempDir.path}/crop_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        await File(path).writeAsBytes(img.encodeJpg(cropped, quality: 96));
+
+        if (mounted) Navigator.pop(context);
+        if (mounted) Navigator.pop(context, path);
       } else {
-         if (mounted) Navigator.pop(context);
-         if (mounted) Navigator.pop(context, null);
+        if (mounted) Navigator.pop(context);
+        if (mounted) Navigator.pop(context, null);
       }
     } catch (e) {
       if (mounted) Navigator.pop(context);
@@ -1097,67 +1346,177 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
           icon: const Icon(Icons.close_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Crop Image',
-          style: AppTextStyles.dmSans.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(
+          'Crop Image',
+          style: AppTextStyles.dmSans.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.check_rounded, color: AppColors.gold, size: 26),
-            onPressed: _crop
+            icon: const Icon(
+              Icons.check_rounded,
+              color: AppColors.gold,
+              size: 26,
+            ),
+            onPressed: _crop,
           ),
           const SizedBox(width: 8),
-        ]
+        ],
       ),
       body: _aspectRatio == null
-        ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
-        : Center(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: AspectRatio(
-                aspectRatio: _aspectRatio!,
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Image.file(File(widget.imagePath), fit: BoxFit.fill)),
-                    Positioned.fill(
-                      child: LayoutBuilder(builder: (context, constraints) {
-                        final w = constraints.maxWidth;
-                        final h = constraints.maxHeight;
-                        return Stack(
-                          children: [
-                            Positioned(left: 0, top: 0, right: 0, height: top * h, child: Container(color: Colors.black.withValues(alpha: 0.6))),
-                            Positioned(left: 0, bottom: 0, right: 0, height: (1 - bottom) * h, child: Container(color: Colors.black.withValues(alpha: 0.6))),
-                            Positioned(left: 0, top: top * h, bottom: (1 - bottom) * h, width: left * w, child: Container(color: Colors.black.withValues(alpha: 0.6))),
-                            Positioned(right: 0, top: top * h, bottom: (1 - bottom) * h, width: (1 - right) * w, child: Container(color: Colors.black.withValues(alpha: 0.6))),
-                            
-                            Positioned(
-                              left: left * w, top: top * h, right: (1 - right) * w, bottom: (1 - bottom) * h,
-                              child: Container(
-                                decoration: BoxDecoration(border: Border.all(color: AppColors.gold, width: 2)),
-                                child: Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    Positioned(left: 0, top: -22, right: 0, child: _edge(0, Alignment.center, false)),
-                                    Positioned(left: 0, bottom: -22, right: 0, child: _edge(1, Alignment.center, false)),
-                                    Positioned(top: 0, bottom: 0, left: -22, child: _edge(2, Alignment.center, true)),
-                                    Positioned(top: 0, bottom: 0, right: -22, child: _edge(3, Alignment.center, true)),
-
-                                    Positioned(left: -22, top: -22, child: _corner(0, Alignment.center)),
-                                    Positioned(right: -22, top: -22, child: _corner(1, Alignment.center)),
-                                    Positioned(left: -22, bottom: -22, child: _corner(2, Alignment.center)),
-                                    Positioned(right: -22, bottom: -22, child: _corner(3, Alignment.center)),
-                                  ],
-                                ),
-                              ),
-                            )
-                          ]
-                        );
-                      })
-                    )
-                  ]
-                )
-              ),
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.gold),
             )
-          )
+          : Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: AspectRatio(
+                  aspectRatio: _aspectRatio!,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Image.file(
+                          File(widget.imagePath),
+                          fit: BoxFit.fill,
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final w = constraints.maxWidth;
+                            final h = constraints.maxHeight;
+                            return Stack(
+                              children: [
+                                Positioned(
+                                  left: 0,
+                                  top: 0,
+                                  right: 0,
+                                  height: top * h,
+                                  child: Container(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                Positioned(
+                                  left: 0,
+                                  bottom: 0,
+                                  right: 0,
+                                  height: (1 - bottom) * h,
+                                  child: Container(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                Positioned(
+                                  left: 0,
+                                  top: top * h,
+                                  bottom: (1 - bottom) * h,
+                                  width: left * w,
+                                  child: Container(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                Positioned(
+                                  right: 0,
+                                  top: top * h,
+                                  bottom: (1 - bottom) * h,
+                                  width: (1 - right) * w,
+                                  child: Container(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                  ),
+                                ),
+
+                                Positioned(
+                                  left: left * w,
+                                  top: top * h,
+                                  right: (1 - right) * w,
+                                  bottom: (1 - bottom) * h,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: AppColors.gold,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Stack(
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        Positioned(
+                                          left: 0,
+                                          top: -22,
+                                          right: 0,
+                                          child: _edge(
+                                            0,
+                                            Alignment.center,
+                                            false,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          left: 0,
+                                          bottom: -22,
+                                          right: 0,
+                                          child: _edge(
+                                            1,
+                                            Alignment.center,
+                                            false,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 0,
+                                          bottom: 0,
+                                          left: -22,
+                                          child: _edge(
+                                            2,
+                                            Alignment.center,
+                                            true,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 0,
+                                          bottom: 0,
+                                          right: -22,
+                                          child: _edge(
+                                            3,
+                                            Alignment.center,
+                                            true,
+                                          ),
+                                        ),
+
+                                        Positioned(
+                                          left: -22,
+                                          top: -22,
+                                          child: _corner(0, Alignment.center),
+                                        ),
+                                        Positioned(
+                                          right: -22,
+                                          top: -22,
+                                          child: _corner(1, Alignment.center),
+                                        ),
+                                        Positioned(
+                                          left: -22,
+                                          bottom: -22,
+                                          child: _corner(2, Alignment.center),
+                                        ),
+                                        Positioned(
+                                          right: -22,
+                                          bottom: -22,
+                                          child: _corner(3, Alignment.center),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
     );
   }
 }

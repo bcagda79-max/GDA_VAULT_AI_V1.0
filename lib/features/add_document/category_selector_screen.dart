@@ -1,11 +1,12 @@
-// lib/features/add_document/category_selector_screen.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
-import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
-import 'package:gda_vault_ai/data/mock_data.dart';
+import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:gda_vault_ai/core/services/document_upload_service.dart';
+import 'package:gda_vault_ai/core/services/supabase_service.dart';
 import 'package:gda_vault_ai/models/category_model.dart';
 
 /// A 3-step flow for categorizing, dating, and uploading a document.
@@ -15,6 +16,7 @@ class CategorySelectorScreen extends StatefulWidget {
   final String fileName;
   final int? fileSize;
   final List<String> imagePaths;
+  final String? filePath;
 
   const CategorySelectorScreen({
     super.key,
@@ -23,6 +25,7 @@ class CategorySelectorScreen extends StatefulWidget {
     required this.fileName,
     this.fileSize,
     this.imagePaths = const [],
+    this.filePath,
   });
 
   @override
@@ -30,64 +33,183 @@ class CategorySelectorScreen extends StatefulWidget {
 }
 
 class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
-  int _currentStep = 0;
-  String? _selectedCategoryId;
-  String? _selectedSubId;
-  String _yearInputType = 'single';
+  final _supa = SupabaseService.instance;
   final TextEditingController _yearController = TextEditingController();
   final TextEditingController _fromYearController = TextEditingController();
   final TextEditingController _toYearController = TextEditingController();
 
+  int _currentStep = 0;
+  String? _selectedCategoryId;
+  String? _selectedSubId;
+  String _yearInputType = 'single';
+  bool _isLoading = true;
   bool _isUploading = false;
   double _uploadProgress = 0.0;
+  String _uploadStatus = 'Preparing...';
+  String? _error;
+  List<CategoryModel> _categories = const [];
 
-  CategoryModel? get _selectedCategory =>
-      _selectedCategoryId != null ? MockData.categories.firstWhere((c) => c.id == _selectedCategoryId) : null;
-
-  String get _finalYearLabel {
-    if (_yearInputType == 'single') return _yearController.text;
-    if (_yearInputType == 'range') return "${_fromYearController.text}–${_toYearController.text}";
-    return "${_fromYearController.text}–Ongoing";
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
   }
 
-  void _uploadDocument() async {
+  @override
+  void dispose() {
+    _yearController.dispose();
+    _fromYearController.dispose();
+    _toYearController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadCategories() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final rows = await _supa.getAllCategories();
+      final categories = rows.map(CategoryModel.fromMap).toList()
+        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+
+      if (!mounted) return;
+      setState(() {
+        _categories = categories;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = e.toString();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to load categories'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  CategoryModel? get _selectedCategory {
+    final id = _selectedSubId ?? _selectedCategoryId;
+    if (id == null) return null;
+    for (final category in _categories) {
+      if (category.id == id) return category;
+    }
+    return null;
+  }
+
+  List<CategoryModel> get _topCategories =>
+      _categories.where((c) => c.parentId == null).toList();
+
+  List<CategoryModel> _childrenOf(String parentId) {
+    return _categories.where((c) => c.parentId == parentId).toList();
+  }
+
+  bool get _selectedCategoryHasChildren {
+    final selected = _selectedCategoryId == null
+        ? null
+        : _categories.where((c) => c.id == _selectedCategoryId).toList();
+    if (selected == null || selected.isEmpty) return false;
+    return _categories.any((c) => c.parentId == selected.first.id);
+  }
+
+  String get _finalYearLabel {
+    if (_yearInputType == 'single') return _yearController.text.trim();
+    if (_yearInputType == 'range') {
+      return '${_fromYearController.text.trim()}–${_toYearController.text.trim()}';
+    }
+    return '${_fromYearController.text.trim()}–Ongoing';
+  }
+
+  Future<void> _uploadDocument() async {
+    final category = _selectedCategory;
+    if (category == null) return;
+
     setState(() {
       _isUploading = true;
       _uploadProgress = 0.0;
+      _uploadStatus = 'Preparing...';
     });
 
-    final phases = [
-      "Optimizing scanned pages...",
-      "Generating searchable PDF...",
-      "Applying GDA watermark...",
-      "Encrypting for secure archive...",
-      "Uploading to Vault..."
-    ];
+    try {
+      final yearStart =
+          int.tryParse(_fromYearController.text.trim()) ??
+          int.tryParse(_yearController.text.trim()) ??
+          DateTime.now().year;
+      final yearEnd = _yearInputType == 'range'
+          ? int.tryParse(_toYearController.text.trim())
+          : null;
 
-    for (int i = 0; i < phases.length; i++) {
-      if (!mounted) return;
-      setState(() {
-        _uploadStatus = phases[i];
-      });
-      
-      // Progress within each phase
-      double start = i / phases.length;
-      double end = (i + 1) / phases.length;
-      
-      for (double p = start; p <= end; p += 0.02) {
-        await Future.delayed(const Duration(milliseconds: 40));
-        if (!mounted) return;
-        setState(() => _uploadProgress = p);
+      UploadResult result;
+      if (widget.source == 'scanner') {
+        result = await DocumentUploadService.instance.uploadScannedImages(
+          imagePaths: widget.imagePaths,
+          categoryId: category.id,
+          categoryStoragePath: category.storagePath,
+          yearLabel: _finalYearLabel,
+          yearStart: yearStart,
+          yearEnd: yearEnd,
+          fileName: widget.fileName,
+          onProgress: (phase, progress) {
+            if (!mounted) return;
+            setState(() {
+              _uploadStatus = phase;
+              _uploadProgress = progress;
+            });
+          },
+        );
+      } else {
+        final filePath = widget.filePath;
+        if (filePath == null || filePath.isEmpty) {
+          throw StateError('Missing file path for imported PDF');
+        }
+        final pdfFile = File(filePath);
+        result = await DocumentUploadService.instance.uploadPdfFile(
+          pdfFile: pdfFile,
+          categoryId: category.id,
+          categoryStoragePath: category.storagePath,
+          yearLabel: _finalYearLabel,
+          yearStart: yearStart,
+          yearEnd: yearEnd,
+          fileName: widget.fileName,
+          pageCount: widget.pageCount,
+          onProgress: (phase, progress) {
+            if (!mounted) return;
+            setState(() {
+              _uploadStatus = phase;
+              _uploadProgress = progress;
+            });
+          },
+        );
       }
-    }
 
-    if (mounted) {
+      if (!mounted) return;
       setState(() => _isUploading = false);
-      _showSuccessSheet();
+      if (result.success) {
+        _showSuccessSheet();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Upload failed: ${result.errorMessage ?? 'Unknown error'}',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isUploading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
     }
   }
-
-  String _uploadStatus = "Preparing...";
 
   void _showSuccessSheet() {
     showModalBottomSheet(
@@ -96,17 +218,17 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
       enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _SuccessBottomSheet(
-        categoryName: _selectedCategory?.name ?? "",
+        categoryName: _selectedCategory?.name ?? '',
         categoryColor: _selectedCategory?.color ?? AppColors.gold,
         finalYearLabel: _finalYearLabel,
         pageCount: widget.pageCount,
         onView: () {
           Navigator.pop(ctx);
-          context.go('/dashboard'); // Mock navigation to home or doc view
+          Navigator.of(context).pop();
         },
         onHome: () {
           Navigator.pop(ctx);
-          context.go('/dashboard');
+          Navigator.of(context).popUntil((route) => route.isFirst);
         },
       ),
     );
@@ -125,12 +247,19 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
         title: Column(
           children: [
             Text(
-              "Save Document",
-              style: AppTextStyles.playfairDisplay.copyWith(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              'Save Document',
+              style: AppTextStyles.playfairDisplay.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             Text(
-              "Step ${_currentStep + 1} of 3",
-              style: AppTextStyles.dmSans.copyWith(fontSize: 9, color: Colors.white.withValues(alpha: 0.5)),
+              'Step ${_currentStep + 1} of 3',
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 9,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
             ),
           ],
         ),
@@ -141,7 +270,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           _buildStepperIndicator(),
           Expanded(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 400),
+              duration: const Duration(milliseconds: 300),
               child: _buildCurrentStep(isDark),
             ),
           ),
@@ -162,23 +291,40 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             child: Row(
               children: [
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
+                  duration: const Duration(milliseconds: 250),
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isDone ? AppColors.gdaGreen : (isActive ? AppColors.gold : Colors.white.withValues(alpha: 0.15)),
-                    border: isActive ? Border.all(color: AppColors.gold.withValues(alpha: 0.4), width: 2) : null,
+                    color: isDone
+                        ? AppColors.gdaGreen
+                        : (isActive
+                              ? AppColors.gold
+                              : Colors.white.withValues(alpha: 0.15)),
+                    border: isActive
+                        ? Border.all(
+                            color: AppColors.gold.withValues(alpha: 0.4),
+                            width: 2,
+                          )
+                        : null,
                   ),
                   child: Center(
                     child: isDone
-                        ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
-                        : Text("${index + 1}",
+                        ? const Icon(
+                            Icons.check_rounded,
+                            size: 14,
+                            color: Colors.white,
+                          )
+                        : Text(
+                            '${index + 1}',
                             style: AppTextStyles.dmSans.copyWith(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: isActive ? AppColors.navyDark : Colors.white.withValues(alpha: 0.5),
-                            )),
+                              color: isActive
+                                  ? AppColors.navyDark
+                                  : Colors.white.withValues(alpha: 0.5),
+                            ),
+                          ),
                   ),
                 ),
                 AppSpacing.horizontal(6),
@@ -187,7 +333,11 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 10,
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    color: isActive ? AppColors.gold : (isDone ? Colors.white.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.3)),
+                    color: isActive
+                        ? AppColors.gold
+                        : (isDone
+                              ? Colors.white.withValues(alpha: 0.7)
+                              : Colors.white.withValues(alpha: 0.3)),
                   ),
                 ),
                 if (index < 2)
@@ -195,7 +345,9 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                     child: Container(
                       height: 1.5,
                       margin: const EdgeInsets.symmetric(horizontal: 8),
-                      color: isDone ? AppColors.gdaGreen.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.15),
+                      color: isDone
+                          ? AppColors.gdaGreen.withValues(alpha: 0.5)
+                          : Colors.white.withValues(alpha: 0.15),
                     ),
                   ),
               ],
@@ -220,25 +372,84 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
   }
 
   Widget _buildStep1(bool isDark) {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.gold),
+      );
+    }
+
+    if (_error != null && _categories.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.wifi_off_rounded,
+                size: 48,
+                color: AppColors.gold,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Failed to load categories',
+                style: AppTextStyles.playfairDisplay.copyWith(
+                  color: isDark ? AppColors.darkText : AppColors.charcoal,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: _loadCategories,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       key: const ValueKey('step1'),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Choose Category", style: AppTextStyles.playfairDisplay.copyWith(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? AppColors.darkText : AppColors.charcoal)),
+          Text(
+            'Choose Category',
+            style: AppTextStyles.playfairDisplay.copyWith(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.darkText : AppColors.charcoal,
+            ),
+          ),
           AppSpacing.vertical(4),
-          Text("Where should this document be filed?", style: AppTextStyles.dmSans.copyWith(fontSize: 13, color: AppColors.charcoal.withValues(alpha: 0.5))),
+          Text(
+            'Where should this document be filed?',
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 13,
+              color: AppColors.charcoal.withValues(alpha: 0.5),
+            ),
+          ),
           AppSpacing.vertical(20),
           _buildSourceFileInfo(isDark),
           AppSpacing.vertical(20),
-          Text("Main Categories", style: AppTextStyles.dmSans.copyWith(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.charcoal.withValues(alpha: 0.45), letterSpacing: 0.8)),
+          Text(
+            'Main Categories',
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: AppColors.charcoal.withValues(alpha: 0.45),
+              letterSpacing: 0.8,
+            ),
+          ),
           AppSpacing.vertical(10),
-          ...MockData.categories.map((cat) => _buildCategoryTile(cat, isDark)),
+          ..._topCategories.map((cat) => _buildCategoryTile(cat, isDark)),
           AppSpacing.vertical(24),
           _buildPrimaryButton(
-            "Continue",
-            enabled: _selectedCategoryId != null && (_selectedCategory?.hasSubCategories == false || _selectedSubId != null),
+            'Continue',
+            enabled:
+                _selectedCategory != null &&
+                (!_selectedCategoryHasChildren || _selectedSubId != null),
             onTap: () => setState(() => _currentStep = 1),
           ),
         ],
@@ -253,47 +464,72 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Document Year", style: AppTextStyles.playfairDisplay.copyWith(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? AppColors.darkText : AppColors.charcoal)),
+          Text(
+            'Document Year',
+            style: AppTextStyles.playfairDisplay.copyWith(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.darkText : AppColors.charcoal,
+            ),
+          ),
           AppSpacing.vertical(4),
-          Text("When was this document created?", style: AppTextStyles.dmSans.copyWith(fontSize: 13, color: AppColors.charcoal.withValues(alpha: 0.5))),
+          Text(
+            'When was this document created?',
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 13,
+              color: AppColors.charcoal.withValues(alpha: 0.5),
+            ),
+          ),
           AppSpacing.vertical(20),
           _buildSelectedCategorySummary(isDark),
           AppSpacing.vertical(24),
-          Text("Enter Year or Range", style: AppTextStyles.dmSans.copyWith(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.charcoal.withValues(alpha: 0.45), letterSpacing: 0.8)),
+          Text(
+            'Enter Year or Range',
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: AppColors.charcoal.withValues(alpha: 0.45),
+              letterSpacing: 0.8,
+            ),
+          ),
           AppSpacing.vertical(12),
           _buildYearOption(
             type: 'single',
-            title: "Single Year",
-            subtitle: "e.g. 1996, 2024",
+            title: 'Single Year',
+            subtitle: 'e.g. 1996, 2024',
             isDark: isDark,
           ),
           AppSpacing.vertical(10),
           _buildYearOption(
             type: 'range',
-            title: "Year Range",
-            subtitle: "e.g. 1961–1996",
+            title: 'Year Range',
+            subtitle: 'e.g. 1961–1996',
             isDark: isDark,
           ),
           AppSpacing.vertical(10),
           _buildYearOption(
             type: 'ongoing',
-            title: "Ongoing",
-            subtitle: "e.g. 2025–onwards (active)",
+            title: 'Ongoing',
+            subtitle: 'e.g. 2025–onwards (active)',
             isDark: isDark,
           ),
           AppSpacing.vertical(20),
-          _buildYearInputFields(isDark),
+          _buildYearInputFields(),
           AppSpacing.vertical(24),
           Row(
             children: [
-              Expanded(child: _buildSecondaryButton("Back", onTap: () => setState(() => _currentStep = 0), isDark: isDark)),
+              Expanded(
+                child: _buildSecondaryButton(
+                  'Back',
+                  onTap: () => setState(() => _currentStep = 0),
+                  isDark: isDark,
+                ),
+              ),
               AppSpacing.horizontal(12),
               Expanded(
                 child: _buildPrimaryButton(
-                  "Continue",
-                  enabled: (_yearInputType == 'single' && _yearController.text.length == 4) ||
-                      (_yearInputType == 'range' && _fromYearController.text.length == 4 && _toYearController.text.length == 4) ||
-                      (_yearInputType == 'ongoing' && _fromYearController.text.length == 4),
+                  'Continue',
+                  enabled: _isYearInputValid,
                   onTap: () => setState(() => _currentStep = 2),
                 ),
               ),
@@ -311,9 +547,22 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Confirm & Save", style: AppTextStyles.playfairDisplay.copyWith(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? AppColors.darkText : AppColors.charcoal)),
+          Text(
+            'Confirm & Save',
+            style: AppTextStyles.playfairDisplay.copyWith(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.darkText : AppColors.charcoal,
+            ),
+          ),
           AppSpacing.vertical(4),
-          Text("Review details before saving", style: AppTextStyles.dmSans.copyWith(fontSize: 13, color: AppColors.charcoal.withValues(alpha: 0.5))),
+          Text(
+            'Review details before saving',
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 13,
+              color: AppColors.charcoal.withValues(alpha: 0.5),
+            ),
+          ),
           AppSpacing.vertical(20),
           _buildConfirmationSummary(isDark),
           AppSpacing.vertical(20),
@@ -321,11 +570,18 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           AppSpacing.vertical(20),
           Row(
             children: [
-              Expanded(child: _buildSecondaryButton("Back", enabled: !_isUploading, onTap: () => setState(() => _currentStep = 1), isDark: isDark)),
+              Expanded(
+                child: _buildSecondaryButton(
+                  'Back',
+                  enabled: !_isUploading,
+                  onTap: () => setState(() => _currentStep = 1),
+                  isDark: isDark,
+                ),
+              ),
               AppSpacing.horizontal(12),
               Expanded(
                 child: _buildPrimaryButton(
-                  _isUploading ? "Saving..." : "Save Document",
+                  _isUploading ? 'Saving...' : 'Save Document',
                   enabled: !_isUploading,
                   onTap: _uploadDocument,
                 ),
@@ -337,8 +593,21 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     );
   }
 
+  bool get _isYearInputValid {
+    if (_yearInputType == 'single') {
+      return _yearController.text.trim().length == 4;
+    }
+    if (_yearInputType == 'range') {
+      return _fromYearController.text.trim().length == 4 &&
+          _toYearController.text.trim().length == 4;
+    }
+    return _fromYearController.text.trim().length == 4;
+  }
+
   Widget _buildSourceFileInfo(bool isDark) {
-    final sizeStr = widget.fileSize != null ? "${(widget.fileSize! / 1048576).toStringAsFixed(1)} MB" : "${widget.pageCount} pages scanned";
+    final sizeStr = widget.fileSize != null
+        ? '${(widget.fileSize! / 1048576).toStringAsFixed(1)} MB'
+        : '${widget.pageCount} pages scanned';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -351,28 +620,58 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           Container(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(color: AppColors.catBoard.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.picture_as_pdf, size: 18, color: AppColors.catBoard),
+            decoration: BoxDecoration(
+              color: AppColors.catBoard.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.picture_as_pdf,
+              size: 18,
+              color: AppColors.catBoard,
+            ),
           ),
           AppSpacing.horizontal(10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.fileName, style: AppTextStyles.dmSans.copyWith(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? AppColors.darkText : AppColors.charcoal), maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(sizeStr, style: AppTextStyles.dmSans.copyWith(fontSize: 11, color: AppColors.charcoal.withValues(alpha: 0.45))),
+                Text(
+                  widget.fileName,
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.darkText : AppColors.charcoal,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  sizeStr,
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 11,
+                    color: AppColors.charcoal.withValues(alpha: 0.45),
+                  ),
+                ),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: widget.source == 'scanner' ? AppColors.catBoard.withValues(alpha: 0.1) : AppColors.gdaGreen.withValues(alpha: 0.1),
+              color: widget.source == 'scanner'
+                  ? AppColors.catBoard.withValues(alpha: 0.1)
+                  : AppColors.gdaGreen.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              widget.source == 'scanner' ? "SCANNED" : "IMPORTED",
-              style: AppTextStyles.dmSans.copyWith(fontSize: 8, fontWeight: FontWeight.bold, color: widget.source == 'scanner' ? AppColors.catBoard : AppColors.gdaGreen),
+              widget.source == 'scanner' ? 'SCANNED' : 'IMPORTED',
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+                color: widget.source == 'scanner'
+                    ? AppColors.catBoard
+                    : AppColors.gdaGreen,
+              ),
             ),
           ),
         ],
@@ -382,15 +681,21 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
 
   Widget _buildCategoryTile(CategoryModel category, bool isDark) {
     final isSelected = _selectedCategoryId == category.id;
+    final children = _childrenOf(category.id);
     return Column(
       children: [
         AnimatedContainer(
           margin: const EdgeInsets.only(bottom: 10),
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            color: isSelected ? category.color.withValues(alpha: 0.08) : (isDark ? AppColors.darkCard : Colors.white),
+            color: isSelected
+                ? category.color.withValues(alpha: 0.08)
+                : (isDark ? AppColors.darkCard : Colors.white),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: isSelected ? category.color : AppColors.divider, width: isSelected ? 1.5 : 0.8),
+            border: Border.all(
+              color: isSelected ? category.color : AppColors.divider,
+              width: isSelected ? 1.5 : 0.8,
+            ),
           ),
           child: Material(
             color: Colors.transparent,
@@ -408,10 +713,16 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: category.color.withValues(alpha: isSelected ? 0.15 : 0.08),
+                        color: category.color.withValues(
+                          alpha: isSelected ? 0.15 : 0.08,
+                        ),
                         borderRadius: BorderRadius.circular(11),
                       ),
-                      child: Icon(category.iconData, size: 20, color: category.color),
+                      child: Icon(
+                        category.iconData,
+                        size: 20,
+                        color: category.color,
+                      ),
                     ),
                     AppSpacing.horizontal(12),
                     Expanded(
@@ -420,19 +731,50 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                         children: [
                           Row(
                             children: [
-                              Text(category.name, style: AppTextStyles.dmSans.copyWith(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? AppColors.darkText : AppColors.charcoal)),
-                              if (category.hasSubCategories) ...[
+                              Flexible(
+                                child: Text(
+                                  category.name,
+                                  style: AppTextStyles.dmSans.copyWith(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark
+                                        ? AppColors.darkText
+                                        : AppColors.charcoal,
+                                  ),
+                                ),
+                              ),
+                              if (children.isNotEmpty) ...[
                                 AppSpacing.horizontal(6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(color: AppColors.gold.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                                  child: Text("has sub-types", style: AppTextStyles.dmSans.copyWith(fontSize: 8, color: AppColors.gold)),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.gold.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '${children.length} sub',
+                                    style: AppTextStyles.dmSans.copyWith(
+                                      fontSize: 8,
+                                      color: AppColors.gold,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ],
                           ),
                           AppSpacing.vertical(2),
-                          Text("${category.docCount} docs · ${category.yearRange}", style: AppTextStyles.dmSans.copyWith(fontSize: 11, color: AppColors.charcoal.withValues(alpha: 0.4))),
+                          Text(
+                            '${category.docCount} docs · ${category.yearRange}',
+                            style: AppTextStyles.dmSans.copyWith(
+                              fontSize: 11,
+                              color: AppColors.charcoal.withValues(alpha: 0.4),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -443,9 +785,22 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: isSelected ? category.color : Colors.transparent,
-                        border: Border.all(color: isSelected ? category.color : AppColors.divider.withValues(alpha: 0.8), width: 2),
+                        border: Border.all(
+                          color: isSelected
+                              ? category.color
+                              : AppColors.divider.withValues(alpha: 0.8),
+                          width: 2,
+                        ),
                       ),
-                      child: isSelected ? const Center(child: Icon(Icons.check_rounded, size: 12, color: Colors.white)) : null,
+                      child: isSelected
+                          ? const Center(
+                              child: Icon(
+                                Icons.check_rounded,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                            )
+                          : null,
                     ),
                   ],
                 ),
@@ -453,35 +808,82 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             ),
           ),
         ),
-        if (isSelected && category.hasSubCategories)
+        if (isSelected && children.isNotEmpty)
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             margin: const EdgeInsets.only(top: 4, left: 16),
             padding: const EdgeInsets.only(left: 16),
-            decoration: BoxDecoration(border: Border(left: BorderSide(color: category.color.withValues(alpha: 0.3), width: 2))),
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(
+                  color: category.color.withValues(alpha: 0.3),
+                  width: 2,
+                ),
+              ),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Select sub-type:", style: AppTextStyles.dmSans.copyWith(fontSize: 11, color: AppColors.charcoal.withValues(alpha: 0.5))),
+                Text(
+                  'Select sub-type:',
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 11,
+                    color: AppColors.charcoal.withValues(alpha: 0.5),
+                  ),
+                ),
                 AppSpacing.vertical(8),
-                ...category.subCategories!.map((sub) {
-                  final subSelected = _selectedSubId == sub;
+                ...children.map((sub) {
+                  final subSelected = _selectedSubId == sub.id;
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedSubId = sub),
+                    onTap: () => setState(() => _selectedSubId = sub.id),
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
-                        color: subSelected ? category.color.withValues(alpha: 0.08) : (isDark ? AppColors.darkCard : Colors.white),
+                        color: subSelected
+                            ? category.color.withValues(alpha: 0.08)
+                            : (isDark ? AppColors.darkCard : Colors.white),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: subSelected ? category.color : AppColors.divider, width: subSelected ? 1.2 : 0.8),
+                        border: Border.all(
+                          color: subSelected
+                              ? category.color
+                              : AppColors.divider,
+                          width: subSelected ? 1.2 : 0.8,
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: subSelected ? category.color : AppColors.divider)),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: subSelected
+                                  ? category.color
+                                  : AppColors.divider,
+                            ),
+                          ),
                           AppSpacing.horizontal(10),
-                          Expanded(child: Text(sub, style: AppTextStyles.dmSans.copyWith(fontSize: 13, color: isDark ? AppColors.darkText : AppColors.charcoal))),
-                          if (subSelected) Icon(Icons.check_circle, size: 16, color: category.color),
+                          Expanded(
+                            child: Text(
+                              sub.name,
+                              style: AppTextStyles.dmSans.copyWith(
+                                fontSize: 13,
+                                color: isDark
+                                    ? AppColors.darkText
+                                    : AppColors.charcoal,
+                              ),
+                            ),
+                          ),
+                          if (subSelected)
+                            Icon(
+                              Icons.check_circle,
+                              size: 16,
+                              color: category.color,
+                            ),
                         ],
                       ),
                     ),
@@ -495,44 +897,69 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
   }
 
   Widget _buildSelectedCategorySummary(bool isDark) {
+    final category = _selectedCategory;
+    if (category == null) return const SizedBox.shrink();
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: _selectedCategory!.color.withValues(alpha: 0.08),
+        color: category.color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _selectedCategory!.color.withValues(alpha: 0.2)),
+        border: Border.all(color: category.color.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
-          Icon(_selectedCategory!.iconData, size: 16, color: _selectedCategory!.color),
+          Icon(category.iconData, size: 16, color: category.color),
           AppSpacing.horizontal(8),
           Expanded(
             child: Text(
-              _selectedSubId ?? _selectedCategory!.name,
-              style: AppTextStyles.dmSans.copyWith(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? AppColors.darkText : AppColors.charcoal),
+              _selectedSubId != null
+                  ? _categories.firstWhere((c) => c.id == _selectedSubId).name
+                  : category.name,
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.darkText : AppColors.charcoal,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           TextButton(
             onPressed: () => setState(() => _currentStep = 0),
-            child: Text("Change", style: AppTextStyles.dmSans.copyWith(fontSize: 11, color: AppColors.gold)),
+            child: Text(
+              'Change',
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 11,
+                color: AppColors.gold,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildYearOption({required String type, required String title, required String subtitle, required bool isDark}) {
+  Widget _buildYearOption({
+    required String type,
+    required String title,
+    required String subtitle,
+    required bool isDark,
+  }) {
     final isSelected = _yearInputType == type;
     return GestureDetector(
       onTap: () => setState(() => _yearInputType = type),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.catBoard.withValues(alpha: 0.06) : (isDark ? AppColors.darkCard : Colors.white),
+          color: isSelected
+              ? AppColors.catBoard.withValues(alpha: 0.06)
+              : (isDark ? AppColors.darkCard : Colors.white),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isSelected ? AppColors.catBoard : AppColors.divider, width: isSelected ? 1.5 : 0.8),
+          border: Border.all(
+            color: isSelected ? AppColors.catBoard : AppColors.divider,
+            width: isSelected ? 1.5 : 0.8,
+          ),
         ),
         child: Row(
           children: [
@@ -541,7 +968,10 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
               height: 18,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: isSelected ? AppColors.catBoard : AppColors.divider, width: isSelected ? 5 : 1.5),
+                border: Border.all(
+                  color: isSelected ? AppColors.catBoard : AppColors.divider,
+                  width: isSelected ? 5 : 1.5,
+                ),
                 color: Colors.transparent,
               ),
             ),
@@ -549,8 +979,21 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTextStyles.dmSans.copyWith(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? AppColors.darkText : AppColors.charcoal)),
-                Text(subtitle, style: AppTextStyles.dmSans.copyWith(fontSize: 11, color: AppColors.charcoal.withValues(alpha: 0.4))),
+                Text(
+                  title,
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.darkText : AppColors.charcoal,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 11,
+                    color: AppColors.charcoal.withValues(alpha: 0.4),
+                  ),
+                ),
               ],
             ),
           ],
@@ -559,24 +1002,46 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     );
   }
 
-  Widget _buildYearInputFields(bool isDark) {
+  Widget _buildYearInputFields() {
     if (_yearInputType == 'single') {
-      return _buildYearTextField(controller: _yearController, label: "Year", hint: "e.g. 1996");
+      return _buildYearTextField(
+        controller: _yearController,
+        label: 'Year',
+        hint: 'e.g. 1996',
+      );
     }
     if (_yearInputType == 'range') {
       return Row(
         children: [
-          Expanded(child: _buildYearTextField(controller: _fromYearController, label: "From Year", hint: "1961")),
+          Expanded(
+            child: _buildYearTextField(
+              controller: _fromYearController,
+              label: 'From Year',
+              hint: '1961',
+            ),
+          ),
           AppSpacing.horizontal(12),
           Container(width: 10, height: 1.5, color: AppColors.divider),
           AppSpacing.horizontal(12),
-          Expanded(child: _buildYearTextField(controller: _toYearController, label: "To Year", hint: "1996")),
+          Expanded(
+            child: _buildYearTextField(
+              controller: _toYearController,
+              label: 'To Year',
+              hint: '1996',
+            ),
+          ),
         ],
       );
     }
     return Row(
       children: [
-        Expanded(child: _buildYearTextField(controller: _fromYearController, label: "From Year", hint: "2025")),
+        Expanded(
+          child: _buildYearTextField(
+            controller: _fromYearController,
+            label: 'From Year',
+            hint: '2025',
+          ),
+        ),
         AppSpacing.horizontal(12),
         Expanded(
           child: Container(
@@ -584,13 +1049,28 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             decoration: BoxDecoration(
               color: AppColors.gdaGreen.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.gdaGreen.withValues(alpha: 0.2)),
+              border: Border.all(
+                color: AppColors.gdaGreen.withValues(alpha: 0.2),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Ongoing", style: AppTextStyles.dmSans.copyWith(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.gdaGreen)),
-                Text("No end year", style: AppTextStyles.dmSans.copyWith(fontSize: 9, color: AppColors.charcoal.withValues(alpha: 0.4))),
+                Text(
+                  'Ongoing',
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.gdaGreen,
+                  ),
+                ),
+                Text(
+                  'No end year',
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 9,
+                    color: AppColors.charcoal.withValues(alpha: 0.4),
+                  ),
+                ),
               ],
             ),
           ),
@@ -599,7 +1079,11 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     );
   }
 
-  Widget _buildYearTextField({required TextEditingController controller, required String label, required String hint}) {
+  Widget _buildYearTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+  }) {
     return TextFormField(
       controller: controller,
       onChanged: (_) => setState(() {}),
@@ -610,44 +1094,107 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        counterText: "",
+        counterText: '',
         filled: true,
-        fillColor: Theme.of(context).brightness == Brightness.dark ? AppColors.darkCard : Colors.white,
-        prefixIcon: const Icon(Icons.calendar_today, size: 18, color: AppColors.gold),
-        suffixIcon: controller.text.length == 4 ? const Icon(Icons.check_circle, size: 18, color: AppColors.gdaGreen) : null,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.divider)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.gold, width: 1.5)),
+        fillColor: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkCard
+            : Colors.white,
+        prefixIcon: const Icon(
+          Icons.calendar_today,
+          size: 18,
+          color: AppColors.gold,
+        ),
+        suffixIcon: controller.text.length == 4
+            ? const Icon(
+                Icons.check_circle,
+                size: 18,
+                color: AppColors.gdaGreen,
+              )
+            : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.divider),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.gold, width: 1.5),
+        ),
       ),
     );
   }
 
   Widget _buildConfirmationSummary(bool isDark) {
+    final category = _selectedCategory;
+    if (category == null) return const SizedBox.shrink();
+
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.divider),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Container(
             height: 6,
-            decoration: BoxDecoration(color: _selectedCategory?.color, borderRadius: const BorderRadius.vertical(top: Radius.circular(16))),
+            decoration: BoxDecoration(
+              color: category.color,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(18),
             child: Column(
               children: [
-                _buildDetailRow(icon: Icons.folder_rounded, label: "Category", value: _selectedCategory?.name ?? "", valueColor: _selectedCategory?.color, isDark: isDark),
+                _buildDetailRow(
+                  icon: Icons.folder_rounded,
+                  label: 'Category',
+                  value: category.name,
+                  valueColor: category.color,
+                  isDark: isDark,
+                ),
                 const Divider(height: 1),
-                _buildDetailRow(icon: Icons.subdirectory_arrow_right, label: "Sub-category", value: _selectedSubId ?? "—", isDark: isDark),
+                _buildDetailRow(
+                  icon: Icons.subdirectory_arrow_right,
+                  label: 'Sub-category',
+                  value: _selectedSubId != null
+                      ? _categories
+                            .firstWhere((c) => c.id == _selectedSubId)
+                            .name
+                      : '—',
+                  isDark: isDark,
+                ),
                 const Divider(height: 1),
-                _buildDetailRow(icon: Icons.calendar_today_rounded, label: "Year", value: _finalYearLabel, isDark: isDark),
+                _buildDetailRow(
+                  icon: Icons.calendar_today_rounded,
+                  label: 'Year',
+                  value: _finalYearLabel,
+                  isDark: isDark,
+                ),
                 const Divider(height: 1),
-                _buildDetailRow(icon: Icons.description_rounded, label: "File", value: widget.fileName, maxLines: 2, isDark: isDark),
+                _buildDetailRow(
+                  icon: Icons.description_rounded,
+                  label: 'File',
+                  value: widget.fileName,
+                  maxLines: 2,
+                  isDark: isDark,
+                ),
                 const Divider(height: 1),
-                _buildDetailRow(icon: Icons.menu_book_rounded, label: "Pages", value: "${widget.pageCount} pages", isDark: isDark),
+                _buildDetailRow(
+                  icon: Icons.menu_book_rounded,
+                  label: 'Pages',
+                  value: '${widget.pageCount} pages',
+                  isDark: isDark,
+                ),
               ],
             ),
           ),
@@ -656,8 +1203,16 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     );
   }
 
-  Widget _buildDetailRow({required IconData icon, required String label, required String value, Color? valueColor, int maxLines = 1, required bool isDark}) {
-    final themeColor = valueColor ?? (isDark ? AppColors.darkText : AppColors.charcoal);
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? valueColor,
+    int maxLines = 1,
+    required bool isDark,
+  }) {
+    final themeColor =
+        valueColor ?? (isDark ? AppColors.darkText : AppColors.charcoal);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
@@ -666,18 +1221,31 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           Container(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(color: themeColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(
+              color: themeColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: Icon(icon, size: 16, color: themeColor),
           ),
           AppSpacing.horizontal(12),
           SizedBox(
             width: 80,
-            child: Text(label, style: AppTextStyles.dmSans.copyWith(fontSize: 12, color: AppColors.charcoal.withValues(alpha: 0.5))),
+            child: Text(
+              label,
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 12,
+                color: AppColors.charcoal.withValues(alpha: 0.5),
+              ),
+            ),
           ),
           Expanded(
             child: Text(
               value,
-              style: AppTextStyles.dmSans.copyWith(fontSize: 13, fontWeight: FontWeight.bold, color: themeColor),
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: themeColor,
+              ),
               maxLines: maxLines,
               overflow: TextOverflow.ellipsis,
             ),
@@ -700,30 +1268,57 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           SizedBox(
             width: 20,
             height: 20,
-            child: CircularProgressIndicator(value: _uploadProgress, color: AppColors.gold, backgroundColor: AppColors.divider, strokeWidth: 2.5),
+            child: CircularProgressIndicator(
+              value: _uploadProgress,
+              color: AppColors.gold,
+              backgroundColor: AppColors.divider,
+              strokeWidth: 2.5,
+            ),
           ),
           AppSpacing.horizontal(12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_uploadStatus, style: AppTextStyles.dmSans.copyWith(fontSize: 13, color: isDark ? AppColors.darkText : AppColors.charcoal)),
+                Text(
+                  _uploadStatus,
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 13,
+                    color: isDark ? AppColors.darkText : AppColors.charcoal,
+                  ),
+                ),
                 AppSpacing.vertical(4),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(value: _uploadProgress, backgroundColor: AppColors.divider, valueColor: const AlwaysStoppedAnimation(AppColors.gold), minHeight: 4),
+                  child: LinearProgressIndicator(
+                    value: _uploadProgress,
+                    backgroundColor: AppColors.divider,
+                    valueColor: const AlwaysStoppedAnimation(AppColors.gold),
+                    minHeight: 4,
+                  ),
                 ),
               ],
             ),
           ),
           AppSpacing.horizontal(12),
-          Text("${(_uploadProgress * 100).toInt()}%", style: AppTextStyles.dmSans.copyWith(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.gold)),
+          Text(
+            '${(_uploadProgress * 100).toInt()}%',
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppColors.gold,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildPrimaryButton(String label, {required bool enabled, required VoidCallback onTap}) {
+  Widget _buildPrimaryButton(
+    String label, {
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
     return AnimatedOpacity(
       opacity: enabled ? 1.0 : 0.5,
       duration: const Duration(milliseconds: 200),
@@ -734,18 +1329,45 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           width: double.infinity,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: enabled ? [AppColors.navyDark, const Color(0xFF1A3A6B)] : [AppColors.charcoal.withValues(alpha: 0.3), AppColors.charcoal.withValues(alpha: 0.2)],
+              colors: enabled
+                  ? [AppColors.navyDark, const Color(0xFF1A3A6B)]
+                  : [
+                      AppColors.charcoal.withValues(alpha: 0.3),
+                      AppColors.charcoal.withValues(alpha: 0.2),
+                    ],
             ),
             borderRadius: BorderRadius.circular(13),
-            boxShadow: enabled ? [BoxShadow(color: AppColors.navyDark.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4))] : [],
+            boxShadow: enabled
+                ? [
+                    BoxShadow(
+                      color: AppColors.navyDark.withValues(alpha: 0.25),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
           ),
-          child: Center(child: Text(label, style: AppTextStyles.dmSans.copyWith(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white))),
+          child: Center(
+            child: Text(
+              label,
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSecondaryButton(String label, {bool enabled = true, required VoidCallback onTap, required bool isDark}) {
+  Widget _buildSecondaryButton(
+    String label, {
+    bool enabled = true,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
@@ -756,7 +1378,14 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           border: Border.all(color: AppColors.divider, width: 1.2),
         ),
         child: Center(
-          child: Text(label, style: AppTextStyles.dmSans.copyWith(fontSize: 14, color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.6))),
+          child: Text(
+            label,
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 14,
+              color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                  .withValues(alpha: 0.6),
+            ),
+          ),
         ),
       ),
     );
@@ -799,33 +1428,74 @@ class _SuccessBottomSheet extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.gdaGreen.withValues(alpha: 0.1),
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.gdaGreen.withValues(alpha: 0.2), width: 2),
+              border: Border.all(
+                color: AppColors.gdaGreen.withValues(alpha: 0.2),
+                width: 2,
+              ),
             ),
-            child: const Center(child: Icon(Icons.check_circle_rounded, size: 40, color: AppColors.gdaGreen)),
+            child: const Center(
+              child: Icon(
+                Icons.check_circle_rounded,
+                size: 40,
+                color: AppColors.gdaGreen,
+              ),
+            ),
           ),
           AppSpacing.vertical(16),
-          Text("Document Saved!", style: AppTextStyles.playfairDisplay.copyWith(fontSize: 22, fontWeight: FontWeight.bold)),
+          Text(
+            'Document Saved!',
+            style: AppTextStyles.playfairDisplay.copyWith(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           AppSpacing.vertical(8),
-          Text("Successfully added to $categoryName", textAlign: TextAlign.center, style: AppTextStyles.dmSans.copyWith(fontSize: 13, color: AppColors.charcoal.withValues(alpha: 0.5))),
+          Text(
+            'Successfully added to $categoryName',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 13,
+              color: AppColors.charcoal.withValues(alpha: 0.5),
+            ),
+          ),
           AppSpacing.vertical(12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(color: categoryColor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(20)),
+            decoration: BoxDecoration(
+              color: categoryColor.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(width: 8, height: 8, decoration: BoxDecoration(color: categoryColor, shape: BoxShape.circle)),
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: categoryColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
                 AppSpacing.horizontal(8),
-                Text("$finalYearLabel · $pageCount pages", style: AppTextStyles.dmSans.copyWith(fontSize: 12)),
+                Text(
+                  '$finalYearLabel · $pageCount pages',
+                  style: AppTextStyles.dmSans.copyWith(fontSize: 12),
+                ),
               ],
             ),
           ),
           AppSpacing.vertical(28),
-          _buildPrimaryButton("View Document", onTap: onView),
+          _buildPrimaryButton('View Document', onTap: onView),
           AppSpacing.vertical(10),
           TextButton(
             onPressed: onHome,
-            child: Text("Back to Home", style: AppTextStyles.dmSans.copyWith(fontSize: 13, color: AppColors.gold)),
+            child: Text(
+              'Back to Home',
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 13,
+                color: AppColors.gold,
+              ),
+            ),
           ),
         ],
       ),
@@ -839,11 +1509,28 @@ class _SuccessBottomSheet extends StatelessWidget {
         height: 52,
         width: double.infinity,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [AppColors.navyDark, Color(0xFF1A3A6B)]),
+          gradient: const LinearGradient(
+            colors: [AppColors.navyDark, Color(0xFF1A3A6B)],
+          ),
           borderRadius: BorderRadius.circular(13),
-          boxShadow: [BoxShadow(color: AppColors.navyDark.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4))],
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.navyDark.withValues(alpha: 0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: Center(child: Text(label, style: AppTextStyles.dmSans.copyWith(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white))),
+        child: Center(
+          child: Text(
+            label,
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
       ),
     );
   }

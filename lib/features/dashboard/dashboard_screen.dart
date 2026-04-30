@@ -1,3 +1,4 @@
+// ignore_for_file: unused_import, curly_braces_in_flow_control_structures
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -129,16 +130,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         body: Stack(
           children: [
             widget.child,
-            if (!hideUI && currentIndex != 3) // Don't show chat FAB if already on chat tab
+            if (!hideUI &&
+                currentIndex != 3) // Don't show chat FAB if already on chat tab
               const Positioned(bottom: 25, right: 10, child: AiChatFab()),
           ],
         ),
         bottomNavigationBar: hideUI
             ? null
-            : GdaBottomNav(
-                currentIndex: currentIndex,
-                onTap: _onTabTapped,
-              ),
+            : GdaBottomNav(currentIndex: currentIndex, onTap: _onTabTapped),
       ),
     );
   }

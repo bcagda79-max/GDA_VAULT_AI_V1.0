@@ -1,4 +1,5 @@
 // lib/features/recent_scans/recent_scans_list_screen.dart
+// ignore_for_file: unused_element, unused_field, prefer_final_fields, unused_local_variable
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -18,8 +19,7 @@ class RecentScansListScreen extends ConsumerStatefulWidget {
       _RecentScansListScreenState();
 }
 
-class _RecentScansListScreenState
-    extends ConsumerState<RecentScansListScreen> {
+class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
 
@@ -55,7 +55,7 @@ class _RecentScansListScreenState
       yearLabel: DateFormat('yyyy').format(modDate),
       yearStart: modDate.year,
       fileName: name,
-      filePath: file.path,
+      storagePath: file.path,
       pageCount: 1,
       uploadedAt: modDate,
     );
@@ -76,7 +76,7 @@ class _RecentScansListScreenState
         'pageCount': 1,
         'source': 'existing_pdf',
         'imagePaths': <String>[],
-        'existingPdfPath': file.path,
+        'filePath': file.path,
       },
     );
   }
@@ -160,15 +160,22 @@ class _RecentScansListScreenState
             fontSize: 14,
             color: Colors.white.withValues(alpha: 0.4),
           ),
-          prefixIcon: const Icon(Icons.search_rounded,
-              color: Colors.white54, size: 20),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: Colors.white54,
+            size: 20,
+          ),
           suffixIcon: _query.isNotEmpty
               ? GestureDetector(
                   onTap: () {
                     _searchCtrl.clear();
                     setState(() => _query = '');
                   },
-                  child: const Icon(Icons.close, color: Colors.white54, size: 18),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white54,
+                    size: 18,
+                  ),
                 )
               : null,
           filled: true,
@@ -197,9 +204,11 @@ class _RecentScansListScreenState
           color: isDark ? AppColors.darkCard : Colors.white,
           child: Row(
             children: [
-              Icon(Icons.folder_copy_rounded,
-                  size: 14,
-                  color: AppColors.navyDark.withValues(alpha: 0.5)),
+              Icon(
+                Icons.folder_copy_rounded,
+                size: 14,
+                color: AppColors.navyDark.withValues(alpha: 0.5),
+              ),
               const SizedBox(width: 6),
               Text(
                 '${files.length} document${files.length == 1 ? '' : 's'}'
@@ -220,7 +229,7 @@ class _RecentScansListScreenState
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             itemCount: files.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            separatorBuilder: (context, index) => const SizedBox(height: 10),
             itemBuilder: (ctx, index) => _ScanListItem(
               file: files[index],
               isDark: isDark,
@@ -302,110 +311,131 @@ class _ScanListItem extends StatelessWidget {
 
     return GestureDetector(
       onTap: onOpen,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider, width: 0.8),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.navyDark.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // File icon
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: isPdf
-                    ? AppColors.navyDark.withValues(alpha: 0.08)
-                    : AppColors.gdaGreen.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                isPdf ? Icons.picture_as_pdf_rounded : Icons.image_rounded,
-                size: 26,
-                color: isPdf ? AppColors.navyDark : AppColors.gdaGreen,
-              ),
-            ),
-            const SizedBox(width: 14),
-            // Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.darkText : AppColors.charcoal,
+      child:
+          Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkCard : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.divider, width: 0.8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.navyDark.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(children: [
-                    Icon(Icons.access_time_rounded,
-                        size: 11,
-                        color: AppColors.charcoal.withValues(alpha: 0.4)),
-                    const SizedBox(width: 4),
-                    Text(
-                      formatDate(stat.modified),
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 10,
-                        color: AppColors.charcoal.withValues(alpha: 0.45),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // File icon
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: isPdf
+                            ? AppColors.navyDark.withValues(alpha: 0.08)
+                            : AppColors.gdaGreen.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        isPdf
+                            ? Icons.picture_as_pdf_rounded
+                            : Icons.image_rounded,
+                        size: 26,
+                        color: isPdf ? AppColors.navyDark : AppColors.gdaGreen,
                       ),
                     ),
-                  ]),
-                  const SizedBox(height: 2),
-                  Row(children: [
-                    Icon(Icons.storage_rounded,
-                        size: 11,
-                        color: AppColors.charcoal.withValues(alpha: 0.4)),
-                    const SizedBox(width: 4),
-                    Text(
-                      formatSize(stat.size),
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 10,
-                        color: AppColors.charcoal.withValues(alpha: 0.45),
+                    const SizedBox(width: 14),
+                    // Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: AppTextStyles.dmSans.copyWith(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? AppColors.darkText
+                                  : AppColors.charcoal,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.access_time_rounded,
+                                size: 11,
+                                color: AppColors.charcoal.withValues(
+                                  alpha: 0.4,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                formatDate(stat.modified),
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 10,
+                                  color: AppColors.charcoal.withValues(
+                                    alpha: 0.45,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.storage_rounded,
+                                size: 11,
+                                color: AppColors.charcoal.withValues(
+                                  alpha: 0.4,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                formatSize(stat.size),
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 10,
+                                  color: AppColors.charcoal.withValues(
+                                    alpha: 0.45,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                  ]),
-                ],
-              ),
-            ),
-            // Actions
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _ActionChip(
-                  icon: Icons.open_in_new_rounded,
-                  label: 'Open',
-                  color: AppColors.navyDark,
-                  onTap: onOpen,
+                    // Actions
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _ActionChip(
+                          icon: Icons.open_in_new_rounded,
+                          label: 'Open',
+                          color: AppColors.navyDark,
+                          onTap: onOpen,
+                        ),
+                        const SizedBox(height: 6),
+                        _ActionChip(
+                          icon: Icons.edit_rounded,
+                          label: 'Edit',
+                          color: AppColors.gold,
+                          onTap: onEdit,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 6),
-                _ActionChip(
-                  icon: Icons.edit_rounded,
-                  label: 'Edit',
-                  color: AppColors.gold,
-                  onTap: onEdit,
-                ),
-              ],
-            ),
-          ],
-        ),
-      )
-          .animate(delay: Duration(milliseconds: 50 * index))
-          .fadeIn(duration: 300.ms)
-          .slideX(begin: 0.04, end: 0),
+              )
+              .animate(delay: Duration(milliseconds: 50 * index))
+              .fadeIn(duration: 300.ms)
+              .slideX(begin: 0.04, end: 0),
     );
   }
 }

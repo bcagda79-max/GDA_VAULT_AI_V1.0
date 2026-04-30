@@ -1,20 +1,110 @@
-// lib/features/categories/categories_screen.dart
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/data/mock_data.dart';
+import 'package:gda_vault_ai/core/services/supabase_service.dart';
 import 'package:gda_vault_ai/models/category_model.dart';
+import 'package:shimmer/shimmer.dart';
 
-class CategoriesScreen extends StatelessWidget {
+class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
+
+  @override
+  State<CategoriesScreen> createState() => _CategoriesScreenState();
+}
+
+class _CategoriesScreenState extends State<CategoriesScreen> {
+  final _supa = SupabaseService.instance;
+  bool _isLoading = true;
+  List<CategoryModel> _topCategories = const [];
+  final Map<String, int> _subCountByParent = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+
+  Future<bool> _hasInternet() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.any((result) => result != ConnectivityResult.none);
+    } catch (_) {
+      return true;
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    if (!await _hasInternet()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No internet connection'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final rows = await _supa.getAllCategories();
+      final all = rows.map(CategoryModel.fromMap).toList()
+        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+
+      final counts = <String, int>{};
+      for (final category in all) {
+        final parentId = category.parentId;
+        if (parentId == null) continue;
+        counts[parentId] = (counts[parentId] ?? 0) + 1;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _subCountByParent
+          ..clear()
+          ..addAll(counts);
+        _topCategories = all
+            .where((category) => category.parentId == null)
+            .map(
+              (category) => category.copyWith(
+                hasSubCategories: counts.containsKey(category.id),
+              ),
+            )
+            .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _topCategories = const [];
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to load categories'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final categories = MockData.categories.where((c) => c.parentId == null).toList();
-    final totalDocs = categories.fold<int>(0, (sum, item) => sum + item.docCount);
+    final totalDocs = _topCategories.fold<int>(
+      0,
+      (sum, item) => sum + item.docCount,
+    );
 
     return PopScope(
       canPop: true,
@@ -22,7 +112,6 @@ class CategoriesScreen extends StatelessWidget {
         backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
         body: Column(
           children: [
-            // CATEGORIES HEADER (merges visually with HomeAppBar)
             Container(
               width: double.infinity,
               color: AppColors.navyDark,
@@ -30,7 +119,7 @@ class CategoriesScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    "Categories",
+                    'Categories',
                     style: AppTextStyles.playfairDisplay.copyWith(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -38,7 +127,7 @@ class CategoriesScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    "All Files",
+                    'All Files',
                     style: AppTextStyles.dmSans.copyWith(
                       fontSize: 9,
                       color: Colors.white.withValues(alpha: 0.5),
@@ -48,8 +137,10 @@ class CategoriesScreen extends StatelessWidget {
                 ],
               ),
             ),
-            Container(color: AppColors.gold.withValues(alpha: 0.25), height: 0.8),
-            // TOP INFO BAR
+            Container(
+              color: AppColors.gold.withValues(alpha: 0.25),
+              height: 0.8,
+            ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
               decoration: BoxDecoration(
@@ -70,24 +161,27 @@ class CategoriesScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        "All Files · ${categories.length} Categories",
+                        'All Files · ${_topCategories.length} Categories',
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 12,
-                          color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                              .withValues(alpha: 0.55),
+                          color:
+                              (isDark ? AppColors.darkText : AppColors.charcoal)
+                                  .withValues(alpha: 0.55),
                         ),
                       ),
                     ],
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.catBoard.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      "$totalDocs Documents",
+                      '$totalDocs Documents',
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -98,15 +192,35 @@ class CategoriesScreen extends StatelessWidget {
                 ],
               ),
             ),
-            // CATEGORY LIST
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  return _buildCategoryItem(context, categories[index], index, isDark);
-                },
-              ),
+              child: _isLoading
+                  ? _CategoriesLoadingList(isDark: isDark)
+                  : _topCategories.isEmpty
+                  ? _CategoriesEmptyState(
+                      isDark: isDark,
+                      onRetry: _loadCategories,
+                    )
+                  : RefreshIndicator(
+                      color: AppColors.gold,
+                      onRefresh: _loadCategories,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
+                        itemCount: _topCategories.length,
+                        itemBuilder: (context, index) {
+                          final category = _topCategories[index];
+                          return _buildCategoryItem(
+                            context,
+                            category,
+                            index,
+                            isDark,
+                            subCount: _subCountByParent[category.id] ?? 0,
+                          );
+                        },
+                      ),
+                    ),
             ),
           ],
         ),
@@ -118,170 +232,193 @@ class CategoriesScreen extends StatelessWidget {
     BuildContext context,
     CategoryModel category,
     int index,
-    bool isDark,
-  ) {
+    bool isDark, {
+    required int subCount,
+  }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider, width: 0.8),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navyDark.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.divider, width: 0.8),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.navyDark.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          splashColor: category.color.withValues(alpha: 0.08),
-          onTap: () => _navigateToCategory(context, category),
-          child: IntrinsicHeight(
-            child: Row(
-              children: [
-                // LEFT COLOR STRIPE
-                Container(
-                  width: 5,
-                  decoration: BoxDecoration(
-                    color: category.color,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(14),
-                      bottomLeft: Radius.circular(14),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              splashColor: category.color.withValues(alpha: 0.08),
+              onTap: () => _navigateToCategory(context, category),
+              child: IntrinsicHeight(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 5,
+                      decoration: BoxDecoration(
+                        color: category.color,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(14),
+                          bottomLeft: Radius.circular(14),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                // ICON
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: category.color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 16,
+                      ),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: category.color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          category.iconData,
+                          size: 22,
+                          color: category.color,
+                        ),
+                      ),
                     ),
-                    child: Icon(category.iconData, size: 22, color: category.color),
-                  ),
-                ),
-                // CONTENT
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 14, bottom: 14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Name + arrow row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 14, bottom: 14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                category.name,
-                                style: AppTextStyles.dmSans.copyWith(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark
-                                      ? AppColors.darkText
-                                      : AppColors.charcoal,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    category.name,
+                                    style: AppTextStyles.dmSans.copyWith(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark
+                                          ? AppColors.darkText
+                                          : AppColors.charcoal,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 14),
-                              child: Row(
-                                children: [
-                                  if (category.hasSubCategories)
-                                    Container(
-                                      margin: const EdgeInsets.only(right: 8),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 3,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.gold.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        "2 sub",
-                                        style: AppTextStyles.dmSans.copyWith(
-                                          fontSize: 8,
-                                          color: AppColors.gold,
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 14),
+                                  child: Row(
+                                    children: [
+                                      if (category.hasSubCategories)
+                                        Container(
+                                          margin: const EdgeInsets.only(
+                                            right: 8,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 3,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.gold.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '$subCount sub',
+                                            style: AppTextStyles.dmSans
+                                                .copyWith(
+                                                  fontSize: 8,
+                                                  color: AppColors.gold,
+                                                ),
+                                          ),
+                                        ),
+                                      Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 13,
+                                        color: AppColors.charcoal.withValues(
+                                          alpha: 0.3,
                                         ),
                                       ),
-                                    ),
-                                  Icon(
-                                    Icons.arrow_forward_ios_rounded,
-                                    size: 13,
-                                    color: AppColors.charcoal.withValues(alpha: 0.3),
+                                    ],
                                   ),
-                                ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                Text(
+                                  category.yearRange,
+                                  style: AppTextStyles.dmSans.copyWith(
+                                    fontSize: 11,
+                                    color: AppColors.charcoal.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  width: 3,
+                                  height: 3,
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.charcoal.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                Text(
+                                  '${category.docCount} files',
+                                  style: AppTextStyles.dmSans.copyWith(
+                                    fontSize: 11,
+                                    color: AppColors.charcoal.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 14),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(2),
+                                child: LinearProgressIndicator(
+                                  value: (category.docCount / 500.0).clamp(
+                                    0.0,
+                                    1.0,
+                                  ),
+                                  backgroundColor: category.color.withValues(
+                                    alpha: 0.08,
+                                  ),
+                                  valueColor: AlwaysStoppedAnimation(
+                                    category.color.withValues(alpha: 0.4),
+                                  ),
+                                  minHeight: 2.5,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 5),
-                        // Year range + doc count
-                        Row(
-                          children: [
-                            Text(
-                              category.yearRange ?? "N/A",
-                              style: AppTextStyles.dmSans.copyWith(
-                                fontSize: 11,
-                                color: AppColors.charcoal.withValues(alpha: 0.4),
-                              ),
-                            ),
-                            Container(
-                              width: 3,
-                              height: 3,
-                              margin: const EdgeInsets.symmetric(horizontal: 6),
-                              decoration: BoxDecoration(
-                                color: AppColors.charcoal.withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Text(
-                              "${category.docCount} files",
-                              style: AppTextStyles.dmSans.copyWith(
-                                fontSize: 11,
-                                color: AppColors.charcoal.withValues(alpha: 0.4),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        // Progress bar
-                        Padding(
-                          padding: const EdgeInsets.only(right: 14),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(2),
-                            child: LinearProgressIndicator(
-                              value: (category.docCount / 500.0).clamp(0.0, 1.0),
-                              backgroundColor: category.color.withValues(alpha: 0.08),
-                              valueColor: AlwaysStoppedAnimation(
-                                category.color.withValues(alpha: 0.4),
-                              ),
-                              minHeight: 2.5,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    )
+        )
         .animate(delay: Duration(milliseconds: index * 70))
         .fadeIn(duration: 300.ms)
         .slideX(begin: 0.03, end: 0, duration: 300.ms);
@@ -291,22 +428,106 @@ class CategoriesScreen extends StatelessWidget {
     if (cat.hasSubCategories) {
       context.push(
         '/categories/sub/${cat.id}',
-        extra: {
-          'categoryName': cat.name,
-          'categoryColor': cat.color,
-        },
+        extra: {'categoryName': cat.name, 'categoryColor': cat.color},
       );
-    } else {
-      context.push(
-        '/categories/sub/${cat.id}/years',
-        extra: {
-          'categoryName': cat.name,
-          'categoryColor': cat.color,
-          'yearFrom': int.tryParse(cat.yearRange?.split(' – ').first ?? '1961') ?? 1961,
-          'yearTo': cat.yearRange?.contains('Ongoing') == true ? null : int.tryParse(cat.yearRange?.split(' – ').last ?? ''),
-          'subCategoryName': null,
-        },
-      );
+      return;
     }
+
+    context.push(
+      '/categories/sub/${cat.id}/years',
+      extra: {
+        'categoryName': cat.name,
+        'categoryColor': cat.color,
+        'yearFrom': cat.yearFrom ?? 1961,
+        'yearTo': cat.yearTo,
+        'subCategoryName': null,
+      },
+    );
+  }
+}
+
+class _CategoriesLoadingList extends StatelessWidget {
+  final bool isDark;
+  const _CategoriesLoadingList({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: isDark
+          ? AppColors.darkCard.withValues(alpha: 0.9)
+          : AppColors.divider.withValues(alpha: 0.6),
+      highlightColor: isDark ? AppColors.darkSurface : Colors.white,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        itemCount: 6,
+        itemBuilder: (context, index) => Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          height: 92,
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.divider, width: 0.8),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoriesEmptyState extends StatelessWidget {
+  final bool isDark;
+  final Future<void> Function() onRetry;
+
+  const _CategoriesEmptyState({required this.isDark, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.wifi_off_rounded,
+              size: 64,
+              color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                  .withValues(alpha: 0.25),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'No categories available',
+              style: AppTextStyles.playfairDisplay.copyWith(
+                fontSize: 18,
+                color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                    .withValues(alpha: 0.75),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Check your internet connection and try again.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 12,
+                color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                    .withValues(alpha: 0.45),
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(
+                'Retry',
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 13,
+                  color: AppColors.gold,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

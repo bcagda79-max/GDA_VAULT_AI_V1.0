@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:gda_vault_ai/core/constants/supabase_constants.dart';
 
 class SubcategoryScreen extends StatelessWidget {
   final String categoryId;
@@ -81,9 +82,9 @@ class SubcategoryScreen extends StatelessWidget {
                 shortTag: "MINUTES",
                 onTap: () {
                   context.push(
-                    '/categories/sub/board-authority/years',
+                    '/categories/sub/${SupabaseConstants.idBoardAuthorityMinutes}/years',
                     extra: {
-                      'categoryName': "Board of Authority",
+                      'categoryName': "Board of Authority Minutes",
                       'subCategoryName': "Board of Authority Minutes 1996–2026",
                       'categoryColor': AppColors.catBoard,
                       'yearFrom': 1996,
@@ -105,9 +106,9 @@ class SubcategoryScreen extends StatelessWidget {
                 shortTag: "TRUST",
                 onTap: () {
                   context.push(
-                    '/categories/sub/trust-minutes/years',
+                    '/categories/sub/${SupabaseConstants.idTrustMinutes}/years',
                     extra: {
-                      'categoryName': "Board of Authority",
+                      'categoryName': "Trust Minutes",
                       'subCategoryName': "Trust Minutes 1961–1996",
                       'categoryColor': AppColors.catTrust,
                       'yearFrom': 1961,
@@ -132,7 +133,6 @@ class _ParentCategoryHeroBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.all(16),
-      height: 120,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -141,7 +141,10 @@ class _ParentCategoryHeroBanner extends StatelessWidget {
           colors: [AppColors.catBoard, Color(0xFF0D1B3E)],
         ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.gdaGold.withValues(alpha: 0.2), width: 1),
+        border: Border.all(
+          color: AppColors.gdaGold.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
@@ -370,7 +373,9 @@ class _SubCategoryCard extends StatelessWidget {
                       "Earliest: $firstYear",
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 11,
-                        color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+                        color: theme.textTheme.bodySmall?.color?.withValues(
+                          alpha: 0.5,
+                        ),
                       ),
                     ),
                     Icon(
@@ -382,7 +387,9 @@ class _SubCategoryCard extends StatelessWidget {
                       "Latest: $lastYear",
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 11,
-                        color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+                        color: theme.textTheme.bodySmall?.color?.withValues(
+                          alpha: 0.5,
+                        ),
                       ),
                     ),
                   ],
@@ -408,7 +415,9 @@ class _Tag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isLight ? color.withValues(alpha: 0.1) : color.withValues(alpha: 0.12),
+        color: isLight
+            ? color.withValues(alpha: 0.1)
+            : color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

@@ -14,8 +14,10 @@ import 'package:gda_vault_ai/features/add_document/scan_pdf_preview_screen.dart'
 import 'package:gda_vault_ai/features/add_document/category_selector_screen.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/home_tab.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/settings_tab.dart';
+import 'package:gda_vault_ai/features/dashboard/recent_documents_screen.dart';
 import 'package:gda_vault_ai/features/ai_chat/chat_screen.dart';
 import 'package:gda_vault_ai/features/recent_scans/recent_scans_list_screen.dart';
+import 'package:gda_vault_ai/features/offline/offline_documents_screen.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
 
 /// Manages the routing logic for the application.
@@ -53,7 +55,12 @@ class AppRouter {
             name: 'settings',
             builder: (context, state) => const SettingsTab(),
           ),
-          
+          GoRoute(
+            path: '/dashboard/recent-documents',
+            name: 'recent-documents',
+            builder: (context, state) => const RecentDocumentsScreen(),
+          ),
+
           // Categories flow — INSIDE shell for persistent nav
           GoRoute(
             path: '/categories',
@@ -132,10 +139,8 @@ class AppRouter {
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           return ScanPdfPreviewScreen(
-            imagePaths: List<String>.from(
-              extra['imagePaths'] as List? ?? []),
-            fileName: extra['fileName'] as String?
-              ?? 'GDA_Scan.pdf',
+            imagePaths: List<String>.from(extra['imagePaths'] as List? ?? []),
+            fileName: extra['fileName'] as String? ?? 'GDA_Scan.pdf',
             source: extra['source'] as String? ?? 'scanner',
             pageCount: extra['pageCount'] as int? ?? 1,
           );
@@ -151,17 +156,27 @@ class AppRouter {
             pageCount: extra['pageCount'] as int? ?? 1,
             fileName: extra['fileName'] as String,
             fileSize: extra['fileSize'] as int?,
+            filePath: extra['filePath'] as String?,
+            imagePaths: List<String>.from(
+              extra['imagePaths'] as List? ?? const [],
+            ),
           );
         },
       ),
-      
+
       // Recent Scans full list (See All - OUTSIDE shell)
       GoRoute(
         path: '/recent-scans',
         name: 'recent-scans',
         builder: (context, state) => const RecentScansListScreen(),
       ),
-      
+
+      GoRoute(
+        path: '/offline-documents',
+        name: 'offline-documents',
+        builder: (context, state) => const OfflineDocumentsScreen(),
+      ),
+
       // Chat screen as full screen if accessed directly from home FAB or PDF viewer
       GoRoute(
         path: '/chat',

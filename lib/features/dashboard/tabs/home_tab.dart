@@ -1,18 +1,40 @@
-// lib/features/dashboard/tabs/home_tab.dart
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/features/add_document/providers/recent_scans_provider.dart';
+import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
+import 'package:gda_vault_ai/core/services/supabase_service.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
 
 /// The home tab of the dashboard, showing a summary and quick actions.
-class HomeTab extends ConsumerWidget {
+class HomeTab extends ConsumerStatefulWidget {
   const HomeTab({super.key});
+
+  @override
+  ConsumerState<HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends ConsumerState<HomeTab> {
+  Map<String, dynamic> _stats = {
+    'total_documents': 0,
+    'total_pages': 0,
+    'total_size_gb': 0.0,
+    'category_count': 5,
+  };
+  List<DocumentModel> _recentlyOpened = [];
+  bool _statsLoading = true;
+  bool _recentOpenedLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+    _loadRecentlyOpened();
+  }
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -25,83 +47,137 @@ class HomeTab extends ConsumerWidget {
     return DateFormat('EEEE, d MMMM yyyy').format(DateTime.now());
   }
 
+  Future<void> _loadStats() async {
+    try {
+      final stats = await SupabaseService.instance.getDashboardStats();
+      if (!mounted) return;
+      setState(() {
+        _stats = stats;
+        _statsLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _statsLoading = false);
+      debugPrint('Dashboard stats error: $e');
+    }
+  }
+
+  Future<void> _loadRecentlyOpened() async {
+    try {
+      final docs = await PdfViewerService.instance.getRecentlyOpenedDocuments();
+      if (!mounted) return;
+      setState(() {
+        _recentlyOpened = docs;
+        _recentOpenedLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _recentOpenedLoading = false);
+      debugPrint('Recent opened docs error: $e');
+    }
+  }
+
+  String _formatTotalPages(dynamic totalPages) {
+    final pages = (totalPages is num)
+        ? totalPages.toInt()
+        : int.tryParse('$totalPages') ?? 0;
+    if (pages > 1000) {
+      return '${(pages / 1000).toStringAsFixed(1)}k';
+    }
+    return pages.toString();
+  }
+
+  String _formatTotalDocs(dynamic totalDocs) {
+    final docs = (totalDocs is num)
+        ? totalDocs.toInt()
+        : int.tryParse('$totalDocs') ?? 0;
+    return docs.toString();
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final recentAsync = ref.watch(recentScansProvider);
-    final recentFiles = recentAsync.when(
-      data: (files) => files,
-      loading: () => <File>[],
-      error: (err, stack) => <File>[],
-    );
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: 100,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildGreetingCard(isDark)
-              .animate()
-              .fadeIn(duration: 400.ms)
-              .slideY(begin: -0.04, end: 0),
-          const SizedBox(height: 16),
-          _buildStatsRow(isDark)
-              .animate()
-              .fadeIn(delay: 150.ms, duration: 400.ms)
-              .slideY(begin: 0.04, end: 0),
-          const SizedBox(height: 20),
-          Text(
-            'BROWSE',
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: AppColors.charcoal.withValues(alpha: 0.4),
-              letterSpacing: 1.2,
+    return RefreshIndicator(
+      color: AppColors.gold,
+      onRefresh: () async {
+        await Future.wait([_loadStats(), _loadRecentlyOpened()]);
+      },
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: 100,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildGreetingCard(
+              isDark,
+            ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.04, end: 0),
+            const SizedBox(height: 16),
+            _buildStatsRow(isDark)
+                .animate()
+                .fadeIn(delay: 150.ms, duration: 400.ms)
+                .slideY(begin: 0.04, end: 0),
+            const SizedBox(height: 20),
+            Text(
+              'BROWSE',
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: AppColors.charcoal.withValues(alpha: 0.4),
+                letterSpacing: 1.2,
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          _buildBigButton(
-            context: context,
-            title: 'Categories',
-            subtitle: 'Board, Trust, Town & more',
-            badge: '5',
-            icon: Icons.folder_copy_rounded,
-            isPrimary: true,
-            isDark: isDark,
-            onTap: () => context.push('/categories'),
-          ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
-          const SizedBox(height: 10),
-          _buildBigButton(
-            context: context,
-            title: 'Add New File',
-            subtitle: 'Scan or import a document',
-            icon: Icons.add_circle_outline_rounded,
-            isPrimary: false,
-            isDark: isDark,
-            onTap: () => context.go('/dashboard/add'),
-          ).animate().fadeIn(delay: 250.ms, duration: 400.ms),
-          const SizedBox(height: 24),
-
-          // ─── Recent Scans Section ──────────────────────────────────
-          _buildRecentScansHeader(context, isDark, recentFiles.length)
-              .animate()
-              .fadeIn(delay: 300.ms, duration: 400.ms),
-          const SizedBox(height: 12),
-          _buildRecentScansBody(context, isDark, recentFiles, recentAsync)
-              .animate()
-              .fadeIn(delay: 350.ms, duration: 400.ms),
-        ],
+            const SizedBox(height: 10),
+            _buildBigButton(
+              context: context,
+              title: 'Categories',
+              subtitle: 'Board, Trust, Town & more',
+              badge: null,
+              icon: Icons.folder_copy_rounded,
+              isPrimary: true,
+              isDark: isDark,
+              onTap: () => context.push('/categories'),
+            ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
+            const SizedBox(height: 10),
+            _buildBigButton(
+              context: context,
+              title: 'Add New File',
+              subtitle: 'Scan or import a document',
+              icon: Icons.add_circle_outline_rounded,
+              isPrimary: false,
+              isDark: isDark,
+              onTap: () => context.go('/dashboard/add'),
+            ).animate().fadeIn(delay: 250.ms, duration: 400.ms),
+            const SizedBox(height: 10),
+            _buildBigButton(
+              context: context,
+              title: 'Offline Files',
+              subtitle: 'Open cached documents without internet',
+              icon: Icons.cloud_done_rounded,
+              isPrimary: false,
+              isDark: isDark,
+              onTap: () => context.push('/offline-documents'),
+            ).animate().fadeIn(delay: 275.ms, duration: 400.ms),
+            const SizedBox(height: 24),
+            _buildRecentDocsHeader(
+              isDark,
+            ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
+            const SizedBox(height: 12),
+            _buildRecentDocsBody(
+              context,
+              isDark,
+            ).animate().fadeIn(delay: 350.ms, duration: 400.ms),
+          ],
+        ),
       ),
     );
   }
 
-  // ── Greeting Card ─────────────────────────────────────────────────────────
   Widget _buildGreetingCard(bool isDark) {
     return Container(
       width: double.infinity,
@@ -185,7 +261,6 @@ class HomeTab extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
               ],
             ),
           ),
@@ -196,7 +271,7 @@ class HomeTab extends ConsumerWidget {
             child: Image.asset(
               'assets/images/gda_logo.png',
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Center(
+              errorBuilder: (context, error, stackTrace) => Center(
                 child: Text(
                   'GDA',
                   style: AppTextStyles.dmSans.copyWith(
@@ -213,13 +288,20 @@ class HomeTab extends ConsumerWidget {
     );
   }
 
-  // ── Stats Row ─────────────────────────────────────────────────────────────
   Widget _buildStatsRow(bool isDark) {
+    final totalDocs = _statsLoading
+        ? '...'
+        : _formatTotalDocs(_stats['total_documents']);
+    final totalPages = _statsLoading
+        ? '...'
+        : _formatTotalPages(_stats['total_pages']);
+    const totalCategories = '5';
+
     return Row(
       children: [
         Expanded(
           child: _StatBox(
-            number: '1,284',
+            number: totalDocs,
             label: 'Documents',
             icon: Icons.folder_copy_rounded,
             iconColor: AppColors.catBoard,
@@ -229,7 +311,7 @@ class HomeTab extends ConsumerWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _StatBox(
-            number: '70.2k',
+            number: totalPages,
             label: 'Pages',
             icon: Icons.description_rounded,
             iconColor: AppColors.gdaGreen,
@@ -239,7 +321,7 @@ class HomeTab extends ConsumerWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _StatBox(
-            number: '5',
+            number: totalCategories,
             label: 'Categories',
             icon: Icons.category_rounded,
             iconColor: AppColors.gold,
@@ -250,7 +332,6 @@ class HomeTab extends ConsumerWidget {
     );
   }
 
-  // ── Big Action Button ─────────────────────────────────────────────────────
   Widget _buildBigButton({
     required BuildContext context,
     required String title,
@@ -276,7 +357,9 @@ class HomeTab extends ConsumerWidget {
               : null,
           color: isPrimary
               ? null
-              : (isDark ? AppColors.darkCard : AppColors.navyDark.withValues(alpha: 0.05)),
+              : (isDark
+                    ? AppColors.darkCard
+                    : AppColors.navyDark.withValues(alpha: 0.05)),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -327,8 +410,8 @@ class HomeTab extends ConsumerWidget {
                         color: isPrimary
                             ? Colors.white
                             : (isDark
-                                ? AppColors.darkText
-                                : AppColors.charcoal),
+                                  ? AppColors.darkText
+                                  : AppColors.charcoal),
                       ),
                     ),
                     Text(
@@ -381,12 +464,7 @@ class HomeTab extends ConsumerWidget {
     );
   }
 
-  // ── Recent Scans Header ───────────────────────────────────────────────────
-  Widget _buildRecentScansHeader(
-    BuildContext context,
-    bool isDark,
-    int count,
-  ) {
+  Widget _buildRecentDocsHeader(bool isDark) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -394,7 +472,7 @@ class HomeTab extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'RECENT SCANS',
+              'RECENT DOCUMENTS',
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
@@ -403,7 +481,9 @@ class HomeTab extends ConsumerWidget {
               ),
             ),
             Text(
-              '$count file${count == 1 ? '' : 's'} scanned locally',
+              _recentOpenedLoading
+                  ? 'Loading recent documents...'
+                  : 'Recently opened documents',
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 12,
                 color: isDark ? AppColors.darkText : AppColors.charcoal,
@@ -412,14 +492,11 @@ class HomeTab extends ConsumerWidget {
             ),
           ],
         ),
-        if (count > 0)
+        if (!_recentOpenedLoading && _recentlyOpened.isNotEmpty)
           GestureDetector(
-            onTap: () => context.push('/recent-scans'),
+            onTap: () => context.push('/dashboard/recent-documents'),
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 7,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               decoration: BoxDecoration(
                 color: AppColors.navyDark.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(20),
@@ -451,14 +528,8 @@ class HomeTab extends ConsumerWidget {
     );
   }
 
-  // ── Recent Scans Body ─────────────────────────────────────────────────────
-  Widget _buildRecentScansBody(
-    BuildContext context,
-    bool isDark,
-    List<File> files,
-    AsyncValue<List<File>> async,
-  ) {
-    if (async is AsyncLoading) {
+  Widget _buildRecentDocsBody(BuildContext context, bool isDark) {
+    if (_recentOpenedLoading) {
       return SizedBox(
         height: 180,
         child: Center(
@@ -470,7 +541,7 @@ class HomeTab extends ConsumerWidget {
       );
     }
 
-    if (files.isEmpty) {
+    if (_recentlyOpened.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
@@ -484,10 +555,7 @@ class HomeTab extends ConsumerWidget {
               offset: const Offset(0, 4),
             ),
           ],
-          border: Border.all(
-            color: AppColors.divider,
-            width: 1,
-          ),
+          border: Border.all(color: AppColors.divider, width: 1),
         ),
         child: Column(
           children: [
@@ -505,7 +573,7 @@ class HomeTab extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No Recent Files',
+              'No Recent Documents',
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -514,7 +582,7 @@ class HomeTab extends ConsumerWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Your recently scanned PDFs will appear here',
+              'Open a document to see it here',
               textAlign: TextAlign.center,
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 12,
@@ -532,104 +600,23 @@ class HomeTab extends ConsumerWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: files.length,
+        itemCount: _recentlyOpened.length,
         separatorBuilder: (context, index) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
-          final file = files[index];
-          final fileName = file.path.split(Platform.pathSeparator).last;
-          
-          return Container(
-            width: 145,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkCard : Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-              border: Border.all(
-                color: AppColors.divider,
-                width: 1,
-              ),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // PDF Preview / Icon Area
-                Expanded(child: Container(
-                    width: double.infinity,
-                    color: AppColors.navyDark.withValues(alpha: 0.03),
-                    child: Stack(
-                      children: [
-                        Center(
-                          child: Icon(
-                            Icons.picture_as_pdf_rounded,
-                            size: 48,
-                            color: AppColors.catPrivate.withValues(alpha: 0.7),
-                          ),
-                        ),
-                        // Indicator that more is there (peek effect)
-                        Positioned(
-                          right: -10,
-                          top: 20,
-                          bottom: 20,
-                          child: Container(
-                            width: 20,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Info Area
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        fileName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? AppColors.darkText : AppColors.charcoal,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.access_time_rounded,
-                            size: 10,
-                            color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                                .withValues(alpha: 0.4),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            DateFormat('MMM d, yyyy').format(file.lastModifiedSync()),
-                            style: AppTextStyles.dmSans.copyWith(
-                              fontSize: 10,
-                              color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                                  .withValues(alpha: 0.4),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          final doc = _recentlyOpened[index];
+          return _RecentDocumentCard(
+            document: doc,
+            isDark: isDark,
+            onTap: () {
+              context.push(
+                '/categories/sub/${doc.categoryId}/years/pdf',
+                extra: {
+                  'document': doc,
+                  'categoryColor': doc.categoryColor ?? AppColors.navyDark,
+                  'categoryName': doc.categoryName ?? 'Recent Documents',
+                },
+              );
+            },
           );
         },
       ),
@@ -637,142 +624,108 @@ class HomeTab extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Recent Scan Card Widget
-// ─────────────────────────────────────────────────────────────────────────────
-class _RecentScanCard extends StatelessWidget {
-  final File file;
+class _RecentDocumentCard extends StatelessWidget {
+  final DocumentModel document;
   final bool isDark;
+  final VoidCallback onTap;
 
-  const _RecentScanCard({required this.file, required this.isDark});
-
-  String _formatDate(DateTime dt) =>
-      DateFormat('dd MMM yyyy').format(dt);
-
-  String _shortName(String name) {
-    if (name.length > 20) return '${name.substring(0, 18)}…';
-    return name;
-  }
+  const _RecentDocumentCard({
+    required this.document,
+    required this.isDark,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final stat = file.statSync();
-    final name = file.uri.pathSegments.last;
-    final modDate = stat.modified;
-    final isPdf = name.toLowerCase().endsWith('.pdf');
+    final categoryColor = document.categoryColor ?? AppColors.navyDark;
 
     return GestureDetector(
-      onTap: () {
-        // Open PDF viewer
-        final doc = DocumentModel(
-          id: file.path,
-          categoryId: 'scan',
-          yearLabel: DateFormat('yyyy').format(modDate),
-          yearStart: modDate.year,
-          fileName: name,
-          filePath: file.path,
-          pageCount: 1,
-          uploadedAt: modDate,
-        );
-        context.push(
-          '/categories/sub/scan/years/pdf',
-          extra: {
-            'document': doc,
-            'categoryColor': AppColors.navyDark,
-            'categoryName': 'Recent Scans',
-          },
-        );
-      },
+      onTap: onTap,
       child: Container(
-        width: 140,
+        width: 145,
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkCard : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider, width: 0.8),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: AppColors.navyDark.withValues(alpha: 0.06),
-              blurRadius: 10,
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
+          border: Border.all(color: AppColors.divider, width: 1),
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Thumbnail area
-            Container(
-              height: 88,
-              decoration: BoxDecoration(
-                color: AppColors.navyDark.withValues(alpha: 0.07),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(15),
-                ),
-              ),
-              child: Center(
-                child: Icon(
-                  isPdf
-                      ? Icons.picture_as_pdf_rounded
-                      : Icons.image_rounded,
-                  size: 36,
-                  color: AppColors.navyDark.withValues(alpha: 0.6),
-                ),
-              ),
-            ),
-
-            // Info area
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Container(
+                width: double.infinity,
+                color: AppColors.navyDark.withValues(alpha: 0.03),
+                child: Stack(
                   children: [
-                    Text(
-                      _shortName(name),
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: isDark
-                            ? AppColors.darkText
-                            : AppColors.charcoal,
+                    Center(
+                      child: Icon(
+                        Icons.picture_as_pdf_rounded,
+                        size: 48,
+                        color: categoryColor.withValues(alpha: 0.7),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _formatDate(modDate),
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 9,
-                            color: AppColors.charcoal.withValues(alpha: 0.45),
-                          ),
+                    Positioned(
+                      right: -10,
+                      top: 20,
+                      bottom: 20,
+                      child: Container(
+                        width: 20,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        // Edit button
-                        GestureDetector(
-                          onTap: () => _openForEdit(context, name),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: AppColors.gold.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(
-                              Icons.edit_rounded,
-                              size: 13,
-                              color: AppColors.gold,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    document.fileName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? AppColors.darkText : AppColors.charcoal,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 10,
+                        color:
+                            (isDark ? AppColors.darkText : AppColors.charcoal)
+                                .withValues(alpha: 0.4),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        DateFormat('MMM d, yyyy').format(document.uploadedAt),
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 10,
+                          color:
+                              (isDark ? AppColors.darkText : AppColors.charcoal)
+                                  .withValues(alpha: 0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
@@ -780,24 +733,8 @@ class _RecentScanCard extends StatelessWidget {
       ),
     );
   }
-
-  void _openForEdit(BuildContext context, String fileName) {
-    // Navigate to scan review screen with the existing PDF path
-    context.push(
-      '/dashboard/add/review',
-      extra: {
-        'pageCount': 1,
-        'source': 'existing_pdf',
-        'imagePaths': <String>[],
-        'existingPdfPath': file.path,
-      },
-    );
-  }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Stat Box Widget
-// ─────────────────────────────────────────────────────────────────────────────
 class _StatBox extends StatelessWidget {
   final String number;
   final String label;
@@ -844,10 +781,11 @@ class _StatBox extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             number,
-            style: (isDark
-                    ? AppTextStyles.statNumberDark
-                    : AppTextStyles.statNumber)
-                .copyWith(fontSize: 20),
+            style:
+                (isDark
+                        ? AppTextStyles.statNumberDark
+                        : AppTextStyles.statNumber)
+                    .copyWith(fontSize: 20),
           ),
           const SizedBox(height: 2),
           Text(

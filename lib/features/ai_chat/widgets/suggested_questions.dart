@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/chat_provider.dart';
-import '../../../data/mock_data.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+
+const List<String> _suggestedQuestions = [
+  'When was the land trust formed?',
+  'What does Resolution 47 say?',
+  'Show Plot 47-A records',
+  'Latest board resolutions 2024',
+  'Admin orders about staff transfers',
+  'Private property transfers in 2008',
+];
 
 class SuggestedQuestions extends ConsumerWidget {
   const SuggestedQuestions({super.key});
@@ -34,7 +42,7 @@ class SuggestedQuestions extends ConsumerWidget {
           child: Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: MockData.suggestedQuestions.map((question) {
+            children: _suggestedQuestions.map((question) {
               return GestureDetector(
                 onTap: () {
                   final notifier = ref.read(chatProvider.notifier);
@@ -49,7 +57,10 @@ class SuggestedQuestions extends ConsumerWidget {
                 },
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 240),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: isDark ? AppColors.darkCard : Colors.white,
                     borderRadius: BorderRadius.circular(24),

@@ -1,14 +1,14 @@
-// lib/features/categories/pdf_viewer_screen.dart
-
-
+// ignore_for_file: prefer_final_fields, unused_field, unused_element
 import 'dart:io';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class PdfViewerScreen extends StatefulWidget {
   final DocumentModel document;
@@ -29,6 +29,112 @@ class PdfViewerScreen extends StatefulWidget {
 class _PdfViewerScreenState extends State<PdfViewerScreen> {
   int _currentPage = 1;
   bool _showThumbnails = true;
+  bool _isLoading = true;
+  bool _isDownloading = false;
+  String? _localPdfPath;
+  String? _pdfUrl;
+  String? _errorMessage;
+  String _downloadStatus = '';
+  double _downloadProgress = 0.0;
+  int _totalPages = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    PdfViewerService.instance.recordRecentlyOpened(widget.document);
+    _loadPdf();
+  }
+
+  Future<void> _loadPdf() async {
+    setState(() => _isLoading = true);
+    try {
+      if (widget.document.isLocalPath &&
+          await File(widget.document.storagePath).exists()) {
+        if (!mounted) return;
+        setState(() {
+          _localPdfPath = widget.document.storagePath;
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final localPath = await PdfViewerService.instance.getLocalPdfPath(
+        widget.document.storagePath,
+        widget.document.fileName,
+      );
+
+      if (localPath != null && mounted) {
+        setState(() {
+          _localPdfPath = localPath.path;
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final url = await PdfViewerService.instance.getSignedUrl(
+        widget.document.storagePath,
+      );
+      if (mounted) {
+        setState(() {
+          _pdfUrl = url;
+          _isLoading = false;
+          _errorMessage = url == null ? 'Failed to load document' : null;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to load document'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _downloadOffline() async {
+    if (_isDownloading) return;
+
+    setState(() {
+      _isDownloading = true;
+      _downloadStatus = 'Starting download...';
+      _downloadProgress = 0.05;
+    });
+
+    final file = await PdfViewerService.instance.downloadDocument(
+      widget.document,
+      onProgress: (progress, status) {
+        if (!mounted) return;
+        setState(() {
+          _downloadProgress = progress;
+          _downloadStatus = status;
+        });
+      },
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _isDownloading = false;
+    });
+
+    if (file != null) {
+      setState(() => _localPdfPath = file.path);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Saved for offline access')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Download failed'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +156,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
-                "${widget.document.pageCount} pages · ${widget.document.yearLabel}",
+                '${widget.document.pageCount ?? 0} pages · ${widget.document.yearLabel}',
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 9,
                   color: Colors.white.withValues(alpha: 0.5),
@@ -61,20 +167,14 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
           centerTitle: true,
           actions: [
             IconButton(
-              icon: const Icon(Icons.share, color: Colors.white),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: const Icon(Icons.download, color: Colors.white),
-              onPressed: () {},
+              icon: const Icon(Icons.download_rounded, color: Colors.white),
+              onPressed: _isDownloading ? null : _downloadOffline,
+              tooltip: 'Download offline',
             ),
             IconButton(
               icon: const Icon(Icons.view_sidebar_rounded, color: Colors.white),
-              onPressed: () {
-                setState(() {
-                  _showThumbnails = !_showThumbnails;
-                });
-              },
+              onPressed: () =>
+                  setState(() => _showThumbnails = !_showThumbnails),
             ),
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: Colors.white),
@@ -91,10 +191,6 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
               },
               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                 const PopupMenuItem<String>(
-                  value: 'add_to_favourites',
-                  child: Text('Add to Favourites'),
-                ),
-                const PopupMenuItem<String>(
                   value: 'view_file_info',
                   child: Text('View File Info'),
                 ),
@@ -108,53 +204,96 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
         ),
         body: Stack(
           children: [
-            if (File(widget.document.filePath).existsSync() && widget.document.filePath.toLowerCase().endsWith('.pdf'))
+            if (_isLoading)
+              const Center(
+                child: CircularProgressIndicator(color: AppColors.gold),
+              )
+            else if (_localPdfPath != null)
               SfPdfViewer.file(
-                File(widget.document.filePath),
+                File(_localPdfPath!),
                 canShowScrollHead: false,
                 canShowScrollStatus: false,
                 pageSpacing: 4,
+                onDocumentLoaded: (details) {
+                  if (mounted) {
+                    setState(() => _totalPages = details.document.pages.count);
+                  }
+                },
+              )
+            else if (_pdfUrl != null)
+              SfPdfViewer.network(
+                _pdfUrl!,
+                canShowScrollHead: false,
+                canShowScrollStatus: false,
+                pageSpacing: 4,
+                onDocumentLoaded: (details) {
+                  if (mounted) {
+                    setState(() => _totalPages = details.document.pages.count);
+                  }
+                },
               )
             else
-              Row(
-                children: [
-                  _ThumbnailRail(
-                    showThumbnails: _showThumbnails,
-                    pageCount: widget.document.pageCount,
-                    currentPage: _currentPage,
-                    categoryColor: widget.categoryColor,
-                    onPageSelected: (page) {
-                      setState(() {
-                        _currentPage = page;
-                      });
-                    },
+              Center(
+                child: Text(
+                  _errorMessage ?? 'Failed to load document',
+                  style: AppTextStyles.dmSans.copyWith(
+                    color: Colors.white.withValues(alpha: 0.7),
                   ),
-                  Expanded(
-                    child: _MainPdfMockArea(
-                      document: widget.document,
-                      currentPage: _currentPage,
-                      categoryColor: widget.categoryColor,
+                ),
+              ),
+            if (!_isLoading && _totalPages > 0)
+              _FloatingAskAIButton(documentId: widget.document.id),
+            if (_isDownloading)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: Material(
+                  elevation: 8,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _downloadStatus,
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.charcoal,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: _downloadProgress,
+                            minHeight: 5,
+                            backgroundColor: AppColors.divider,
+                            valueColor: const AlwaysStoppedAnimation(
+                              AppColors.gold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${(_downloadProgress * 100).clamp(0, 100).toStringAsFixed(0)}%',
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 11,
+                            color: AppColors.charcoal.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
-            if (!File(widget.document.filePath).existsSync() || !widget.document.filePath.toLowerCase().endsWith('.pdf'))
-              _BottomPageControls(
-                currentPage: _currentPage,
-                pageCount: widget.document.pageCount,
-                categoryColor: widget.categoryColor,
-                onPrevious: () {
-                  if (_currentPage > 1) {
-                    setState(() => _currentPage--);
-                  }
-                },
-                onNext: () {
-                  if (_currentPage < widget.document.pageCount) {
-                    setState(() => _currentPage++);
-                  }
-                },
-              ),
-            _FloatingAskAIButton(documentId: widget.document.id),
           ],
         ),
       ),
@@ -205,7 +344,7 @@ class _ThumbnailRail extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  "$pageNum",
+                  '$pageNum',
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 8,
                     color: isSelected
@@ -217,156 +356,6 @@ class _ThumbnailRail extends StatelessWidget {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _MainPdfMockArea extends StatelessWidget {
-  final DocumentModel document;
-  final int currentPage;
-  final Color categoryColor;
-
-  const _MainPdfMockArea({
-    required this.document,
-    required this.currentPage,
-    required this.categoryColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 16, 16, 72),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(4),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "GALIYAT DEVELOPMENT AUTHORITY",
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.charcoal,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                    Text(
-                      "ABBOTTABAD, KPK, PAKISTAN",
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 7,
-                        color: AppColors.charcoal.withValues(alpha: 0.5),
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Image.asset(
-                    'assets/images/gda_logo.png',
-                    errorBuilder: (context, error, stackTrace) {
-                      return Icon(
-                        Icons.gavel_rounded,
-                        size: 20,
-                        color: categoryColor,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-            Divider(height: 16, color: categoryColor, thickness: 1.5),
-            AppSpacing.vertical(16),
-            Center(
-              child: Column(
-                children: [
-                  Text(
-                    document.fileName.replaceAll('.pdf', ''),
-                    style: AppTextStyles.playfairDisplay.copyWith(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.charcoal,
-                    ),
-                  ),
-                  AppSpacing.vertical(4),
-                  Text(
-                    document.yearLabel,
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 11,
-                      color: AppColors.charcoal.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            AppSpacing.vertical(20),
-            _buildMockTextLine(widthFactor: 1.0, opacity: 0.15),
-            AppSpacing.vertical(6),
-            _buildMockTextLine(widthFactor: 0.9, opacity: 0.12),
-            AppSpacing.vertical(6),
-            _buildMockTextLine(widthFactor: 0.95, opacity: 0.13),
-            AppSpacing.vertical(12),
-            _buildMockTextLine(widthFactor: 0.85, opacity: 0.1),
-            AppSpacing.vertical(6),
-            _buildMockTextLine(widthFactor: 1.0, opacity: 0.12),
-            AppSpacing.vertical(6),
-            _buildMockTextLine(widthFactor: 0.7, opacity: 0.1),
-            AppSpacing.vertical(16),
-            _buildMockTextLine(widthFactor: 0.95, opacity: 0.12),
-            AppSpacing.vertical(6),
-            _buildMockTextLine(widthFactor: 0.8, opacity: 0.1),
-            AppSpacing.vertical(6),
-            _buildMockTextLine(widthFactor: 1.0, opacity: 0.13),
-            const Spacer(),
-            const Divider(),
-            AppSpacing.vertical(8),
-            Center(
-              child: Text(
-                "Page $currentPage of ${document.pageCount}",
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 9,
-                  color: AppColors.charcoal.withValues(alpha: 0.4),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMockTextLine({
-    required double widthFactor,
-    required double opacity,
-  }) {
-    return Container(
-      height: 8,
-      decoration: BoxDecoration(
-        color: AppColors.charcoal.withValues(alpha: opacity),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: FractionallySizedBox(
-        widthFactor: widthFactor,
-        alignment: Alignment.centerLeft,
-        child: Container(color: AppColors.charcoal.withValues(alpha: opacity)),
       ),
     );
   }
@@ -407,7 +396,7 @@ class _BottomPageControls extends StatelessWidget {
           children: [
             _NavButton(
               icon: Icons.chevron_left_rounded,
-              label: "Previous",
+              label: 'Previous',
               enabled: currentPage > 1,
               onTap: onPrevious,
             ),
@@ -415,7 +404,7 @@ class _BottomPageControls extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "$currentPage / $pageCount",
+                  '$currentPage / $pageCount',
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -431,7 +420,7 @@ class _BottomPageControls extends StatelessWidget {
                     borderRadius: BorderRadius.circular(2),
                   ),
                   child: FractionallySizedBox(
-                    widthFactor: currentPage / pageCount,
+                    widthFactor: pageCount == 0 ? 0 : currentPage / pageCount,
                     alignment: Alignment.centerLeft,
                     child: Container(
                       decoration: BoxDecoration(
@@ -445,7 +434,7 @@ class _BottomPageControls extends StatelessWidget {
             ),
             _NavButton(
               icon: Icons.chevron_right_rounded,
-              label: "Next",
+              label: 'Next',
               enabled: currentPage < pageCount,
               onTap: onNext,
             ),

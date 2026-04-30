@@ -6,7 +6,6 @@ import 'package:gda_vault_ai/core/router/app_router.dart';
 import 'package:gda_vault_ai/core/theme/app_theme.dart';
 import 'package:gda_vault_ai/providers/theme_provider.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/floating_bubbles_overlay.dart';
-import 'package:go_router/go_router.dart';
 
 class GdaVaultApp extends ConsumerWidget {
   const GdaVaultApp({super.key});
@@ -41,26 +40,32 @@ class _GlobalOverlay extends StatelessWidget {
 }
 
 class _BubblesVisibilityWrapper extends StatelessWidget {
-   @override
-   Widget build(BuildContext context) {
-     return ListenableBuilder(
-       listenable: AppRouter.router.routerDelegate,
-       builder: (context, child) {
-         String location = '/';
-         try {
-           location = AppRouter.router.routerDelegate.currentConfiguration.last.matchedLocation;
-         } catch (_) {}
-         
-         // Hide if we are on the chat tab or any full-screen modal like scanner/review
-         final bool shouldHide = location.contains('/chat') || 
-                                location.contains('/scanner') || 
-                                location.contains('/review') || 
-                                location.contains('/select-category') ||
-                                location.contains('/pdf-preview') ||
-                                location.contains('/pdf');
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: AppRouter.router.routerDelegate,
+      builder: (context, child) {
+        String location = '/';
+        try {
+          location = AppRouter
+              .router
+              .routerDelegate
+              .currentConfiguration
+              .last
+              .matchedLocation;
+        } catch (_) {}
 
-         return FloatingBubblesOverlay(visible: !shouldHide);
-       },
-     );
-   }
- }
+        // Hide if we are on the chat tab or any full-screen modal like scanner/review
+        final bool shouldHide =
+            location.contains('/chat') ||
+            location.contains('/scanner') ||
+            location.contains('/review') ||
+            location.contains('/select-category') ||
+            location.contains('/pdf-preview') ||
+            location.contains('/pdf');
+
+        return FloatingBubblesOverlay(visible: !shouldHide);
+      },
+    );
+  }
+}
