@@ -17,7 +17,8 @@ class ScannerScreen extends ConsumerStatefulWidget {
   ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
 }
 
-class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTickerProviderStateMixin {
+class _ScannerScreenState extends ConsumerState<ScannerScreen>
+    with SingleTickerProviderStateMixin {
   CameraController? _cameraController;
   bool _isCameraInitialized = false;
   bool _isFlashOn = false;
@@ -49,10 +50,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
       debugPrint("Camera Error: $e");
     }
 
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
   }
 
   @override
@@ -62,7 +65,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
   }
 
   Future<void> _startScan() async {
-    if (_cameraController == null || !_isCameraInitialized || _isCapturing) return;
+    if (_cameraController == null || !_isCameraInitialized || _isCapturing)
+      return;
 
     setState(() {
       _isCapturing = true;
@@ -74,12 +78,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
       final XFile photo = await _cameraController!.takePicture();
       // Add to provider
       ref.read(scanImagesProvider.notifier).add(photo.path);
-      
+
       setState(() {
         _isCapturing = false;
         _showFlashEffect = false;
       });
-      
+
       _proceedToReview(); // Go to review immediately for now to make it feel "real"
     } catch (e) {
       debugPrint("Capture Error: $e");
@@ -95,21 +99,25 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
   void _proceedToReview() {
     final scannedPages = ref.read(scanImagesProvider);
     if (scannedPages.isEmpty) return;
-    context.push('/dashboard/add/review', extra: {
-      'pageCount': scannedPages.length,
-      'source': 'scanner',
-      'imagePaths': scannedPages,
-    });
+    context.push(
+      '/dashboard/add/review',
+      extra: {
+        'pageCount': scannedPages.length,
+        'source': 'scanner',
+        'imagePaths': scannedPages,
+      },
+    );
   }
 
   void _toggleFlash() {
     if (_cameraController == null) return;
     setState(() {
       _isFlashOn = !_isFlashOn;
-      _cameraController!.setFlashMode(_isFlashOn ? FlashMode.torch : FlashMode.off);
+      _cameraController!.setFlashMode(
+        _isFlashOn ? FlashMode.torch : FlashMode.off,
+      );
     });
   }
-  
 
   @override
   @override
@@ -132,9 +140,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
             children: [
               // Top Bar
               _buildTopBar(context),
-              
+
               const Spacer(),
-              
+
               // Bottom UI Area
               Container(
                 decoration: BoxDecoration(
@@ -160,7 +168,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
     );
   }
 
-
   Widget _buildTopBar(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(
@@ -179,7 +186,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+                icon: const Icon(
+                  Icons.arrow_back_ios,
+                  color: Colors.white,
+                  size: 20,
+                ),
                 onPressed: () => context.pop(),
               ),
               Text(
@@ -203,8 +214,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
               ),
               IconButton(
                 icon: Icon(
-                  Icons.hd_outlined, 
-                  color: _isHighRes ? AppColors.gold : Colors.white
+                  Icons.hd_outlined,
+                  color: _isHighRes ? AppColors.gold : Colors.white,
                 ),
                 onPressed: _toggleHighRes,
               ),
@@ -219,22 +230,22 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
   Future<void> _toggleHighRes() async {
     if (_cameraController == null) return;
     setState(() => _isHighRes = !_isHighRes);
-    
+
     final currentFlash = _isFlashOn;
     await _cameraController!.dispose();
-    
+
     final cameras = await availableCameras();
     _cameraController = CameraController(
       cameras.first,
       _isHighRes ? ResolutionPreset.max : ResolutionPreset.high,
       enableAudio: false,
     );
-    
+
     await _cameraController!.initialize();
     if (currentFlash) {
       await _cameraController!.setFlashMode(FlashMode.torch);
     }
-    
+
     if (mounted) setState(() {});
   }
 
@@ -245,7 +256,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Spacer(),
-          
+
           // Main Capture Button (Double Ring)
           GestureDetector(
             onTap: _startScan,
@@ -257,7 +268,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
                   height: 84,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withOpacity(0.3), width: 4),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 4,
+                    ),
                   ),
                 ),
                 Container(
@@ -267,14 +281,19 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
                     shape: BoxShape.circle,
                     color: Colors.white,
                   ),
-                  child: _isCapturing 
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.navyDark, strokeWidth: 3))
-                    : null,
+                  child: _isCapturing
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.navyDark,
+                            strokeWidth: 3,
+                          ),
+                        )
+                      : null,
                 ),
               ],
             ),
           ),
-          
+
           Expanded(
             child: Align(
               alignment: Alignment.centerRight,
@@ -291,12 +310,19 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
                     border: Border.all(color: Colors.white.withOpacity(0.2)),
                     color: Colors.white.withOpacity(0.05),
                   ),
-                  child: ref.watch(scanImagesProvider).isEmpty 
-                    ? const Icon(Icons.image_outlined, color: Colors.white, size: 24)
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(7),
-                        child: Image.file(File(ref.watch(scanImagesProvider).last), fit: BoxFit.cover),
-                      ),
+                  child: ref.watch(scanImagesProvider).isEmpty
+                      ? const Icon(
+                          Icons.image_outlined,
+                          color: Colors.white,
+                          size: 24,
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(7),
+                          child: Image.file(
+                            File(ref.watch(scanImagesProvider).last),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -312,7 +338,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
         width: size.width,
         height: size.height,
         color: Colors.black,
-        child: const Center(child: CircularProgressIndicator(color: AppColors.gold)),
+        child: const Center(
+          child: CircularProgressIndicator(color: AppColors.gold),
+        ),
       );
     }
 
@@ -331,9 +359,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
       ),
     );
   }
-
-
-
 
   void _showScannedPagesSheet() {
     final scannedPages = ref.read(scanImagesProvider);
@@ -368,119 +393,202 @@ class _ScannedPagesSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final maxHeight = MediaQuery.of(context).size.height * 0.6;
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                "Scanned Pages (${scannedPages.length})",
-                style: AppTextStyles.playfairDisplay.copyWith(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              TextButton(
-                onPressed: onDone,
-                child: Text("Done →", style: AppTextStyles.dmSans.copyWith(color: AppColors.gold)),
-              ),
-            ],
-          ),
-          AppSpacing.vertical(12),
-          SizedBox(
-            height: 120,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: scannedPages.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  width: 80,
-                  height: 110,
-                  margin: const EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0EDE4),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.divider),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4),
-                    ],
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Scanned Pages (${scannedPages.length})",
+                    style: AppTextStyles.playfairDisplay.copyWith(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  child: Stack(
-                    children: [
-                      Center(child: Icon(Icons.description_rounded, size: 32, color: AppColors.charcoal.withValues(alpha: 0.2))),
-                      Positioned(
-                        bottom: 4,
-                        right: 4,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(color: AppColors.navyDark.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(4)),
-                          child: Text("p.${index + 1}", style: AppTextStyles.dmSans.copyWith(fontSize: 8, color: Colors.white)),
-                        ),
+                  TextButton(
+                    onPressed: onDone,
+                    child: Text(
+                      "Done →",
+                      style: AppTextStyles.dmSans.copyWith(
+                        color: AppColors.gold,
                       ),
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: GestureDetector(
-                          onTap: () => onDelete(index),
-                          child: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
-                            child: const Icon(Icons.close, size: 12, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              AppSpacing.vertical(12),
+              SizedBox(
+                height: 120,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: scannedPages.length,
+                  itemBuilder: (context, index) {
+                    final path = scannedPages[index];
+                    return Container(
+                      width: 80,
+                      height: 110,
+                      margin: const EdgeInsets.only(right: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0EDE4),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.divider),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 4,
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-          AppSpacing.vertical(12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.gold),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.add_a_photo, color: AppColors.gold, size: 18),
-                      AppSpacing.horizontal(8),
-                      Text("Add More", style: AppTextStyles.dmSans.copyWith(color: AppColors.gold)),
-                    ],
-                  ),
+                      child: Stack(
+                        children: [
+                          // show real captured thumbnail if file exists
+                          if (path.isNotEmpty && File(path).existsSync())
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(
+                                File(path),
+                                width: 80,
+                                height: 110,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          else
+                            Center(
+                              child: Icon(
+                                Icons.description_rounded,
+                                size: 32,
+                                color: AppColors.charcoal.withValues(
+                                  alpha: 0.2,
+                                ),
+                              ),
+                            ),
+                          Positioned(
+                            bottom: 4,
+                            right: 4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.navyDark.withValues(
+                                  alpha: 0.7,
+                                ),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                "p.${index + 1}",
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 8,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () => onDelete(index),
+                              child: Container(
+                                width: 20,
+                                height: 20,
+                                decoration: const BoxDecoration(
+                                  color: Colors.redAccent,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
-              AppSpacing.horizontal(12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: onDone,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.gold,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              AppSpacing.vertical(12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.gold),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.add_a_photo,
+                            color: AppColors.gold,
+                            size: 18,
+                          ),
+                          AppSpacing.horizontal(8),
+                          Text(
+                            "Add More",
+                            style: AppTextStyles.dmSans.copyWith(
+                              color: AppColors.gold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.check_rounded, color: AppColors.navyDark, size: 18),
-                      AppSpacing.horizontal(8),
-                      Text("Review & Save", style: AppTextStyles.dmSans.copyWith(color: AppColors.navyDark, fontWeight: FontWeight.bold)),
-                    ],
+                  AppSpacing.horizontal(12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: onDone,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.gold,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.check_rounded,
+                            color: AppColors.navyDark,
+                            size: 18,
+                          ),
+                          AppSpacing.horizontal(8),
+                          Text(
+                            "Review & Save",
+                            style: AppTextStyles.dmSans.copyWith(
+                              color: AppColors.navyDark,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

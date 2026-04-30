@@ -11,12 +11,18 @@ class CategorySelectorSheet extends ConsumerWidget {
   String _getCatDocCount(String id) {
     // Mock counts for realism
     switch (id) {
-      case 'board-authority': return "452";
-      case 'town-plots': return "1,284";
-      case 'administration': return "89";
-      case 'private-properties': return "215";
-      case 'trust-minutes': return "342";
-      default: return "0";
+      case 'board-authority':
+        return "452";
+      case 'town-plots':
+        return "1,284";
+      case 'administration':
+        return "89";
+      case 'private-properties':
+        return "215";
+      case 'trust-minutes':
+        return "342";
+      default:
+        return "0";
     }
   }
 
@@ -25,7 +31,9 @@ class CategorySelectorSheet extends ConsumerWidget {
     final chatState = ref.watch(chatProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final selectedCount = chatState.selectedCategories.length;
-    final selectedCatNames = chatState.selectedCategories.map((c) => c.shortName).join(', ');
+    final selectedCatNames = chatState.selectedCategories
+        .map((c) => c.shortName)
+        .join(', ');
 
     return Container(
       decoration: BoxDecoration(
@@ -77,7 +85,10 @@ class CategorySelectorSheet extends ConsumerWidget {
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 9,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.navyDark,
                       borderRadius: BorderRadius.circular(10),
@@ -112,7 +123,8 @@ class CategorySelectorSheet extends ConsumerWidget {
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: () => ref.read(chatProvider.notifier).selectAllCategories(),
+                      onTap: () =>
+                          ref.read(chatProvider.notifier).selectAllCategories(),
                       child: Text(
                         "Select All",
                         style: AppTextStyles.dmSans.copyWith(
@@ -125,11 +137,14 @@ class CategorySelectorSheet extends ConsumerWidget {
                     const SizedBox(width: 4),
                     Text(
                       "·",
-                      style: TextStyle(color: AppColors.charcoal.withValues(alpha: 0.3)),
+                      style: TextStyle(
+                        color: AppColors.charcoal.withValues(alpha: 0.3),
+                      ),
                     ),
                     const SizedBox(width: 4),
                     GestureDetector(
-                      onTap: () => ref.read(chatProvider.notifier).clearAllCategories(),
+                      onTap: () =>
+                          ref.read(chatProvider.notifier).clearAllCategories(),
                       child: Text(
                         "Clear",
                         style: AppTextStyles.dmSans.copyWith(
@@ -143,53 +158,72 @@ class CategorySelectorSheet extends ConsumerWidget {
               ],
             ),
           ),
-          // Category List
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: chatState.categories.map((cat) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
-                  child: _buildCategoryRow(ref, cat),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Search Scope Summary
-          if (selectedCount > 0)
-            Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCard : AppColors.navyDark.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.divider, width: 0.8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.search_rounded,
-                      size: 14,
-                      color: AppColors.charcoal.withValues(alpha: 0.4),
+          // Category List (scrollable to avoid overflow on small screens)
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: chatState.categories.map((cat) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10.0),
+                          child: _buildCategoryRow(ref, cat),
+                        );
+                      }).toList(),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        "Searching across $selectedCount ${selectedCount == 1 ? 'category' : 'categories'}: $selectedCatNames",
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 11,
-                          color: AppColors.charcoal.withValues(alpha: 0.55),
+                  ),
+                  const SizedBox(height: 20),
+                  // Search Scope Summary
+                  if (selectedCount > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: 16,
+                        right: 16,
+                        bottom: 20,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.darkCard
+                              : AppColors.navyDark.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.divider,
+                            width: 0.8,
+                          ),
                         ),
-                        maxLines: 2,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.search_rounded,
+                              size: 14,
+                              color: AppColors.charcoal.withValues(alpha: 0.4),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Searching across $selectedCount ${selectedCount == 1 ? 'category' : 'categories'}: $selectedCatNames",
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 11,
+                                  color: AppColors.charcoal.withValues(
+                                    alpha: 0.55,
+                                  ),
+                                ),
+                                maxLines: 2,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
+                ],
               ),
             ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
+          ),
         ],
       ),
     );
@@ -202,10 +236,14 @@ class CategorySelectorSheet extends ConsumerWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: cat.isSelected ? cat.color.withValues(alpha: 0.07) : Colors.transparent,
+          color: cat.isSelected
+              ? cat.color.withValues(alpha: 0.07)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: cat.isSelected ? cat.color.withValues(alpha: 0.3) : AppColors.divider,
+            color: cat.isSelected
+                ? cat.color.withValues(alpha: 0.3)
+                : AppColors.divider,
             width: cat.isSelected ? 1.2 : 0.8,
           ),
         ),
@@ -216,14 +254,18 @@ class CategorySelectorSheet extends ConsumerWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: cat.color.withValues(alpha: cat.isSelected ? 0.15 : 0.08),
+                color: cat.color.withValues(
+                  alpha: cat.isSelected ? 0.15 : 0.08,
+                ),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
                 child: Icon(
                   cat.icon,
                   size: 20,
-                  color: cat.color.withValues(alpha: cat.isSelected ? 1.0 : 0.6),
+                  color: cat.color.withValues(
+                    alpha: cat.isSelected ? 1.0 : 0.6,
+                  ),
                 ),
               ),
             ),
@@ -237,8 +279,12 @@ class CategorySelectorSheet extends ConsumerWidget {
                     cat.name,
                     style: AppTextStyles.dmSans.copyWith(
                       fontSize: 14,
-                      fontWeight: cat.isSelected ? FontWeight.bold : FontWeight.w500,
-                      color: cat.isSelected ? AppColors.charcoal : AppColors.charcoal.withValues(alpha: 0.7),
+                      fontWeight: cat.isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
+                      color: cat.isSelected
+                          ? AppColors.charcoal
+                          : AppColors.charcoal.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -267,7 +313,11 @@ class CategorySelectorSheet extends ConsumerWidget {
               ),
               child: cat.isSelected
                   ? const Center(
-                      child: Icon(Icons.check_rounded, size: 13, color: Colors.white),
+                      child: Icon(
+                        Icons.check_rounded,
+                        size: 13,
+                        color: Colors.white,
+                      ),
                     )
                   : null,
             ),

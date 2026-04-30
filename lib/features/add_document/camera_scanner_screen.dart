@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:camera/camera.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
@@ -73,9 +76,25 @@ class _CameraScannerScreenState extends State<CameraScannerScreen>
 
       final image = await _cameraController!.takePicture();
 
+      String pathToAdd = image.path;
+      try {
+        final bytes = await File(image.path).readAsBytes();
+        img.Image? decoded = img.decodeImage(bytes);
+        if (decoded != null) {
+          final fixed = img.bakeOrientation(decoded);
+          final tempDir = await getTemporaryDirectory();
+          final outPath =
+              '${tempDir.path}/capt_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          await File(outPath).writeAsBytes(img.encodeJpg(fixed, quality: 95));
+          pathToAdd = outPath;
+        }
+      } catch (e) {
+        debugPrint('Capture orientation fix failed: $e');
+      }
+
       if (mounted) {
         setState(() {
-          _scannedImagePaths.add(image.path);
+          _scannedImagePaths.add(pathToAdd);
           _isCapturing = false;
         });
 
