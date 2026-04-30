@@ -20,38 +20,35 @@ class CategoriesScreen extends StatelessWidget {
       canPop: true,
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-        appBar: AppBar(
-          backgroundColor: AppColors.navyDark,
-          elevation: 0,
-          leading: const BackButton(color: Colors.white),
-          title: Column(
-            children: [
-              Text(
-                "Categories",
-                style: AppTextStyles.playfairDisplay.copyWith(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                "All Files",
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 9,
-                  color: Colors.white.withValues(alpha: 0.5),
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ],
-          ),
-          centerTitle: true,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(0.8),
-            child: Container(color: AppColors.gold.withValues(alpha: 0.25), height: 0.8),
-          ),
-        ),
         body: Column(
           children: [
+            // CATEGORIES HEADER (merges visually with HomeAppBar)
+            Container(
+              width: double.infinity,
+              color: AppColors.navyDark,
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Column(
+                children: [
+                  Text(
+                    "Categories",
+                    style: AppTextStyles.playfairDisplay.copyWith(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    "All Files",
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontSize: 9,
+                      color: Colors.white.withValues(alpha: 0.5),
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(color: AppColors.gold.withValues(alpha: 0.25), height: 0.8),
             // TOP INFO BAR
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),

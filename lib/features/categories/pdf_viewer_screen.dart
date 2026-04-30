@@ -1,6 +1,8 @@
 // lib/features/categories/pdf_viewer_screen.dart
 
 
+import 'dart:io';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
@@ -106,43 +108,52 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
         ),
         body: Stack(
           children: [
-            Row(
-              children: [
-                _ThumbnailRail(
-                  showThumbnails: _showThumbnails,
-                  pageCount: widget.document.pageCount,
-                  currentPage: _currentPage,
-                  categoryColor: widget.categoryColor,
-                  onPageSelected: (page) {
-                    setState(() {
-                      _currentPage = page;
-                    });
-                  },
-                ),
-                Expanded(
-                  child: _MainPdfMockArea(
-                    document: widget.document,
+            if (File(widget.document.filePath).existsSync() && widget.document.filePath.toLowerCase().endsWith('.pdf'))
+              SfPdfViewer.file(
+                File(widget.document.filePath),
+                canShowScrollHead: false,
+                canShowScrollStatus: false,
+                pageSpacing: 4,
+              )
+            else
+              Row(
+                children: [
+                  _ThumbnailRail(
+                    showThumbnails: _showThumbnails,
+                    pageCount: widget.document.pageCount,
                     currentPage: _currentPage,
                     categoryColor: widget.categoryColor,
+                    onPageSelected: (page) {
+                      setState(() {
+                        _currentPage = page;
+                      });
+                    },
                   ),
-                ),
-              ],
-            ),
-            _BottomPageControls(
-              currentPage: _currentPage,
-              pageCount: widget.document.pageCount,
-              categoryColor: widget.categoryColor,
-              onPrevious: () {
-                if (_currentPage > 1) {
-                  setState(() => _currentPage--);
-                }
-              },
-              onNext: () {
-                if (_currentPage < widget.document.pageCount) {
-                  setState(() => _currentPage++);
-                }
-              },
-            ),
+                  Expanded(
+                    child: _MainPdfMockArea(
+                      document: widget.document,
+                      currentPage: _currentPage,
+                      categoryColor: widget.categoryColor,
+                    ),
+                  ),
+                ],
+              ),
+            if (!File(widget.document.filePath).existsSync() || !widget.document.filePath.toLowerCase().endsWith('.pdf'))
+              _BottomPageControls(
+                currentPage: _currentPage,
+                pageCount: widget.document.pageCount,
+                categoryColor: widget.categoryColor,
+                onPrevious: () {
+                  if (_currentPage > 1) {
+                    setState(() => _currentPage--);
+                  }
+                },
+                onNext: () {
+                  if (_currentPage < widget.document.pageCount) {
+                    setState(() => _currentPage++);
+                  }
+                },
+              ),
             _FloatingAskAIButton(documentId: widget.document.id),
           ],
         ),

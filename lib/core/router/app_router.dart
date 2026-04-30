@@ -9,12 +9,13 @@ import 'package:gda_vault_ai/features/categories/year_list_screen.dart';
 import 'package:gda_vault_ai/features/categories/pdf_viewer_screen.dart';
 import 'package:gda_vault_ai/features/add_document/add_screen.dart';
 import 'package:gda_vault_ai/features/add_document/scanner_screen.dart';
-import 'package:gda_vault_ai/features/add_document/camera_scanner_screen.dart';
 import 'package:gda_vault_ai/features/add_document/scan_review_screen.dart';
+import 'package:gda_vault_ai/features/add_document/scan_pdf_preview_screen.dart';
 import 'package:gda_vault_ai/features/add_document/category_selector_screen.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/home_tab.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/settings_tab.dart';
 import 'package:gda_vault_ai/features/ai_chat/chat_screen.dart';
+import 'package:gda_vault_ai/features/recent_scans/recent_scans_list_screen.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
 
 /// Manages the routing logic for the application.
@@ -52,52 +53,52 @@ class AppRouter {
             name: 'settings',
             builder: (context, state) => const SettingsTab(),
           ),
-        ],
-      ),
-
-      // Categories flow — OUTSIDE shell (full screen, has own back)
-      GoRoute(
-        path: '/categories',
-        name: 'categories',
-        builder: (context, state) => const CategoriesScreen(),
-        routes: [
+          
+          // Categories flow — INSIDE shell for persistent nav
           GoRoute(
-            path: 'sub/:categoryId',
-            name: 'subcategory',
-            builder: (context, state) {
-              final extra = state.extra as Map<String, dynamic>;
-              return SubcategoryScreen(
-                categoryId: state.pathParameters['categoryId']!,
-                categoryName: extra['categoryName'] as String,
-              );
-            },
+            path: '/categories',
+            name: 'categories',
+            builder: (context, state) => const CategoriesScreen(),
             routes: [
               GoRoute(
-                path: 'years',
-                name: 'years',
+                path: 'sub/:categoryId',
+                name: 'subcategory',
                 builder: (context, state) {
                   final extra = state.extra as Map<String, dynamic>;
-                  return YearListScreen(
+                  return SubcategoryScreen(
                     categoryId: state.pathParameters['categoryId']!,
                     categoryName: extra['categoryName'] as String,
-                    categoryColor: extra['categoryColor'] as Color,
-                    yearFrom: extra['yearFrom'] as int,
-                    yearTo: extra['yearTo'] as int?,
-                    subCategoryName: extra['subCategoryName'] as String?,
                   );
                 },
                 routes: [
                   GoRoute(
-                    path: 'pdf',
-                    name: 'pdf',
+                    path: 'years',
+                    name: 'years',
                     builder: (context, state) {
                       final extra = state.extra as Map<String, dynamic>;
-                      return PdfViewerScreen(
-                        document: extra['document'] as DocumentModel,
-                        categoryColor: extra['categoryColor'] as Color,
+                      return YearListScreen(
+                        categoryId: state.pathParameters['categoryId']!,
                         categoryName: extra['categoryName'] as String,
+                        categoryColor: extra['categoryColor'] as Color,
+                        yearFrom: extra['yearFrom'] as int,
+                        yearTo: extra['yearTo'] as int?,
+                        subCategoryName: extra['subCategoryName'] as String?,
                       );
                     },
+                    routes: [
+                      GoRoute(
+                        path: 'pdf',
+                        name: 'pdf',
+                        builder: (context, state) {
+                          final extra = state.extra as Map<String, dynamic>;
+                          return PdfViewerScreen(
+                            document: extra['document'] as DocumentModel,
+                            categoryColor: extra['categoryColor'] as Color,
+                            categoryName: extra['categoryName'] as String,
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -106,29 +107,37 @@ class AppRouter {
         ],
       ),
 
-      // Add document flow (Full Screen)
+      // Add document flow (Full Screen - OUTSIDE shell)
       GoRoute(
         path: '/dashboard/add/scanner',
         name: 'scanner',
         builder: (context, state) => const ScannerScreen(),
       ),
       GoRoute(
-        path: '/dashboard/add/camera-scanner',
-        name: 'camera-scanner',
-        builder: (context, state) => const CameraScannerScreen(),
-      ),
-      GoRoute(
         path: '/dashboard/add/review',
         name: 'review',
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>;
-          final imagePaths =
-              (extra['imagePaths'] as List<dynamic>?)?.cast<String>() ??
-              const <String>[];
+          final extra = state.extra as Map<String, dynamic>? ?? {};
           return ScanReviewScreen(
-            pageCount: extra['pageCount'] as int,
-            source: extra['source'] as String,
-            imagePaths: imagePaths,
+            pageCount: extra['pageCount'] as int? ?? 1,
+            source: extra['source'] as String? ?? 'scanner',
+            imagePaths: List<String>.from(extra['imagePaths'] as List? ?? []),
+            existingPdfPath: extra['existingPdfPath'] as String?,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/dashboard/add/pdf-preview',
+        name: 'pdf-preview',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return ScanPdfPreviewScreen(
+            imagePaths: List<String>.from(
+              extra['imagePaths'] as List? ?? []),
+            fileName: extra['fileName'] as String?
+              ?? 'GDA_Scan.pdf',
+            source: extra['source'] as String? ?? 'scanner',
+            pageCount: extra['pageCount'] as int? ?? 1,
           );
         },
       ),
@@ -145,6 +154,14 @@ class AppRouter {
           );
         },
       ),
+      
+      // Recent Scans full list (See All - OUTSIDE shell)
+      GoRoute(
+        path: '/recent-scans',
+        name: 'recent-scans',
+        builder: (context, state) => const RecentScansListScreen(),
+      ),
+      
       // Chat screen as full screen if accessed directly from home FAB or PDF viewer
       GoRoute(
         path: '/chat',

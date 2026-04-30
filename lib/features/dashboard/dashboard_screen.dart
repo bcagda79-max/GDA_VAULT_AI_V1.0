@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/ai_chat_fab.dart';
+import 'package:gda_vault_ai/features/dashboard/widgets/floating_bubbles_overlay.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/gda_bottom_nav.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/home_app_bar.dart';
 
@@ -20,9 +21,11 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _getCurrentIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    if (location.startsWith('/dashboard/add')) return 1;
-    if (location.startsWith('/dashboard/chat')) return 2;
-    if (location.startsWith('/dashboard/settings')) return 3;
+    if (location.startsWith('/categories')) return 1;
+    if (location.startsWith('/dashboard/add')) return 2;
+    if (location.startsWith('/dashboard/chat') || location.startsWith('/chat'))
+      return 3;
+    if (location.startsWith('/dashboard/settings')) return 4;
     return 0;
   }
 
@@ -32,12 +35,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         context.go('/dashboard');
         break;
       case 1:
-        context.go('/dashboard/add');
+        context.go('/categories');
         break;
       case 2:
-        context.go('/dashboard/chat');
+        context.go('/dashboard/add');
         break;
       case 3:
+        context.go('/dashboard/chat');
+        break;
+      case 4:
         context.go('/dashboard/settings');
         break;
     }
@@ -71,7 +77,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               "Cancel",
-              style: TextStyle(color: AppColors.charcoal.withValues(alpha: 0.5)),
+              style: TextStyle(
+                color: AppColors.charcoal.withValues(alpha: 0.5),
+              ),
             ),
           ),
           TextButton(
@@ -89,10 +97,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  bool _shouldHideUI(BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
+    // Strictly hide on scanner, review, category selection, and PDF viewer
+    return location.contains('/scanner') ||
+        location.contains('/review') ||
+        location.contains('/select-category') ||
+        location.contains('/pdf-preview') ||
+        location.contains('/pdf');
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentIndex = _getCurrentIndex(context);
+    final hideUI = _shouldHideUI(context);
 
     return PopScope(
       canPop: false,
@@ -106,17 +125,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       },
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-        appBar: HomeAppBar(currentIndex: currentIndex),
+        appBar: hideUI ? null : HomeAppBar(currentIndex: currentIndex),
         body: Stack(
           children: [
             widget.child,
-            const Positioned(bottom: 75, right: 16, child: AiChatFab()),
+            if (!hideUI && currentIndex != 3) // Don't show chat FAB if already on chat tab
+              const Positioned(bottom: 25, right: 10, child: AiChatFab()),
           ],
         ),
-        bottomNavigationBar: GdaBottomNav(
-          currentIndex: currentIndex,
-          onTap: _onTabTapped,
-        ),
+        bottomNavigationBar: hideUI
+            ? null
+            : GdaBottomNav(
+                currentIndex: currentIndex,
+                onTap: _onTabTapped,
+              ),
       ),
     );
   }

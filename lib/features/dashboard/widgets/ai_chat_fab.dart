@@ -11,81 +11,42 @@ class AiChatFab extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => context.go('/dashboard/chat'),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Outer pulse ring
+      child:
           Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.gold.withValues(alpha: 0.3),
-                width: 1.5,
-              ),
-            ),
-          )
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.navyDark, Color(0xFF2A4A8B)],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.navyDark.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1.5,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.chat_bubble_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              )
               .animate(onPlay: (c) => c.repeat(reverse: true))
-              .scale(
-                begin: const Offset(0.95, 0.95),
-                end: const Offset(1.05, 1.05),
-                duration: 1500.ms,
+              .moveY(
+                begin: -3,
+                end: 3,
+                duration: 2000.ms,
                 curve: Curves.easeInOut,
               ),
-
-          // Main button
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF1A3A6B), AppColors.navyDark],
-              ),
-              border: Border.all(
-                color: AppColors.gold.withValues(alpha: 0.5),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.gold.withValues(alpha: 0.25),
-                  blurRadius: 16,
-                  spreadRadius: 2,
-                ),
-                BoxShadow(
-                  color: AppColors.navyDark.withValues(alpha: 0.4),
-                  blurRadius: 8,
-                ),
-              ],
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.auto_awesome_rounded,
-                size: 22,
-                color: AppColors.gold,
-              ),
-            ),
-          ),
-
-          // Green dot badge top-right
-          Positioned(
-            top: 2,
-            right: 2,
-            child: Container(
-              width: 9,
-              height: 9,
-              decoration: BoxDecoration(
-                color: AppColors.gdaGreenMid,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.navyDark, width: 1.5),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

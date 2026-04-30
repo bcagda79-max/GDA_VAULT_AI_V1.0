@@ -57,7 +57,7 @@ class AddScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.navyDark,
         elevation: 0,
-        leading: const BackButton(color: Colors.white),
+        automaticallyImplyLeading: false,
         title: Column(
           children: [
             Text(
