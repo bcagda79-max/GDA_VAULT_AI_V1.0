@@ -179,13 +179,13 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: Colors.white),
               onSelected: (value) {
-                if (value == 'ask_ai') {
-                  context.push(
-                    '/chat',
-                    extra: {
-                      'documentId': widget.document.id,
-                      'from': 'pdf_viewer',
-                    },
+                if (value == 'view_file_info') {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '${widget.document.fileName} • ${widget.document.yearLabel}',
+                      ),
+                    ),
                   );
                 }
               },
@@ -193,10 +193,6 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                 const PopupMenuItem<String>(
                   value: 'view_file_info',
                   child: Text('View File Info'),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'ask_ai',
-                  child: Text('Ask AI about this document'),
                 ),
               ],
             ),
@@ -241,8 +237,11 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                   ),
                 ),
               ),
-            if (!_isLoading && _totalPages > 0)
-              _FloatingAskAIButton(documentId: widget.document.id),
+            if (!_isLoading && _totalPages > 0 && !widget.document.isLocalPath)
+              _BottomAskAIButton(
+                documentId: widget.document.id,
+                bottomOffset: _isDownloading ? 110 : 14,
+              ),
             if (_isDownloading)
               Positioned(
                 left: 16,
@@ -482,56 +481,46 @@ class _NavButton extends StatelessWidget {
   }
 }
 
-class _FloatingAskAIButton extends StatelessWidget {
+class _BottomAskAIButton extends StatelessWidget {
   final String documentId;
-  const _FloatingAskAIButton({required this.documentId});
+  final double bottomOffset;
+
+  const _BottomAskAIButton({
+    required this.documentId,
+    required this.bottomOffset,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      bottom: 80,
+      left: 16,
       right: 16,
-      child: GestureDetector(
-        onTap: () => context.push(
-          '/chat',
-          extra: {'documentId': documentId, 'from': 'pdf_viewer'},
-        ),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.navyDark, Color(0xFF1A3A6B)],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: AppColors.gdaGold.withValues(alpha: 0.4),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.gdaGold.withValues(alpha: 0.2),
-                blurRadius: 12,
-                spreadRadius: 2,
-              ),
-            ],
+      bottom: bottomOffset,
+      child: SizedBox(
+        height: 46,
+        child: ElevatedButton.icon(
+          onPressed: () => context.push(
+            '/chat',
+            extra: {'documentId': documentId, 'from': 'pdf_viewer'},
           ),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.auto_awesome,
-                size: 16,
-                color: AppColors.gdaGold,
-              ),
-              AppSpacing.horizontal(6),
-              Text(
-                "Ask AI",
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.navyDark,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(color: AppColors.gdaGold.withValues(alpha: 0.5)),
+            ),
+            elevation: 8,
+            shadowColor: AppColors.gdaGold.withValues(alpha: 0.25),
+          ),
+          icon: const Icon(Icons.auto_awesome, color: AppColors.gdaGold),
+          label: Text(
+            'Ask AI',
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
           ),
         ),
       ),

@@ -76,14 +76,7 @@ class _YearListScreenState extends State<YearListScreen> {
       final years = docs.map((d) => d.yearStart).toSet().toList()
         ..sort((a, b) => b.compareTo(a));
 
-      final startYear = widget.yearFrom;
-      final endYear =
-          widget.yearTo ??
-          (years.isNotEmpty ? years.first : DateTime.now().year);
-      final folders = <int>[];
-      for (var year = endYear; year >= startYear; year--) {
-        folders.add(year);
-      }
+      final folders = years;
 
       if (!mounted) return;
       setState(() {
@@ -497,50 +490,93 @@ class _YearFolderStrip extends StatelessWidget {
     if (yearFolders.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      height: 86,
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 6),
+      height: 116,
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 10),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: yearFolders.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final year = yearFolders[index];
           final isSelected = selectedYear == year;
           return GestureDetector(
             onTap: () => onSelected(year),
             child: Container(
-              width: 94,
-              padding: const EdgeInsets.all(12),
+              width: 134,
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.navyDark : Colors.white,
-                borderRadius: BorderRadius.circular(14),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isSelected
+                      ? [
+                          AppColors.navyDark,
+                          AppColors.navyDark.withValues(alpha: 0.88),
+                        ]
+                      : [Colors.white, Colors.white],
+                ),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isSelected ? AppColors.navyDark : AppColors.divider,
+                  color: isSelected
+                      ? AppColors.gdaGold.withValues(alpha: 0.45)
+                      : AppColors.divider,
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+                    color: Colors.black.withValues(
+                      alpha: isSelected ? 0.16 : 0.06,
+                    ),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.folder_rounded,
-                    color: isSelected ? Colors.white : AppColors.gold,
-                    size: 20,
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.white.withValues(alpha: 0.14)
+                          : AppColors.gold.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.folder_rounded,
+                      color: isSelected ? Colors.white : AppColors.gold,
+                      size: 21,
+                    ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '$year',
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : AppColors.charcoal,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$year',
+                          style: AppTextStyles.playfairDisplay.copyWith(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.charcoal,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Folder',
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 10,
+                            color: isSelected
+                                ? Colors.white.withValues(alpha: 0.75)
+                                : AppColors.charcoal.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

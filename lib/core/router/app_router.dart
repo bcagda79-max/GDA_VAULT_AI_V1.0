@@ -61,6 +61,12 @@ class AppRouter {
             builder: (context, state) => const RecentDocumentsScreen(),
           ),
 
+          GoRoute(
+            path: '/dashboard/offline-documents',
+            name: 'offline-documents',
+            builder: (context, state) => const OfflineDocumentsScreen(),
+          ),
+
           // Categories flow — INSIDE shell for persistent nav
           GoRoute(
             path: '/categories',
@@ -169,12 +175,6 @@ class AppRouter {
         path: '/recent-scans',
         name: 'recent-scans',
         builder: (context, state) => const RecentScansListScreen(),
-      ),
-
-      GoRoute(
-        path: '/offline-documents',
-        name: 'offline-documents',
-        builder: (context, state) => const OfflineDocumentsScreen(),
       ),
 
       // Chat screen as full screen if accessed directly from home FAB or PDF viewer

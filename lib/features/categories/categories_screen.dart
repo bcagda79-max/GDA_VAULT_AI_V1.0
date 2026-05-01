@@ -110,120 +110,249 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       canPop: true,
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-        body: Column(
+        body: Stack(
           children: [
-            Container(
-              width: double.infinity,
-              color: AppColors.navyDark,
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                children: [
-                  Text(
-                    'Categories',
-                    style: AppTextStyles.playfairDisplay.copyWith(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+            Positioned(
+              top: -60,
+              left: -50,
+              child: IgnorePointer(
+                child: Container(
+                  width: 190,
+                  height: 190,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        AppColors.gold.withValues(alpha: isDark ? 0.16 : 0.09),
+                        Colors.transparent,
+                      ],
                     ),
                   ),
-                  Text(
-                    'All Files',
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 9,
-                      color: Colors.white.withValues(alpha: 0.5),
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              color: AppColors.gold.withValues(alpha: 0.25),
-              height: 0.8,
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCard : Colors.white,
-                border: Border(
-                  bottom: BorderSide(color: AppColors.divider, width: 0.8),
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.folder_copy_rounded,
-                        size: 14,
-                        color: AppColors.catBoard,
+            ),
+            Positioned(
+              top: 240,
+              right: -70,
+              child: IgnorePointer(
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        AppColors.navyLight.withValues(alpha: isDark ? 0.12 : 0.06),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.navyDark, AppColors.navyLight],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.navyDark.withValues(alpha: 0.24),
+                        blurRadius: 18,
+                        offset: const Offset(0, 5),
                       ),
-                      const SizedBox(width: 6),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
                       Text(
-                        'All Files · ${_topCategories.length} Categories',
+                        'Categories',
+                        style: AppTextStyles.playfairDisplay.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Browse all document families',
                         style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 12,
-                          color:
-                              (isDark ? AppColors.darkText : AppColors.charcoal)
-                                  .withValues(alpha: 0.55),
+                          fontSize: 9,
+                          color: Colors.white.withValues(alpha: 0.58),
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 9,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.08),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.folder_copy_rounded,
+                                    size: 15,
+                                    color: AppColors.gdaGold,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'All Files · ${_topCategories.length} Categories',
+                                    style: AppTextStyles.dmSans.copyWith(
+                                      fontSize: 12,
+                                      color: Colors.white.withValues(alpha: 0.82),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.gdaGold.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                '$totalDocs Documents',
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.gdaGold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.catBoard.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '$totalDocs Documents',
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.catBoard,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: _isLoading
-                  ? _CategoriesLoadingList(isDark: isDark)
-                  : _topCategories.isEmpty
-                  ? _CategoriesEmptyState(
-                      isDark: isDark,
-                      onRetry: _loadCategories,
-                    )
-                  : RefreshIndicator(
-                      color: AppColors.gold,
-                      onRefresh: _loadCategories,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 16,
+                ),
+                Expanded(
+                  child: _isLoading
+                      ? _CategoriesLoadingList(isDark: isDark)
+                      : _topCategories.isEmpty
+                      ? _CategoriesEmptyState(
+                          isDark: isDark,
+                          onRetry: _loadCategories,
+                        )
+                      : RefreshIndicator(
+                          color: AppColors.gold,
+                          onRefresh: _loadCategories,
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+                            children: [
+                              _buildSectionHeader(
+                                context,
+                                isDark,
+                                title: 'Folders',
+                                subtitle: 'Tap any category to open its documents',
+                              ),
+                              const SizedBox(height: 12),
+                              ...List.generate(_topCategories.length, (index) {
+                                final category = _topCategories[index];
+                                return _buildCategoryItem(
+                                  context,
+                                  category,
+                                  index,
+                                  isDark,
+                                  subCount: _subCountByParent[category.id] ?? 0,
+                                );
+                              }),
+                            ],
+                          ),
                         ),
-                        itemCount: _topCategories.length,
-                        itemBuilder: (context, index) {
-                          final category = _topCategories[index];
-                          return _buildCategoryItem(
-                            context,
-                            category,
-                            index,
-                            isDark,
-                            subCount: _subCountByParent[category.id] ?? 0,
-                          );
-                        },
-                      ),
-                    ),
+                ),
+              ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(
+    BuildContext context,
+    bool isDark, {
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title.toUpperCase(),
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.charcoal.withValues(alpha: 0.42),
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 12,
+                  color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                      .withValues(alpha: 0.55),
+                ),
+              ),
+            ],
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.navyDark.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.navyDark.withValues(alpha: 0.08),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 12,
+                  color: AppColors.gdaGold,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  '${_topCategories.length} found',
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.navyDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -236,189 +365,155 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     required int subCount,
   }) {
     return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkCard : Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.divider, width: 0.8),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.navyDark.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            isDark ? AppColors.darkCard : Colors.white,
+            category.color.withValues(alpha: isDark ? 0.82 : 0.72),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: category.color.withValues(alpha: 0.26),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 5),
           ),
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(14),
-              splashColor: category.color.withValues(alpha: 0.08),
-              onTap: () => _navigateToCategory(context, category),
-              child: IntrinsicHeight(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 5,
-                      decoration: BoxDecoration(
-                        color: category.color,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(14),
-                          bottomLeft: Radius.circular(14),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 16,
-                      ),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: category.color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          category.iconData,
-                          size: 22,
-                          color: category.color,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 14, bottom: 14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    category.name,
-                                    style: AppTextStyles.dmSans.copyWith(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark
-                                          ? AppColors.darkText
-                                          : AppColors.charcoal,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 14),
-                                  child: Row(
-                                    children: [
-                                      if (category.hasSubCategories)
-                                        Container(
-                                          margin: const EdgeInsets.only(
-                                            right: 8,
-                                          ),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 3,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.gold.withValues(
-                                              alpha: 0.1,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            '$subCount sub',
-                                            style: AppTextStyles.dmSans
-                                                .copyWith(
-                                                  fontSize: 8,
-                                                  color: AppColors.gold,
-                                                ),
-                                          ),
-                                        ),
-                                      Icon(
-                                        Icons.arrow_forward_ios_rounded,
-                                        size: 13,
-                                        color: AppColors.charcoal.withValues(
-                                          alpha: 0.3,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          splashColor: Colors.white.withValues(alpha: 0.08),
+          onTap: () => _navigateToCategory(context, category),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: AppColors.gdaGold.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    category.iconData,
+                    size: 24,
+                    color: AppColors.gdaGold,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              category.name,
+                              style: AppTextStyles.playfairDisplay.copyWith(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Text(
-                                  category.yearRange,
-                                  style: AppTextStyles.dmSans.copyWith(
-                                    fontSize: 11,
-                                    color: AppColors.charcoal.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  width: 3,
-                                  height: 3,
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.charcoal.withValues(
-                                      alpha: 0.2,
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                Text(
-                                  '${category.docCount} files',
-                                  style: AppTextStyles.dmSans.copyWith(
-                                    fontSize: 11,
-                                    color: AppColors.charcoal.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 14),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(2),
-                                child: LinearProgressIndicator(
-                                  value: (category.docCount / 500.0).clamp(
-                                    0.0,
-                                    1.0,
-                                  ),
-                                  backgroundColor: category.color.withValues(
-                                    alpha: 0.08,
-                                  ),
-                                  valueColor: AlwaysStoppedAnimation(
-                                    category.color.withValues(alpha: 0.4),
-                                  ),
-                                  minHeight: 2.5,
+                          ),
+                          if (category.hasSubCategories)
+                            Container(
+                              margin: const EdgeInsets.only(left: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                '$subCount sub',
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
-                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.date_range_rounded,
+                            size: 12,
+                            color: Colors.white.withValues(alpha: 0.68),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            category.yearRange,
+                            style: AppTextStyles.dmSans.copyWith(
+                              fontSize: 11,
+                              color: Colors.white.withValues(alpha: 0.78),
+                            ),
+                          ),
+                          Container(
+                            width: 3,
+                            height: 3,
+                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.4),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          Text(
+                            '${category.docCount} files',
+                            style: AppTextStyles.dmSans.copyWith(
+                              fontSize: 11,
+                              color: Colors.white.withValues(alpha: 0.78),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: (category.docCount / 500.0).clamp(0.0, 1.0),
+                          backgroundColor: Colors.white.withValues(alpha: 0.14),
+                          valueColor: const AlwaysStoppedAnimation(
+                            AppColors.gdaGold,
+                          ),
+                          minHeight: 3,
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 10),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: Colors.white.withValues(alpha: 0.78),
+                ),
+              ],
             ),
           ),
-        )
+        ),
+      ),
+    )
         .animate(delay: Duration(milliseconds: index * 70))
         .fadeIn(duration: 300.ms)
         .slideX(begin: 0.03, end: 0, duration: 300.ms);
@@ -454,18 +549,18 @@ class _CategoriesLoadingList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
       baseColor: isDark
-          ? AppColors.darkCard.withValues(alpha: 0.9)
-          : AppColors.divider.withValues(alpha: 0.6),
+          ? AppColors.darkCard.withValues(alpha: 0.92)
+          : AppColors.divider.withValues(alpha: 0.55),
       highlightColor: isDark ? AppColors.darkSurface : Colors.white,
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
         itemCount: 6,
         itemBuilder: (context, index) => Container(
           margin: const EdgeInsets.only(bottom: 10),
-          height: 92,
+          height: 108,
           decoration: BoxDecoration(
             color: isDark ? AppColors.darkCard : Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: AppColors.divider, width: 0.8),
           ),
         ),
@@ -488,11 +583,19 @@ class _CategoriesEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.wifi_off_rounded,
-              size: 64,
-              color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                  .withValues(alpha: 0.25),
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.navyDark.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                Icons.wifi_off_rounded,
+                size: 34,
+                color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                    .withValues(alpha: 0.28),
+              ),
             ),
             const SizedBox(height: 14),
             Text(
@@ -500,7 +603,7 @@ class _CategoriesEmptyState extends StatelessWidget {
               style: AppTextStyles.playfairDisplay.copyWith(
                 fontSize: 18,
                 color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                    .withValues(alpha: 0.75),
+                    .withValues(alpha: 0.78),
               ),
             ),
             const SizedBox(height: 6),
@@ -510,18 +613,24 @@ class _CategoriesEmptyState extends StatelessWidget {
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 12,
                 color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                    .withValues(alpha: 0.45),
+                    .withValues(alpha: 0.48),
               ),
             ),
             const SizedBox(height: 14),
-            TextButton(
-              onPressed: onRetry,
-              child: Text(
-                'Retry',
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 13,
-                  color: AppColors.gold,
-                  fontWeight: FontWeight.bold,
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.navyDark.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: TextButton(
+                onPressed: onRetry,
+                child: Text(
+                  'Retry',
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 13,
+                    color: AppColors.gold,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

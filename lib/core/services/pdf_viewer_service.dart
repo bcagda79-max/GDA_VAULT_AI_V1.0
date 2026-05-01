@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:gda_vault_ai/core/constants/supabase_constants.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:gda_vault_ai/core/services/supabase_service.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
@@ -96,6 +97,67 @@ class OfflineDocumentRecord {
   }
 }
 
+class _CategoryMeta {
+  final String id;
+  final String slug;
+  final String name;
+  final List<String> pathPrefixes;
+  final List<String> aliases;
+
+  const _CategoryMeta({
+    required this.id,
+    required this.slug,
+    required this.name,
+    this.pathPrefixes = const [],
+    this.aliases = const [],
+  });
+}
+
+const List<_CategoryMeta> _knownCategories = <_CategoryMeta>[
+  _CategoryMeta(
+    id: SupabaseConstants.idBoardAuthorityMinutes,
+    slug: 'board-authority-minutes',
+    name: 'Board Authority Minutes',
+    pathPrefixes: [SupabaseConstants.pathBoardAuthorityMinutes],
+    aliases: ['board authority minutes'],
+  ),
+  _CategoryMeta(
+    id: SupabaseConstants.idTrustMinutes,
+    slug: 'trust-minutes',
+    name: 'Trust Minutes',
+    pathPrefixes: [SupabaseConstants.pathTrustMinutes],
+    aliases: ['trust minutes'],
+  ),
+  _CategoryMeta(
+    id: SupabaseConstants.idTownPlots,
+    slug: 'town-plots',
+    name: 'Town (Plot) Files',
+    pathPrefixes: [SupabaseConstants.pathTownPlots],
+    aliases: ['town plots', 'town-plots-files'],
+  ),
+  _CategoryMeta(
+    id: SupabaseConstants.idAdministration,
+    slug: 'administration',
+    name: 'Administration',
+    pathPrefixes: [SupabaseConstants.pathAdministration],
+    aliases: ['administration files', 'administration-files'],
+  ),
+  _CategoryMeta(
+    id: SupabaseConstants.idPrivateProperties,
+    slug: 'private-properties',
+    name: 'Private Properties',
+    pathPrefixes: [SupabaseConstants.pathPrivateProperties],
+    aliases: ['private properties', 'private-properties-files'],
+  ),
+  _CategoryMeta(
+    id: SupabaseConstants.idBoardOfAuthority,
+    slug: 'board-of-authority',
+    name: 'Board of Authority',
+    pathPrefixes: ['board-of-authority'],
+    aliases: ['board of authority'],
+  ),
+];
+
 /// Handles fetching PDFs from Supabase Storage and local caching.
 class PdfViewerService {
   PdfViewerService._();
@@ -179,13 +241,57 @@ class PdfViewerService {
         _offlineRecords = <OfflineDocumentRecord>[];
         return _offlineRecords!;
       }
-      _offlineRecords = decoded
+      final loaded = decoded
           .whereType<Map>()
           .map(
             (entry) =>
                 OfflineDocumentRecord.fromMap(Map<String, dynamic>.from(entry)),
           )
           .toList();
+
+      var changed = false;
+      final normalized = loaded.map((record) {
+        final known = _resolveKnownCategory(
+          categoryId: record.categoryId,
+          categorySlug: record.categorySlug,
+          categoryName: record.categoryName,
+          storagePath: record.storagePath,
+        );
+
+        final nextSlug = known?.slug ?? record.categorySlug;
+        final nextName =
+            (record.categoryName.isNotEmpty &&
+                !_looksLikeUuid(record.categoryName))
+            ? record.categoryName
+            : (known?.name ?? record.categoryName);
+        final nextCategoryId = known?.id ?? record.categoryId;
+
+        if (nextSlug != record.categorySlug ||
+            nextName != record.categoryName ||
+            nextCategoryId != record.categoryId) {
+          changed = true;
+          return OfflineDocumentRecord(
+            storagePath: record.storagePath,
+            localPath: record.localPath,
+            fileName: record.fileName,
+            categoryId: nextCategoryId,
+            categoryName: nextName,
+            categorySlug: nextSlug,
+            yearLabel: record.yearLabel,
+            yearStart: record.yearStart,
+            yearEnd: record.yearEnd,
+            pageCount: record.pageCount,
+            fileSizeBytes: record.fileSizeBytes,
+            downloadedAt: record.downloadedAt,
+          );
+        }
+        return record;
+      }).toList();
+
+      _offlineRecords = normalized;
+      if (changed) {
+        await _saveRecords(normalized);
+      }
       return _offlineRecords!;
     } catch (e) {
       debugPrint('load offline cache error: $e');
@@ -202,6 +308,61 @@ class PdfViewerService {
     );
   }
 
+  String _normalizeCategoryKey(String value) {
+    return value.trim().toLowerCase().replaceAll('_', '-').replaceAll(' ', '-');
+  }
+
+  bool _looksLikeUuid(String value) {
+    final v = value.trim();
+    return RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    ).hasMatch(v);
+  }
+
+  _CategoryMeta? _matchKnownCategory(String? rawValue) {
+    if (rawValue == null || rawValue.trim().isEmpty) return null;
+    final normalized = _normalizeCategoryKey(rawValue);
+    for (final category in _knownCategories) {
+      if (category.id == rawValue) return category;
+      if (category.slug == normalized) return category;
+      if (category.aliases.any(
+        (alias) => _normalizeCategoryKey(alias) == normalized,
+      )) {
+        return category;
+      }
+    }
+    return null;
+  }
+
+  _CategoryMeta? _matchByStoragePath(String? storagePath) {
+    if (storagePath == null || storagePath.trim().isEmpty) return null;
+    final normalizedPath = storagePath
+        .trim()
+        .replaceAll('\\', '/')
+        .toLowerCase();
+    for (final category in _knownCategories) {
+      for (final prefix in category.pathPrefixes) {
+        final normalizedPrefix = prefix.toLowerCase();
+        if (normalizedPath.startsWith(normalizedPrefix)) {
+          return category;
+        }
+      }
+    }
+    return null;
+  }
+
+  _CategoryMeta? _resolveKnownCategory({
+    String? categoryId,
+    String? categorySlug,
+    String? categoryName,
+    String? storagePath,
+  }) {
+    return _matchKnownCategory(categoryId) ??
+        _matchKnownCategory(categorySlug) ??
+        _matchKnownCategory(categoryName) ??
+        _matchByStoragePath(storagePath);
+  }
+
   String _safeSegment(String value) {
     return value
         .trim()
@@ -211,8 +372,14 @@ class PdfViewerService {
 
   Future<Directory> _offlineDirectoryFor(DocumentModel document) async {
     final root = await getApplicationDocumentsDirectory();
+    final known = _resolveKnownCategory(
+      categoryId: document.categoryId,
+      categorySlug: document.categorySlug,
+      categoryName: document.categoryName,
+      storagePath: document.storagePath,
+    );
     final categorySegment = _safeSegment(
-      document.categorySlug ?? document.categoryId,
+      known?.slug ?? document.categorySlug ?? document.categoryId,
     );
     final yearSegment = _safeSegment(
       document.yearLabel.isEmpty ? '${document.yearStart}' : document.yearLabel,
@@ -343,16 +510,25 @@ class PdfViewerService {
       await tempFile.rename(localFile.path);
 
       final records = await _loadRecords();
+      final known = _resolveKnownCategory(
+        categoryId: document.categoryId,
+        categorySlug: document.categorySlug,
+        categoryName: document.categoryName,
+        storagePath: document.storagePath,
+      );
+      final resolvedCategoryName =
+          (document.categoryName != null &&
+              document.categoryName!.isNotEmpty &&
+              !_looksLikeUuid(document.categoryName!))
+          ? document.categoryName!
+          : (known?.name ?? document.categorySlug ?? document.categoryId);
       final record = OfflineDocumentRecord(
         storagePath: document.storagePath,
         localPath: localFile.path,
         fileName: document.fileName,
-        categoryId: document.categoryId,
-        categoryName:
-            document.categoryName ??
-            document.categorySlug ??
-            document.categoryId,
-        categorySlug: document.categorySlug,
+        categoryId: known?.id ?? document.categoryId,
+        categoryName: resolvedCategoryName,
+        categorySlug: known?.slug ?? document.categorySlug,
         yearLabel: document.yearLabel,
         yearStart: document.yearStart,
         yearEnd: document.yearEnd,

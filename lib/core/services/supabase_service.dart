@@ -105,7 +105,7 @@ class SupabaseService {
       }
       final response = await client
           .from('documents')
-          .select()
+          .select('*, categories(id, name, slug, color_hex)')
           .eq('category_id', categoryId)
           .eq('is_active', true)
           .order('year_start', ascending: true)
@@ -130,7 +130,7 @@ class SupabaseService {
       }
       final response = await client
           .from('documents')
-          .select()
+          .select('*, categories(id, name, slug, color_hex)')
           .eq('category_id', categoryId)
           .eq('year_start', year)
           .eq('is_active', true)

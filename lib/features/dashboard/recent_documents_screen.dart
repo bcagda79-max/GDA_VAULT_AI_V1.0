@@ -72,12 +72,6 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-            onPressed: _loadDocuments,
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(
@@ -134,7 +128,7 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
                   : ListView.separated(
                       padding: const EdgeInsets.all(16),
                       itemCount: _documents.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final doc = _documents[index];
                         return _RecentDocumentTile(

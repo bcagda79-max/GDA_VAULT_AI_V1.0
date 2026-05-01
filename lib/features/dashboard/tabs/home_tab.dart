@@ -161,7 +161,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               icon: Icons.cloud_done_rounded,
               isPrimary: false,
               isDark: isDark,
-              onTap: () => context.push('/offline-documents'),
+              onTap: () => context.push('/dashboard/offline-documents'),
             ).animate().fadeIn(delay: 275.ms, duration: 400.ms),
             const SizedBox(height: 24),
             _buildRecentDocsHeader(
