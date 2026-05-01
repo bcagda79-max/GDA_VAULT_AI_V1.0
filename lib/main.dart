@@ -14,8 +14,8 @@ void main() async {
 
   // Initialize Supabase (replace with your project credentials)
   await Supabase.initialize(
-    url: 'https://dbafsdtunojaveghfoyf.supabase.co',
-    anonKey: 'sb_publishable_0vWKI1SM9LLDv_9BTD4cmA_YLwRKVz4',
+    url: 'https://ojwarkdnccfgavorhxyq.supabase.co',
+    anonKey: 'sb_publishable_jf1i1jcbVWD19VH4FWTlGA_mwFjXWD6',
     debug: false,
   );
 

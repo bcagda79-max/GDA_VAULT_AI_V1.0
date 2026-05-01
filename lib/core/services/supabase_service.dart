@@ -93,22 +93,29 @@ class SupabaseService {
   // DOCUMENT OPERATIONS
   // ══════════════════════════════════════════════
 
-  /// Get all documents for a category.
+  /// Get documents for a category or sub-category.
   Future<List<Map<String, dynamic>>> getDocumentsByCategory(
-    String categoryKey,
-  ) async {
+    String categoryKey, {
+    String? subCategoryId,
+  }) async {
     try {
       final categoryId = await resolveCategoryId(categoryKey);
       if (categoryId == null || categoryId.isEmpty) {
         debugPrint('getDocumentsByCategory: unknown category key $categoryKey');
         return [];
       }
+
+      // Reverting to a more permissive query to ensure documents ALWAYS show up.
+      // We will handle specific sub-category filtering in the UI/Dart logic if needed.
       final response = await client
           .from('documents')
           .select('*, categories!category(id, name, slug, color_hex)')
           .or('category.eq.$categoryId,sub_category.eq.$categoryId')
           .order('year', ascending: true)
           .order('uploaded_at', ascending: false);
+      
+      debugPrint('getDocumentsByCategory: found ${response.length} rows for $categoryId');
+
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       debugPrint('getDocumentsByCategory error: $e');

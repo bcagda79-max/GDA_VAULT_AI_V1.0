@@ -17,6 +17,7 @@ class YearListScreen extends StatefulWidget {
   final int yearFrom;
   final int? yearTo;
   final String? subCategoryName;
+  final String? subCategoryId;
 
   const YearListScreen({
     super.key,
@@ -26,6 +27,7 @@ class YearListScreen extends StatefulWidget {
     required this.yearFrom,
     this.yearTo,
     this.subCategoryName,
+    this.subCategoryId,
   });
 
   @override
@@ -56,21 +58,12 @@ class _YearListScreenState extends State<YearListScreen> {
     });
 
     try {
-      final resolvedCategoryId =
-          await _supa.resolveCategoryId(widget.categoryId) ?? widget.categoryId;
       final rows = await _supa.getDocumentsByCategory(widget.categoryId);
       List<DocumentModel> docs = rows.map(DocumentModel.fromMap).toList();
 
-      if (docs.isEmpty) {
-        final offline = await PdfViewerService.instance.getOfflineDocuments();
-        docs = offline
-            .where(
-              (record) =>
-                  record.categoryId == resolvedCategoryId ||
-                  record.categorySlug == widget.categoryId,
-            )
-            .map((record) => record.toDocumentModel())
-            .toList();
+      // Filter by sub-category on the Dart side to be 100% sure we don't miss anything
+      if (widget.subCategoryId != null && widget.subCategoryId!.isNotEmpty && widget.subCategoryId != widget.categoryId) {
+        docs = docs.where((d) => d.subCategoryId == widget.subCategoryId).toList();
       }
 
       final years = docs.map((d) => d.yearStart).toSet().toList()
@@ -172,7 +165,10 @@ class _YearListScreenState extends State<YearListScreen> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: Theme.of(context).brightness == Brightness.dark
-                    ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
+                    ? [
+                        AppColors.navyDark,
+                        AppColors.navyDark.withValues(alpha: 0.8),
+                      ]
                     : [AppColors.navyDark, AppColors.navyLight],
               ),
             ),
@@ -515,8 +511,8 @@ class _YearFolderStrip extends StatelessWidget {
     if (yearFolders.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      height: 116,
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 10),
+      height: 130,
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 12),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: yearFolders.length,
@@ -527,8 +523,8 @@ class _YearFolderStrip extends StatelessWidget {
           return GestureDetector(
             onTap: () => onSelected(year),
             child: Container(
-              width: 134,
-              padding: const EdgeInsets.all(14),
+              width: 100,
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -539,71 +535,64 @@ class _YearFolderStrip extends StatelessWidget {
                           AppColors.navyDark.withValues(alpha: 0.88),
                         ]
                       : (Theme.of(context).brightness == Brightness.dark
-                          ? [AppColors.darkCard, AppColors.darkCard]
-                          : [Colors.white, Colors.white]),
+                            ? [AppColors.darkCard, AppColors.darkCard]
+                            : [Colors.white, Colors.white]),
                 ),
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                   color: isSelected
                       ? AppColors.gdaGold.withValues(alpha: 0.45)
-                      : (Theme.of(context).brightness == Brightness.dark ? AppColors.divider : AppColors.divider.withValues(alpha: 0.5)),
+                      : (Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.divider
+                            : AppColors.divider.withValues(alpha: 0.5)),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(
-                      alpha: isSelected ? 0.2 : (Theme.of(context).brightness == Brightness.dark ? 0.25 : 0.05),
+                      alpha: isSelected
+                          ? 0.2
+                          : (Theme.of(context).brightness == Brightness.dark
+                                ? 0.25
+                                : 0.05),
                     ),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
                 ],
               ),
-              child: Row(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    width: 38,
-                    height: 38,
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? Colors.white.withValues(alpha: 0.14)
-                          : AppColors.gold.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
+                          ? Colors.white.withValues(alpha: 0.15)
+                          : AppColors.gold.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       Icons.folder_rounded,
                       color: isSelected ? Colors.white : AppColors.gold,
-                      size: 21,
+                      size: 24,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '$year',
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected
-                                ? Colors.white
-                                : (Theme.of(context).brightness == Brightness.dark ? AppColors.darkText : AppColors.charcoal),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          'Folder',
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 10,
-                            color: isSelected
-                                ? Colors.white.withValues(alpha: 0.75)
-                                : AppColors.charcoal.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 10),
+                  Text(
+                    '$year',
+                    maxLines: 1,
+                    overflow: TextOverflow.visible,
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected
+                          ? Colors.white
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withValues(alpha: 0.9)
+                              : AppColors.navyDark),
                     ),
                   ),
                 ],
@@ -638,10 +627,10 @@ class _YearListItem extends StatelessWidget {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: theme.brightness == Brightness.dark 
-              ? categoryColor.withValues(alpha: 0.3) 
-              : theme.dividerColor, 
-          width: 1
+          color: theme.brightness == Brightness.dark
+              ? categoryColor.withValues(alpha: 0.3)
+              : theme.dividerColor,
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
@@ -693,19 +682,18 @@ class _LeftYearBand extends StatelessWidget {
   final int yearStart;
   final Color categoryColor;
 
-  const _LeftYearBand({
-    required this.yearStart,
-    required this.categoryColor,
-  });
+  const _LeftYearBand({required this.yearStart, required this.categoryColor});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       width: 72,
       decoration: BoxDecoration(
-        color: isDark ? categoryColor.withValues(alpha: 0.2) : categoryColor.withValues(alpha: 0.1),
+        color: isDark
+            ? categoryColor.withValues(alpha: 0.2)
+            : categoryColor.withValues(alpha: 0.1),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(14),
           bottomLeft: Radius.circular(14),

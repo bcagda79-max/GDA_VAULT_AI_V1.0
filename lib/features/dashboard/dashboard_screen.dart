@@ -99,8 +99,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   bool _shouldHideUI(BuildContext context) {
-    final location = GoRouterState.of(context).matchedLocation;
-    // Strictly hide on scanner, review, category selection, and PDF viewer
+    final location = GoRouterState.of(context).uri.path.toLowerCase();
+    // Strictly hide on scanner, review, category selection, and PDF viewer flow
     return location.contains('/scanner') ||
         location.contains('/review') ||
         location.contains('/select-category') ||
@@ -132,7 +132,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           children: [
             widget.child,
             if (!hideUI &&
-                currentIndex != 3) // Don't show chat FAB if already on chat tab
+                currentIndex != 1 && // Hide on Chat tab
+                currentIndex != 3) // Hide on Settings tab
               const Positioned(bottom: 25, right: 10, child: AiChatFab()),
           ],
         ),

@@ -103,6 +103,7 @@ class SubcategoryScreen extends StatelessWidget {
                       'categoryColor': AppColors.catBoard,
                       'yearFrom': 1996,
                       'yearTo': 2026,
+                      'subCategoryId': SupabaseConstants.idBoardAuthorityMinutes,
                     },
                   );
                 },
@@ -127,6 +128,7 @@ class SubcategoryScreen extends StatelessWidget {
                       'categoryColor': AppColors.catTrust,
                       'yearFrom': 1961,
                       'yearTo': 1996,
+                      'subCategoryId': SupabaseConstants.idTrustMinutes,
                     },
                   );
                 },

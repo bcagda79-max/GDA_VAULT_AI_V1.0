@@ -12,11 +12,17 @@ import '../../core/constants/app_text_styles.dart';
 class ChatScreen extends ConsumerStatefulWidget {
   final bool isPushed;
   final String? initialDocumentId;
+  final String? initialCategoryId;
+  final String? initialSubCategoryId;
+  final String? initialYear;
 
   const ChatScreen({
     super.key,
     this.isPushed = false,
     this.initialDocumentId,
+    this.initialCategoryId,
+    this.initialSubCategoryId,
+    this.initialYear,
   });
 
   @override
@@ -33,15 +39,40 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void initState() {
     super.initState();
     _focusNode.addListener(_onFocusChange);
-    
-    // If initialDocumentId is provided, we might want to pre-select a category
-    // or set a specific context. For now, we'll just select all categories
-    // if it's pushed from a PDF to ensure immediate usability.
-    if (widget.isPushed) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(chatProvider.notifier).selectAllCategories();
-      });
+    _initializeFromContext();
+  }
+
+  @override
+  void didUpdateWidget(ChatScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialCategoryId != oldWidget.initialCategoryId ||
+        widget.initialSubCategoryId != oldWidget.initialSubCategoryId ||
+        widget.initialYear != oldWidget.initialYear) {
+      _initializeFromContext();
     }
+  }
+
+  void _initializeFromContext() {
+    // Smart Initialization from PDF Viewer or Home FAB
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.initialCategoryId != null || widget.initialSubCategoryId != null) {
+        // Automatically select the specific category/sub-category
+        ref.read(chatProvider.notifier).selectSpecificCategory(
+          widget.initialCategoryId,
+          widget.initialSubCategoryId,
+        );
+        
+        // If year is provided, pre-fill it for the user
+        if (widget.initialYear != null) {
+          final yearText = "Year ${widget.initialYear}: ";
+          _inputController.text = yearText;
+          ref.read(chatProvider.notifier).updateInput(yearText);
+        }
+      } else if (widget.isPushed) {
+        // If just pushed without specific context, select all for convenience
+        ref.read(chatProvider.notifier).selectAllCategories();
+      }
+    });
   }
 
   void _onFocusChange() {

@@ -12,11 +12,14 @@ class UploadResult {
   final String? storagePath;
   final String? errorMessage;
 
+  final Map<String, dynamic>? record;
+
   const UploadResult({
     required this.success,
     this.documentId,
     this.storagePath,
     this.errorMessage,
+    this.record,
   });
 }
 
@@ -82,6 +85,7 @@ class DocumentUploadService {
         success: true,
         documentId: record?['id']?.toString(),
         storagePath: storagePath,
+        record: record,
       );
     } catch (e) {
       debugPrint('uploadPdfFile error: $e');
@@ -153,6 +157,7 @@ class DocumentUploadService {
         success: true,
         documentId: record?['id']?.toString(),
         storagePath: storagePath,
+        record: record,
       );
     } catch (e) {
       debugPrint('uploadScannedImages error: $e');

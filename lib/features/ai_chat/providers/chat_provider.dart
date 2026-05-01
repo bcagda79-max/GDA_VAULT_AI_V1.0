@@ -22,7 +22,7 @@ class ChatNotifier extends Notifier<ChatState> {
   List<ChatCategory> _buildInitialCategories() {
     return [
       ChatCategory(
-        id: 'board-authority',
+        id: '11111111-1111-1111-1111-111111111111', // idBoardOfAuthority
         name: 'Board of Authority',
         shortName: 'BOARD',
         color: AppColors.catBoard,
@@ -30,25 +30,25 @@ class ChatNotifier extends Notifier<ChatState> {
         isSelected: false,
       ),
       ChatCategory(
-        id: 'board-minutes',
-        name: 'Board of Authority Minutes 1996-2026',
+        id: '22222222-2222-2222-2222-222222222222', // idBoardAuthorityMinutes
+        name: 'Board Authority Minutes',
         shortName: 'MINUTES',
         color: AppColors.catBoard,
         icon: Icons.history_edu_rounded,
-        parentId: 'board-authority',
+        parentId: '11111111-1111-1111-1111-111111111111',
         isSelected: false,
       ),
       ChatCategory(
-        id: 'trust-minutes-sub',
-        name: 'Trust Minutes 1961-1996',
+        id: '33333333-3333-3333-3333-333333333333', // idTrustMinutes
+        name: 'Trust Minutes Archive',
         shortName: 'TRUST',
         color: AppColors.catBoard,
         icon: Icons.handshake_rounded,
-        parentId: 'board-authority',
+        parentId: '11111111-1111-1111-1111-111111111111',
         isSelected: false,
       ),
       ChatCategory(
-        id: 'town-plots',
+        id: '44444444-4444-4444-4444-444444444444', // idTownPlots
         name: 'Town (Plot) Files',
         shortName: 'TOWNS',
         color: AppColors.catTown,
@@ -56,7 +56,7 @@ class ChatNotifier extends Notifier<ChatState> {
         isSelected: false,
       ),
       ChatCategory(
-        id: 'administration',
+        id: '55555555-5555-5555-5555-555555555555', // idAdministration
         name: 'Administration',
         shortName: 'ADMIN',
         color: AppColors.catAdmin,
@@ -64,22 +64,37 @@ class ChatNotifier extends Notifier<ChatState> {
         isSelected: false,
       ),
       ChatCategory(
-        id: 'private-properties',
+        id: '66666666-6666-6666-6666-666666666666', // idPrivateProperties
         name: 'Private Properties',
         shortName: 'PRIVATE',
         color: AppColors.catPrivate,
         icon: Icons.home_work_rounded,
         isSelected: false,
       ),
-      ChatCategory(
-        id: 'trust-minutes',
-        name: 'Trust Minutes Archive',
-        shortName: 'TRUST',
-        color: AppColors.catTrust,
-        icon: Icons.handshake_rounded,
-        isSelected: false,
-      ),
     ];
+  }
+
+  // Smart Selection for PDF View context
+  void selectSpecificCategory(String? categoryId, String? subCategoryId) {
+    final targetId = subCategoryId ?? categoryId;
+    if (targetId == null) return;
+
+    final updatedCategories = state.categories.map((cat) {
+      return ChatCategory(
+        id: cat.id,
+        name: cat.name,
+        shortName: cat.shortName,
+        color: cat.color,
+        icon: cat.icon,
+        parentId: cat.parentId,
+        isSelected: cat.id == targetId || cat.id == categoryId,
+      );
+    }).toList();
+
+    state = state.copyWith(
+      categories: updatedCategories,
+      categoriesSelected: updatedCategories.any((c) => c.isSelected),
+    );
   }
 
   // Toggle category selection

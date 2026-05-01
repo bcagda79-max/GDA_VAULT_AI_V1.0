@@ -4,6 +4,8 @@ import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/constants/supabase_constants.dart';
 import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gda_vault_ai/features/offline/offline_browser_screen.dart';
 
 class OfflineDocumentsScreen extends StatefulWidget {
   const OfflineDocumentsScreen({super.key});
@@ -179,19 +181,21 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
     switch (folder.routeType) {
       case _OfflineFolderRouteType.boardSubcategories:
         context.push(
-          '/categories/sub/${SupabaseConstants.idBoardOfAuthority}',
-          extra: {'categoryName': 'Board of Authority'},
+          '/dashboard/offline-documents/sub/${SupabaseConstants.idBoardOfAuthority}',
+          extra: {
+            'categoryName': 'Board of Authority',
+            'categoryColor': folder.color,
+            'viewType': OfflineBrowserViewType.subcategories,
+          },
         );
         return;
       case _OfflineFolderRouteType.yearBrowser:
         context.push(
-          '/categories/sub/${folder.categoryId}/years',
+          '/dashboard/offline-documents/files/${folder.categoryId}',
           extra: {
             'categoryName': folder.categoryName,
             'categoryColor': folder.color,
-            'yearFrom': folder.yearFrom ?? 1999,
-            'yearTo': folder.yearTo,
-            'subCategoryName': null,
+            'viewType': OfflineBrowserViewType.years,
           },
         );
         return;
@@ -201,219 +205,458 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final totalDocs = _records.length;
+    final activeFolders = _folders.where((f) => (_counts[f.key] ?? 0) > 0).toList();
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-      appBar: AppBar(
-        backgroundColor: AppColors.navyDark,
-        automaticallyImplyLeading: false,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Offline Files',
-              style: AppTextStyles.playfairDisplay.copyWith(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+      body: Stack(
+        children: [
+          // Background Glows (matching Categories screen)
+          Positioned(
+            top: -60,
+            left: -50,
+            child: IgnorePointer(
+              child: Container(
+                width: 190,
+                height: 190,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.gold.withValues(alpha: isDark ? 0.16 : 0.09),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
               ),
             ),
-            Text(
-              'Choose a folder',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 9,
-                color: Colors.white.withValues(alpha: 0.55),
+          ),
+          Positioned(
+            top: 240,
+            right: -70,
+            child: IgnorePointer(
+              child: Container(
+                width: 220,
+                height: 220,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.navyLight.withValues(alpha: isDark ? 0.12 : 0.06),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
-        centerTitle: false,
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.gold),
-            )
-          : RefreshIndicator(
-              color: AppColors.gold,
-              onRefresh: _loadRecords,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                children: [
-                  ..._folders.where((folder) => (_counts[folder.key] ?? 0) > 0).map((
-                    folder,
-                  ) {
-                    final count = _counts[folder.key] ?? 0;
-                    final range = _rangeLabelFor(folder);
-                    final isBoard = folder.key == 'board-authority';
+          ),
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () => _openFolder(folder),
-                          borderRadius: BorderRadius.circular(18),
-                          child: Container(
-                            padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  folder.color.withValues(alpha: 0.9),
-                                  folder.color.withValues(alpha: 0.68),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.08),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.14),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: Row(
+          Column(
+            children: [
+              // Gradient Header
+              _buildModernHeader(context, isDark, activeFolders.length, totalDocs),
+              
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
+                    : activeFolders.isEmpty
+                        ? _buildEmptyState(isDark)
+                        : RefreshIndicator(
+                            color: AppColors.gold,
+                            onRefresh: _loadRecords,
+                            child: ListView(
+                              padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
                               children: [
-                                Container(
-                                  width: 46,
-                                  height: 46,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.14),
-                                    borderRadius: BorderRadius.circular(13),
-                                  ),
-                                  child: Icon(
-                                    folder.icon,
-                                    color: AppColors.gdaGold,
-                                    size: 24,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              folder.title,
-                                              style: AppTextStyles
-                                                  .playfairDisplay
-                                                  .copyWith(
-                                                    fontSize: 17,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.white,
-                                                  ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          if (isBoard)
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.14,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
-                                              ),
-                                              child: Text(
-                                                '2 sub',
-                                                style: AppTextStyles.dmSans
-                                                    .copyWith(
-                                                      fontSize: 10,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.white,
-                                                    ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 5),
-                                      Text(
-                                        range,
-                                        style: AppTextStyles.dmSans.copyWith(
-                                          fontSize: 11,
-                                          color: Colors.white.withValues(
-                                            alpha: 0.8,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 5,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.12,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                            ),
-                                            child: Text(
-                                              '$count file${count == 1 ? '' : 's'}',
-                                              style: AppTextStyles.dmSans
-                                                  .copyWith(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.white,
-                                                  ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: Colors.white.withValues(alpha: 0.9),
-                                  size: 28,
-                                ),
+                                _buildSectionHeader(context, isDark, activeFolders.length),
+                                const SizedBox(height: 12),
+                                ...List.generate(activeFolders.length, (index) {
+                                  final folder = activeFolders[index];
+                                  return _buildFolderItem(
+                                    context,
+                                    folder,
+                                    index,
+                                    isDark,
+                                    count: _counts[folder.key] ?? 0,
+                                  );
+                                }),
                               ],
                             ),
                           ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernHeader(BuildContext context, bool isDark, int catCount, int totalDocs) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 10,
+        bottom: 18,
+        left: 16,
+        right: 16,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
+              : [AppColors.navyDark, AppColors.navyLight],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.navyDark.withValues(alpha: isDark ? 0.5 : 0.24),
+            blurRadius: 18,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned(
+                left: 0,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Colors.white),
+                  onPressed: () => context.pop(),
+                ),
+              ),
+              Text(
+                'Offline Files',
+                style: AppTextStyles.playfairDisplay.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Locally cached documents',
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 9,
+              color: Colors.white.withValues(alpha: 0.58),
+              letterSpacing: 1.0,
+            ),
+          ),
+          const SizedBox(height: 14),
+          // All Files Summary Card
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.folder_copy_rounded, size: 15, color: AppColors.gdaGold),
+                      const SizedBox(width: 8),
+                      Text(
+                        'All Files · $catCount Categories',
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.82),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    );
-                  }),
-                  if (_folders
-                      .where((folder) => (_counts[folder.key] ?? 0) > 0)
-                      .isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 56),
-                      child: Center(
-                        child: Text(
-                          'No offline files yet',
-                          style: AppTextStyles.playfairDisplay.copyWith(
-                            fontSize: 18,
-                            color: isDark
-                                ? AppColors.darkText
-                                : AppColors.charcoal,
-                          ),
-                        ),
-                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.gdaGold.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '$totalDocs Documents',
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.gdaGold,
                     ),
-                ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, end: 0);
+  }
+
+  Widget _buildSectionHeader(BuildContext context, bool isDark, int count) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'FOLDERS',
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.5),
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Tap any category to open its documents',
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 12,
+                  color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.55),
+                ),
+              ),
+            ],
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.gold.withValues(alpha: 0.15) : AppColors.navyDark.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? AppColors.gold.withValues(alpha: 0.3) : AppColors.navyDark.withValues(alpha: 0.08),
               ),
             ),
+            child: Row(
+              children: [
+                Icon(Icons.auto_awesome_rounded, size: 12, color: isDark ? AppColors.gold : AppColors.navyDark),
+                const SizedBox(width: 5),
+                Text(
+                  '$count found',
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.gold : AppColors.navyDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildFolderItem(BuildContext context, _OfflineFolderMeta folder, int index, bool isDark, {required int count}) {
+    final range = _rangeLabelFor(folder);
+    final isBoard = folder.key == 'board-authority';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [AppColors.darkCard, folder.color.withValues(alpha: 0.35)]
+              : [folder.color, folder.color.withValues(alpha: 0.85)],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? folder.color.withValues(alpha: 0.3) : Colors.transparent,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black.withValues(alpha: 0.2) : folder.color.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          splashColor: Colors.white.withValues(alpha: 0.08),
+          onTap: () => _openFolder(folder),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Icon(
+                    folder.icon,
+                    size: 24,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              folder.title,
+                              style: AppTextStyles.playfairDisplay.copyWith(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isBoard)
+                            Container(
+                              margin: const EdgeInsets.only(left: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                '2 sub',
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.date_range_rounded,
+                            size: 12,
+                            color: Colors.white.withValues(alpha: 0.68),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            range,
+                            style: AppTextStyles.dmSans.copyWith(
+                              fontSize: 11,
+                              color: Colors.white.withValues(alpha: 0.78),
+                            ),
+                          ),
+                          Container(
+                            width: 3,
+                            height: 3,
+                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.4),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          Text(
+                            '$count files',
+                            style: AppTextStyles.dmSans.copyWith(
+                              fontSize: 11,
+                              color: Colors.white.withValues(alpha: 0.78),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: (count / 50.0).clamp(0.0, 1.0),
+                          backgroundColor: Colors.white.withValues(alpha: 0.14),
+                          valueColor: const AlwaysStoppedAnimation(
+                            AppColors.gdaGold,
+                          ),
+                          minHeight: 3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: Colors.white.withValues(alpha: 0.78),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    )
+        .animate(delay: Duration(milliseconds: index * 70))
+        .fadeIn(duration: 300.ms)
+        .slideX(begin: 0.03, end: 0, duration: 300.ms);
+  }
+
+  Widget _buildEmptyState(bool isDark) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkCard : AppColors.navyDark.withValues(alpha: 0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Icon(
+                Icons.cloud_off_rounded,
+                size: 40,
+                color: AppColors.gold.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'No offline files yet',
+            style: AppTextStyles.playfairDisplay.copyWith(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.darkText : AppColors.charcoal,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Documents you save for offline access\nwill appear here for instant viewing.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 13,
+              color: (isDark ? Colors.white : AppColors.charcoal).withValues(alpha: 0.5),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.9, 0.9));
   }
 }
 

@@ -2,6 +2,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
@@ -19,185 +20,189 @@ class SettingsTab extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(
-                AppSpacing.md,
-              ).copyWith(top: AppSpacing.lg),
-              child: Text(
-                "Settings",
-                style: AppTextStyles.headlineMedium.copyWith(
-                  color: isDark ? AppColors.darkText : AppColors.charcoal,
-                ),
-              ),
-            ),
-            _buildProfileCard(),
-            const SizedBox(height: AppSpacing.md),
-            _buildStorageCard(isDark),
-            const SizedBox(height: AppSpacing.lg),
-            _buildSettingsList(context, ref, isDark),
-            const SizedBox(height: AppSpacing.xl),
-            Text(
-              "GDA Vault AI v1.0.0",
-              textAlign: TextAlign.center,
-              style: AppTextStyles.labelSmall.copyWith(
-                color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                    .withValues(alpha: 0.35),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              "Galiyat Development Authority · Abbottabad",
-              textAlign: TextAlign.center,
-              style: AppTextStyles.labelSmall.copyWith(
-                fontSize: 9,
-                color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                    .withValues(alpha: 0.25),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.2)),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.navyDark, Color(0xFF1A3A6B)],
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: const BoxDecoration(
-              color: AppColors.gold,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                "OA",
-                style: AppTextStyles.headlineMedium.copyWith(
-                  fontSize: 20,
-                  color: AppColors.navyDark,
-                ),
-              ),
-            ),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // Professional Centered Header Section (Sub-AppBar style)
+          SliverToBoxAdapter(
+            child: _buildSectionHeader(context, isDark),
           ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Officer Ahmed",
-                  style: AppTextStyles.titleLarge.copyWith(
-                    color: AppColors.white,
-                    fontSize: 17,
+
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildStorageCard(isDark),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Text(
+                    "Preferences",
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                      color: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.5),
+                    ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  "Senior Archivist",
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.white.withValues(alpha: 0.6),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  "Authority HQ · Abbottabad",
-                  style: AppTextStyles.bodySmall.copyWith(
-                    fontSize: 11,
-                    color: AppColors.white.withValues(alpha: 0.45),
-                  ),
-                ),
-              ],
+                _buildSettingsList(context, ref, isDark),
+                const SizedBox(height: 40),
+                _buildFooter(isDark),
+              ]),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0A1D37), // Specific professional dark navy background
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          "Settings",
+          style: AppTextStyles.playfairDisplay.copyWith(
+            fontSize: 18, // Smaller font size
+            fontWeight: FontWeight.bold,
+            color: Colors.white, // Always white on navy background
+          ),
+        ),
+      ),
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.2, end: 0);
   }
 
   Widget _buildStorageCard(bool isDark) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      padding: const EdgeInsets.all(AppSpacing.md),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.gold.withValues(alpha: isDark ? 0.2 : 0.15),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.gold.withValues(alpha: isDark ? 0.05 : 0.02),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Storage",
-            style: AppTextStyles.titleMedium.copyWith(
-              color: isDark ? AppColors.darkText : AppColors.charcoal,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
-              Text(
-                "42.6 GB used of 100 GB",
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                      .withValues(alpha: 0.6),
-                ),
+              Icon(
+                Icons.cloud_done_rounded,
+                color: AppColors.gold,
+                size: 20,
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Text(
-                "42%",
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.gold,
+                "GDA Cloud Storage",
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : AppColors.navyDark,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Text(
+                "42.6 GB",
+                style: AppTextStyles.dmSans.copyWith( // Simplified font
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.gold : AppColors.navyDark,
+                ),
+              ),
+              Text(
+                " / 100 GB used",
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 12,
+                  color: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.5),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  "42%",
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.gold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           ClipRRect(
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: 0.426,
-              backgroundColor: isDark ? AppColors.darkBg : AppColors.slate,
+              backgroundColor: isDark ? AppColors.darkBg : AppColors.slate.withValues(alpha: 0.5),
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.gold),
-              minHeight: 6,
+              minHeight: 8,
             ),
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(delay: 200.ms).slideX(begin: 0.05);
   }
 
   Widget _buildSettingsList(BuildContext context, WidgetRef ref, bool isDark) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         children: [
           _SettingsListItem(
             isDark: isDark,
-            icon: Icons.brightness_6,
+            icon: Icons.dark_mode_outlined,
             iconBgColor: AppColors.gold.withValues(alpha: 0.1),
             iconColor: AppColors.gold,
-            title: "Dark Mode",
+            title: "Dark Mode Appearance",
             trailing: CupertinoSwitch(
               value: isDark,
               onChanged: (value) =>
@@ -207,52 +212,53 @@ class SettingsTab extends ConsumerWidget {
           ),
           _SettingsListItem(
             isDark: isDark,
-            icon: Icons.folder_shared_rounded,
+            icon: Icons.folder_open_rounded,
             iconBgColor: AppColors.catBoard.withValues(alpha: 0.1),
             iconColor: AppColors.catBoard,
             title: "Manage Categories",
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+            trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
           ),
           _SettingsListItem(
             isDark: isDark,
-            icon: Icons.sync,
+            icon: Icons.sync_problem_rounded,
             iconBgColor: AppColors.gdaGreen.withValues(alpha: 0.1),
             iconColor: AppColors.gdaGreen,
-            title: "Sync & Backup",
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+            title: "Sync Settings",
+            trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
           ),
           _SettingsListItem(
             isDark: isDark,
-            icon: Icons.language,
+            icon: Icons.translate_rounded,
             iconBgColor: AppColors.catAdmin.withValues(alpha: 0.1),
             iconColor: AppColors.catAdmin,
-            title: "Language",
+            title: "Language preference",
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   "English",
-                  style: AppTextStyles.bodySmall.copyWith(
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.gold,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.xs),
-                const Icon(Icons.chevron_right, color: Colors.grey),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
               ],
             ),
           ),
           _SettingsListItem(
             isDark: isDark,
-            icon: Icons.info_outline,
-            iconBgColor: isDark ? AppColors.darkSurface : AppColors.slate,
-            iconColor: (isDark ? AppColors.darkText : AppColors.charcoal)
-                .withValues(alpha: 0.6),
-            title: "About GDA Vault AI",
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+            icon: Icons.help_outline_rounded,
+            iconBgColor: isDark ? AppColors.darkSurface : AppColors.paper,
+            iconColor: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.6),
+            title: "Help & Documentation",
+            trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
           ),
           _SettingsListItem(
             isDark: isDark,
-            icon: Icons.logout,
+            icon: Icons.logout_rounded,
             iconBgColor: AppColors.catPrivate.withValues(alpha: 0.1),
             iconColor: AppColors.catPrivate,
             title: "Sign Out",
@@ -261,6 +267,29 @@ class SettingsTab extends ConsumerWidget {
           ),
         ],
       ),
+    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1, end: 0);
+  }
+
+  Widget _buildFooter(bool isDark) {
+    return Column(
+      children: [
+        Text(
+          "GDA Vault AI v1.0.0",
+          style: AppTextStyles.dmSans.copyWith(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.3),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          "Galiyat Development Authority · Abbottabad",
+          style: AppTextStyles.dmSans.copyWith(
+            fontSize: 10,
+            color: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.2),
+          ),
+        ),
+      ],
     );
   }
 
@@ -269,18 +298,22 @@ class SettingsTab extends ConsumerWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Sign Out?"),
-          content: const Text("Are you sure you want to sign out?"),
+          backgroundColor: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text("Sign Out?", style: AppTextStyles.playfairDisplay.copyWith(fontWeight: FontWeight.bold)),
+          content: Text(
+            "Are you sure you want to sign out from the GDA Vault AI system?",
+            style: AppTextStyles.dmSans.copyWith(fontSize: 14),
+          ),
           actions: [
             TextButton(
-              child: const Text("Cancel"),
+              child: Text("Cancel", style: TextStyle(color: Colors.grey[600])),
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: const Text("Sign Out"),
+              child: const Text("Sign Out", style: TextStyle(color: AppColors.catPrivate, fontWeight: FontWeight.bold)),
               onPressed: () {
                 Navigator.of(context).pop();
-                // Perform sign out logic
               },
             ),
           ],
@@ -313,22 +346,22 @@ class _SettingsListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final trailingWidget = trailing;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
         child: Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
+            horizontal: 20,
+            vertical: 16,
           ),
           decoration: BoxDecoration(
             border: hasDivider
                 ? Border(
                     bottom: BorderSide(
-                      color: AppColors.divider.withValues(alpha: isDark ? 0.1 : 0.5),
-                      width: 0.5,
+                      color: AppColors.divider.withValues(alpha: isDark ? 0.05 : 0.1),
+                      width: 1,
                     ),
                   )
                 : null,
@@ -336,24 +369,26 @@ class _SettingsListItem extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: iconBgColor,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: iconColor, size: 20),
+                child: Icon(icon, color: iconColor, size: 22),
               ),
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(width: 16),
               Expanded(
                 child: Text(
                   title,
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: isDark ? AppColors.darkText : AppColors.charcoal,
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? Colors.white : AppColors.navyDark,
                   ),
                 ),
               ),
-              ?trailingWidget,
+              if (trailing != null) trailing!,
             ],
           ),
         ),
@@ -361,3 +396,4 @@ class _SettingsListItem extends StatelessWidget {
     );
   }
 }
+

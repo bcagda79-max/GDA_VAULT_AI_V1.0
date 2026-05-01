@@ -18,6 +18,7 @@ import 'package:gda_vault_ai/features/dashboard/recent_documents_screen.dart';
 import 'package:gda_vault_ai/features/ai_chat/chat_screen.dart';
 import 'package:gda_vault_ai/features/recent_scans/recent_scans_list_screen.dart';
 import 'package:gda_vault_ai/features/offline/offline_documents_screen.dart';
+import 'package:gda_vault_ai/features/offline/offline_browser_screen.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
 
 /// Manages the routing logic for the application.
@@ -48,7 +49,16 @@ class AppRouter {
           GoRoute(
             path: '/dashboard/chat',
             name: 'chatTab',
-            builder: (context, state) => const ChatScreen(isPushed: false),
+            builder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>?;
+              return ChatScreen(
+                isPushed: false,
+                initialDocumentId: extra?['documentId'] as String?,
+                initialCategoryId: extra?['categoryId'] as String?,
+                initialSubCategoryId: extra?['subCategoryId'] as String?,
+                initialYear: extra?['year'] as String?,
+              );
+            },
           ),
           GoRoute(
             path: '/dashboard/settings',
@@ -65,6 +75,37 @@ class AppRouter {
             path: '/dashboard/offline-documents',
             name: 'offline-documents',
             builder: (context, state) => const OfflineDocumentsScreen(),
+            routes: [
+              GoRoute(
+                path: 'sub/:categoryId',
+                name: 'offline-subcategories',
+                builder: (context, state) {
+                  final extra = state.extra as Map<String, dynamic>;
+                  return OfflineBrowserScreen(
+                    categoryId: state.pathParameters['categoryId']!,
+                    categoryName: extra['categoryName'] as String,
+                    categoryColor: extra['categoryColor'] as Color,
+                    viewType: extra['viewType'] as OfflineBrowserViewType,
+                    subCategoryName: extra['subCategoryName'] as String?,
+                  );
+                },
+              ),
+              GoRoute(
+                path: 'files/:categoryId',
+                name: 'offline-files-list',
+                builder: (context, state) {
+                  final extra = state.extra as Map<String, dynamic>;
+                  return OfflineBrowserScreen(
+                    categoryId: state.pathParameters['categoryId']!,
+                    categoryName: extra['categoryName'] as String,
+                    categoryColor: extra['categoryColor'] as Color,
+                    viewType: extra['viewType'] as OfflineBrowserViewType,
+                    subCategoryName: extra['subCategoryName'] as String?,
+                    year: extra['year'] as int?,
+                  );
+                },
+              ),
+            ],
           ),
 
           // Categories flow — INSIDE shell for persistent nav
@@ -97,6 +138,7 @@ class AppRouter {
                         yearFrom: extra['yearFrom'] as int,
                         yearTo: extra['yearTo'] as int?,
                         subCategoryName: extra['subCategoryName'] as String?,
+                        subCategoryId: extra['subCategoryId'] as String?,
                       );
                     },
                     routes: [
@@ -187,6 +229,9 @@ class AppRouter {
           return ChatScreen(
             isPushed: true,
             initialDocumentId: extra?['documentId'] as String?,
+            initialCategoryId: extra?['categoryId'] as String?,
+            initialSubCategoryId: extra?['subCategoryId'] as String?,
+            initialYear: extra?['year'] as String?,
           );
         },
       ),

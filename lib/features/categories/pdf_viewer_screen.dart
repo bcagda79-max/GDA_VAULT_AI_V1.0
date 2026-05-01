@@ -239,7 +239,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
               ),
             if (!_isLoading && _totalPages > 0 && !widget.document.isLocalPath)
               _BottomAskAIButton(
-                documentId: widget.document.id,
+                document: widget.document,
                 bottomOffset: _isDownloading ? 110 : 14,
               ),
             if (_isDownloading)
@@ -482,11 +482,11 @@ class _NavButton extends StatelessWidget {
 }
 
 class _BottomAskAIButton extends StatelessWidget {
-  final String documentId;
+  final DocumentModel document;
   final double bottomOffset;
 
   const _BottomAskAIButton({
-    required this.documentId,
+    required this.document,
     required this.bottomOffset,
   });
 
@@ -499,9 +499,15 @@ class _BottomAskAIButton extends StatelessWidget {
       child: SizedBox(
         height: 46,
         child: ElevatedButton.icon(
-          onPressed: () => context.push(
-            '/chat',
-            extra: {'documentId': documentId, 'from': 'pdf_viewer'},
+          onPressed: () => context.go(
+            '/dashboard/chat',
+            extra: {
+              'documentId': document.id,
+              'from': 'pdf_viewer',
+              'categoryId': document.categoryId,
+              'subCategoryId': document.subCategoryId,
+              'year': document.yearStart.toString(),
+            },
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.navyDark,

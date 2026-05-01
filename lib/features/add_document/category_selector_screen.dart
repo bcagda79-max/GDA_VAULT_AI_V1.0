@@ -1,7 +1,7 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
@@ -188,7 +188,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
       if (!mounted) return;
       setState(() => _isUploading = false);
       if (result.success) {
-        _showSuccessSheet();
+        _showSuccessSheet(result);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -208,7 +208,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     }
   }
 
-  void _showSuccessSheet() {
+  void _showSuccessSheet(UploadResult result) {
     showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -219,9 +219,30 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
         categoryColor: _selectedCategory?.color ?? AppColors.gold,
         finalYearLabel: _finalYearLabel,
         pageCount: widget.pageCount,
-        onView: () {
-          Navigator.pop(ctx);
-          Navigator.of(context).pop();
+        onView: () async {
+          Navigator.pop(ctx); // Close success sheet
+          
+          // Slight delay to allow the sheet to dismiss fully before navigation
+          await Future.delayed(const Duration(milliseconds: 300));
+          if (!mounted) return;
+
+          // Find the main category for the route path
+          final mainCategory = _selectedCategory?.parentId != null
+              ? _categories.firstWhere((c) => c.id == _selectedCategory!.parentId, orElse: () => _selectedCategory!)
+              : _selectedCategory!;
+
+          // Use context.go to navigate directly and reset the upload stack
+          context.go(
+            '/categories/sub/${mainCategory.id}/years',
+            extra: {
+              'categoryName': mainCategory.name,
+              'subCategoryName': _selectedCategory?.parentId != null ? _selectedCategory?.name : null,
+              'categoryColor': mainCategory.color,
+              'yearFrom': _selectedCategory?.yearFrom ?? 1961,
+              'yearTo': _selectedCategory?.yearTo,
+              'subCategoryId': _selectedCategory?.id,
+            },
+          );
         },
         onHome: () {
           Navigator.pop(ctx);
@@ -913,68 +934,6 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildYearOption({
-    required String type,
-    required String title,
-    required String subtitle,
-    required bool isDark,
-  }) {
-    final isSelected = _yearInputType == type;
-    return GestureDetector(
-      onTap: () => setState(() => _yearInputType = type),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.catBoard.withValues(alpha: 0.06)
-              : (isDark ? AppColors.darkCard : Colors.white),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.catBoard : (isDark ? AppColors.divider.withValues(alpha: 0.3) : AppColors.divider),
-            width: isSelected ? 1.5 : 0.8,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppColors.catBoard : (isDark ? AppColors.divider.withValues(alpha: 0.4) : AppColors.divider),
-                  width: isSelected ? 5 : 1.5,
-                ),
-                color: Colors.transparent,
-              ),
-            ),
-            AppSpacing.horizontal(12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.darkText : AppColors.charcoal,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 11,
-                    color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.4),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
