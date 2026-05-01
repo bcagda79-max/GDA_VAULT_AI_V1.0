@@ -31,11 +31,10 @@ class DocumentUploadService {
   /// Upload a PDF file from device.
   Future<UploadResult> uploadPdfFile({
     required File pdfFile,
-    required String categoryId,
+    required String category,
+    String? subCategory,
     required String categoryStoragePath,
-    required String yearLabel,
-    required int yearStart,
-    int? yearEnd,
+    required int year,
     required String fileName,
     int? pageCount,
     void Function(String phase, double progress)? onProgress,
@@ -45,7 +44,7 @@ class DocumentUploadService {
       onProgress?.call('Preparing upload...', 0.1);
       final storagePath = _supa.buildStoragePath(
         categoryStoragePath: categoryStoragePath,
-        year: yearStart.toString(),
+        year: year.toString(),
         fileName: fileName,
       );
 
@@ -68,10 +67,9 @@ class DocumentUploadService {
 
       // Phase 3: Insert DB record
       final record = await _supa.insertDocument(
-        categoryId: categoryId,
-        yearLabel: yearLabel,
-        yearStart: yearStart,
-        yearEnd: yearEnd,
+        category: category,
+        subCategory: subCategory,
+        year: year,
         fileName: fileName,
         storagePath: storagePath,
         fileSizeBytes: fileSizeBytes,
@@ -94,11 +92,10 @@ class DocumentUploadService {
   /// Upload scanned images as a generated PDF.
   Future<UploadResult> uploadScannedImages({
     required List<String> imagePaths,
-    required String categoryId,
+    required String category,
+    String? subCategory,
     required String categoryStoragePath,
-    required String yearLabel,
-    required int yearStart,
-    int? yearEnd,
+    required int year,
     required String fileName,
     void Function(String phase, double progress)? onProgress,
   }) async {
@@ -121,7 +118,7 @@ class DocumentUploadService {
       onProgress?.call('Uploading to GDA Vault...', 0.4);
       final storagePath = _supa.buildStoragePath(
         categoryStoragePath: categoryStoragePath,
-        year: yearStart.toString(),
+        year: year.toString(),
         fileName: fileName,
       );
 
@@ -141,10 +138,9 @@ class DocumentUploadService {
 
       // Phase 3: DB record
       final record = await _supa.insertDocument(
-        categoryId: categoryId,
-        yearLabel: yearLabel,
-        yearStart: yearStart,
-        yearEnd: yearEnd,
+        category: category,
+        subCategory: subCategory,
+        year: year,
         fileName: fileName,
         storagePath: storagePath,
         fileSizeBytes: pdfBytes.length,

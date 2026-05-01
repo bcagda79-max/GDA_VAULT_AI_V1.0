@@ -4,18 +4,17 @@ import 'package:flutter/material.dart';
 class DocumentModel {
   final String id;
   final String categoryId;
-  final String yearLabel;
+  final String? subCategoryId;
   final int yearStart;
-  final int? yearEnd;
   final String fileName;
 
   /// Supabase Storage path (relative), or a local file path for local-only PDFs.
   final String storagePath;
 
+  final String processingStatus;
   final int? fileSizeBytes;
   final int? pageCount;
   final DateTime uploadedAt;
-  final bool isActive;
 
   // UI helpers (not from DB — joined or computed)
   final String? categoryName;
@@ -25,15 +24,14 @@ class DocumentModel {
   const DocumentModel({
     required this.id,
     required this.categoryId,
-    required this.yearLabel,
+    this.subCategoryId,
     required this.yearStart,
-    this.yearEnd,
     required this.fileName,
     required this.storagePath,
+    this.processingStatus = 'pending',
     this.fileSizeBytes,
     this.pageCount,
     required this.uploadedAt,
-    this.isActive = true,
     this.categoryName,
     this.categoryColor,
     this.categorySlug,
@@ -42,18 +40,15 @@ class DocumentModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'category_id': categoryId,
-      'year_label': yearLabel,
-      'year_start': yearStart,
-      'year_end': yearEnd,
+      'category': categoryId,
+      'sub_category': subCategoryId,
+      'year': yearStart,
       'file_name': fileName,
       'storage_path': storagePath,
+      'processing_status': processingStatus,
       'file_size_bytes': fileSizeBytes,
       'page_count': pageCount,
       'uploaded_at': uploadedAt.toIso8601String(),
-      'is_active': isActive,
-      'category_name': categoryName,
-      'category_slug': categorySlug,
     };
   }
 
@@ -68,29 +63,25 @@ class DocumentModel {
 
     return DocumentModel(
       id: map['id'].toString(),
-      categoryId: map['category_id'].toString(),
-      yearLabel: map['year_label']?.toString() ?? '',
-      yearStart: _asInt(map['year_start']) ?? 0,
-      yearEnd: _asInt(map['year_end']),
+      categoryId: map['category']?.toString() ?? '',
+      subCategoryId: map['sub_category']?.toString(),
+      yearStart: _asInt(map['year']) ?? 0,
       fileName: map['file_name']?.toString() ?? '',
       storagePath: map['storage_path']?.toString() ?? '',
+      processingStatus: map['processing_status']?.toString() ?? 'pending',
       fileSizeBytes: _asInt(map['file_size_bytes']),
       pageCount: _asInt(map['page_count']),
       uploadedAt:
           DateTime.tryParse(map['uploaded_at']?.toString() ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
-      isActive: map['is_active'] as bool? ?? true,
       categoryName: map['categories']?['name']?.toString(),
       categoryColor: color,
       categorySlug: map['categories']?['slug']?.toString(),
     );
   }
 
-  /// Used by existing UI to tag "ongoing" files.
-  bool get isOngoing {
-    final v = yearLabel.toLowerCase();
-    return v.contains('ongoing') || v.contains('onwards');
-  }
+  /// Year label for display
+  String get yearLabel => yearStart.toString();
 
   bool get isLocalPath {
     final p = storagePath;

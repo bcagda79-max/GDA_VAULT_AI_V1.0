@@ -31,7 +31,7 @@ class SuggestedQuestions extends ConsumerWidget {
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: AppColors.charcoal.withValues(alpha: 0.4),
+              color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.4),
               letterSpacing: 0.8,
             ),
           ),
@@ -64,7 +64,10 @@ class SuggestedQuestions extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: isDark ? AppColors.darkCard : Colors.white,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AppColors.divider, width: 0.8),
+                    border: Border.all(
+                      color: isDark ? Colors.white.withValues(alpha: 0.15) : AppColors.divider,
+                      width: 0.8,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: AppColors.navyDark.withValues(alpha: 0.04),
@@ -79,7 +82,7 @@ class SuggestedQuestions extends ConsumerWidget {
                       Icon(
                         Icons.chat_bubble_outline_rounded,
                         size: 13,
-                        color: AppColors.charcoal.withValues(alpha: 0.35),
+                        color: isDark ? Colors.white.withValues(alpha: 0.4) : AppColors.charcoal.withValues(alpha: 0.35),
                       ),
                       const SizedBox(width: 7),
                       Flexible(
@@ -87,7 +90,7 @@ class SuggestedQuestions extends ConsumerWidget {
                           question,
                           style: AppTextStyles.dmSans.copyWith(
                             fontSize: 12,
-                            color: AppColors.charcoal.withValues(alpha: 0.65),
+                            color: isDark ? Colors.white.withValues(alpha: 0.8) : AppColors.charcoal.withValues(alpha: 0.65),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),

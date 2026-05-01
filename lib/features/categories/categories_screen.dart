@@ -156,14 +156,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [AppColors.navyDark, AppColors.navyLight],
+                      colors: isDark
+                          ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
+                          : [AppColors.navyDark, AppColors.navyLight],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.navyDark.withValues(alpha: 0.24),
+                        color: AppColors.navyDark.withValues(alpha: isDark ? 0.5 : 0.24),
                         blurRadius: 18,
                         offset: const Offset(0, 5),
                       ),
@@ -309,7 +311,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.charcoal.withValues(alpha: 0.42),
+                  color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.5),
                   letterSpacing: 1.2,
                 ),
               ),
@@ -327,18 +329,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: AppColors.navyDark.withValues(alpha: 0.07),
+              color: isDark ? AppColors.gold.withValues(alpha: 0.15) : AppColors.navyDark.withValues(alpha: 0.07),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AppColors.navyDark.withValues(alpha: 0.08),
+                color: isDark ? AppColors.gold.withValues(alpha: 0.3) : AppColors.navyDark.withValues(alpha: 0.08),
               ),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.auto_awesome_rounded,
                   size: 12,
-                  color: AppColors.gdaGold,
+                  color: isDark ? AppColors.gold : AppColors.navyDark,
                 ),
                 const SizedBox(width: 5),
                 Text(
@@ -346,7 +348,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.navyDark,
+                    color: isDark ? AppColors.gold : AppColors.navyDark,
                   ),
                 ),
               ],
@@ -370,21 +372,24 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            isDark ? AppColors.darkCard : Colors.white,
-            category.color.withValues(alpha: isDark ? 0.82 : 0.72),
-          ],
+          colors: isDark
+              ? [AppColors.darkCard, category.color.withValues(alpha: 0.35)]
+              : [category.color, category.color.withValues(alpha: 0.85)],
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: category.color.withValues(alpha: 0.26),
+          color: isDark 
+              ? category.color.withValues(alpha: 0.3) 
+              : Colors.transparent,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.2)
+                : category.color.withValues(alpha: 0.3),
             blurRadius: 16,
-            offset: const Offset(0, 5),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -403,13 +408,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: AppColors.gdaGold.withValues(alpha: 0.18),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 0.5,
+                    ),
                   ),
                   child: Icon(
                     category.iconData,
                     size: 24,
-                    color: AppColors.gdaGold,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(width: 14),

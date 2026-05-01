@@ -187,9 +187,9 @@ class ChatMessageBubble extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.black.withValues(alpha: 0.3) : AppColors.navyDark.withValues(alpha: 0.04),
+                          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.navyDark.withValues(alpha: 0.04),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.divider, width: 0.8),
+                          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.divider, width: 0.8),
                         ),
                         child: Row(
                           children: [
@@ -200,7 +200,7 @@ class ChatMessageBubble extends StatelessWidget {
                               style: AppTextStyles.dmSans.copyWith(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.charcoal.withValues(alpha: 0.5),
+                                color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.5),
                               ),
                             ),
                           ],

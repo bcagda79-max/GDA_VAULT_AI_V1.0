@@ -83,9 +83,7 @@ class OfflineDocumentRecord {
     return DocumentModel(
       id: storagePath,
       categoryId: categoryId,
-      yearLabel: yearLabel,
       yearStart: yearStart,
-      yearEnd: yearEnd,
       fileName: fileName,
       storagePath: localPath,
       pageCount: pageCount,
@@ -531,7 +529,6 @@ class PdfViewerService {
         categorySlug: known?.slug ?? document.categorySlug,
         yearLabel: document.yearLabel,
         yearStart: document.yearStart,
-        yearEnd: document.yearEnd,
         pageCount: document.pageCount,
         fileSizeBytes: document.fileSizeBytes,
         downloadedAt: DateTime.now(),

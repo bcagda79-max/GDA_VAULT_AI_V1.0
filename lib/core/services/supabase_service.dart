@@ -105,10 +105,9 @@ class SupabaseService {
       }
       final response = await client
           .from('documents')
-          .select('*, categories(id, name, slug, color_hex)')
-          .eq('category_id', categoryId)
-          .eq('is_active', true)
-          .order('year_start', ascending: true)
+          .select('*, categories!category(id, name, slug, color_hex)')
+          .or('category.eq.$categoryId,sub_category.eq.$categoryId')
+          .order('year', ascending: true)
           .order('uploaded_at', ascending: false);
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -130,10 +129,9 @@ class SupabaseService {
       }
       final response = await client
           .from('documents')
-          .select('*, categories(id, name, slug, color_hex)')
-          .eq('category_id', categoryId)
-          .eq('year_start', year)
-          .eq('is_active', true)
+          .select('*, categories!category(id, name, slug, color_hex)')
+          .or('category.eq.$categoryId,sub_category.eq.$categoryId')
+          .eq('year', year)
           .order('uploaded_at', ascending: false);
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -151,15 +149,14 @@ class SupabaseService {
       }
       final response = await client
           .from('documents')
-          .select('year_start')
-          .eq('category_id', resolvedCategoryId)
-          .eq('is_active', true)
-          .order('year_start', ascending: false);
+          .select('year')
+          .or('category.eq.$resolvedCategoryId,sub_category.eq.$resolvedCategoryId')
+          .order('year', ascending: false);
 
       final years =
           (response as List)
               .map<int>((row) {
-                final value = (row as Map<String, dynamic>)['year_start'];
+                final value = (row as Map<String, dynamic>)['year'];
                 if (value is int) return value;
                 if (value is num) return value.toInt();
                 return int.tryParse(value.toString()) ?? 0;
@@ -178,10 +175,9 @@ class SupabaseService {
 
   /// Insert document record after upload.
   Future<Map<String, dynamic>?> insertDocument({
-    required String categoryId,
-    required String yearLabel,
-    required int yearStart,
-    int? yearEnd,
+    required String category,
+    String? subCategory,
+    required int year,
     required String fileName,
     required String storagePath,
     int? fileSizeBytes,
@@ -191,15 +187,13 @@ class SupabaseService {
       final response = await client
           .from('documents')
           .insert({
-            'category_id': categoryId,
-            'year_label': yearLabel,
-            'year_start': yearStart,
-            'year_end': yearEnd,
+            'category': category,
+            'sub_category': subCategory,
+            'year': year,
             'file_name': fileName,
             'storage_path': storagePath,
             'file_size_bytes': fileSizeBytes,
             'page_count': pageCount,
-            'mime_type': 'application/pdf',
           })
           .select()
           .single();
@@ -376,11 +370,10 @@ class SupabaseService {
       final response = await client
           .from('documents')
           .select('''
-            id, category_id, file_name, storage_path, year_label, year_start,
-            year_end, page_count, file_size_bytes, uploaded_at,
-            categories!inner(name, color_hex, slug)
+            id, category, sub_category, file_name, storage_path, year,
+            page_count, file_size_bytes, uploaded_at, processing_status,
+            categories!category(name, color_hex, slug)
           ''')
-          .eq('is_active', true)
           .order('uploaded_at', ascending: false)
           .limit(10);
       return List<Map<String, dynamic>>.from(response);

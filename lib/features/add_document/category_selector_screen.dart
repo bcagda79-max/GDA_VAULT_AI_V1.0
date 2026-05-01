@@ -141,19 +141,17 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           int.tryParse(_fromYearController.text.trim()) ??
           int.tryParse(_yearController.text.trim()) ??
           DateTime.now().year;
-      final yearEnd = _yearInputType == 'range'
-          ? int.tryParse(_toYearController.text.trim())
-          : null;
+      final mainCategoryId = category.parentId ?? category.id;
+      final subCategoryId = category.parentId != null ? category.id : null;
 
       UploadResult result;
       if (widget.source == 'scanner') {
         result = await DocumentUploadService.instance.uploadScannedImages(
           imagePaths: widget.imagePaths,
-          categoryId: category.id,
+          category: mainCategoryId,
+          subCategory: subCategoryId,
           categoryStoragePath: category.storagePath,
-          yearLabel: _finalYearLabel,
-          yearStart: yearStart,
-          yearEnd: yearEnd,
+          year: yearStart,
           fileName: widget.fileName,
           onProgress: (phase, progress) {
             if (!mounted) return;
@@ -171,11 +169,10 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
         final pdfFile = File(filePath);
         result = await DocumentUploadService.instance.uploadPdfFile(
           pdfFile: pdfFile,
-          categoryId: category.id,
+          category: mainCategoryId,
+          subCategory: subCategoryId,
           categoryStoragePath: category.storagePath,
-          yearLabel: _finalYearLabel,
-          yearStart: yearStart,
-          yearEnd: yearEnd,
+          year: yearStart,
           fileName: widget.fileName,
           pageCount: widget.pageCount,
           onProgress: (phase, progress) {
@@ -241,7 +238,18 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
       appBar: AppBar(
-        backgroundColor: AppColors.navyDark,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
+                  : [AppColors.navyDark, AppColors.navyLight],
+            ),
+          ),
+        ),
         elevation: 0,
         leading: const BackButton(color: Colors.white),
         title: Column(
@@ -257,8 +265,8 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             Text(
               'Step ${_currentStep + 1} of 3',
               style: AppTextStyles.dmSans.copyWith(
-                fontSize: 9,
-                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 10,
+                color: Colors.white.withValues(alpha: 0.75),
               ),
             ),
           ],
@@ -427,7 +435,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             'Where should this document be filed?',
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 13,
-              color: AppColors.charcoal.withValues(alpha: 0.5),
+              color: isDark ? Colors.white.withValues(alpha: 0.7) : AppColors.charcoal.withValues(alpha: 0.5),
             ),
           ),
           AppSpacing.vertical(20),
@@ -438,7 +446,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: AppColors.charcoal.withValues(alpha: 0.45),
+              color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.45),
               letterSpacing: 0.8,
             ),
           ),
@@ -477,43 +485,12 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             'When was this document created?',
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 13,
-              color: AppColors.charcoal.withValues(alpha: 0.5),
+              color: isDark ? Colors.white.withValues(alpha: 0.7) : AppColors.charcoal.withValues(alpha: 0.5),
             ),
           ),
           AppSpacing.vertical(20),
           _buildSelectedCategorySummary(isDark),
           AppSpacing.vertical(24),
-          Text(
-            'Enter Year or Range',
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: AppColors.charcoal.withValues(alpha: 0.45),
-              letterSpacing: 0.8,
-            ),
-          ),
-          AppSpacing.vertical(12),
-          _buildYearOption(
-            type: 'single',
-            title: 'Single Year',
-            subtitle: 'e.g. 1996, 2024',
-            isDark: isDark,
-          ),
-          AppSpacing.vertical(10),
-          _buildYearOption(
-            type: 'range',
-            title: 'Year Range',
-            subtitle: 'e.g. 1961–1996',
-            isDark: isDark,
-          ),
-          AppSpacing.vertical(10),
-          _buildYearOption(
-            type: 'ongoing',
-            title: 'Ongoing',
-            subtitle: 'e.g. 2025–onwards (active)',
-            isDark: isDark,
-          ),
-          AppSpacing.vertical(20),
           _buildYearInputFields(),
           AppSpacing.vertical(24),
           Row(
@@ -560,7 +537,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             'Review details before saving',
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 13,
-              color: AppColors.charcoal.withValues(alpha: 0.5),
+              color: isDark ? Colors.white.withValues(alpha: 0.7) : AppColors.charcoal.withValues(alpha: 0.5),
             ),
           ),
           AppSpacing.vertical(20),
@@ -611,7 +588,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.navyDark.withValues(alpha: 0.05),
+        color: isDark ? AppColors.darkCard : AppColors.navyDark.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.divider),
       ),
@@ -649,7 +626,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                   sizeStr,
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 11,
-                    color: AppColors.charcoal.withValues(alpha: 0.45),
+                    color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.45),
                   ),
                 ),
               ],
@@ -772,7 +749,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                             '${category.docCount} docs · ${category.yearRange}',
                             style: AppTextStyles.dmSans.copyWith(
                               fontSize: 11,
-                              color: AppColors.charcoal.withValues(alpha: 0.4),
+                              color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.4),
                             ),
                           ),
                         ],
@@ -828,7 +805,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                   'Select sub-type:',
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 11,
-                    color: AppColors.charcoal.withValues(alpha: 0.5),
+                    color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.5),
                   ),
                 ),
                 AppSpacing.vertical(8),
@@ -957,7 +934,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
               : (isDark ? AppColors.darkCard : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.catBoard : AppColors.divider,
+            color: isSelected ? AppColors.catBoard : (isDark ? AppColors.divider.withValues(alpha: 0.3) : AppColors.divider),
             width: isSelected ? 1.5 : 0.8,
           ),
         ),
@@ -969,7 +946,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.catBoard : AppColors.divider,
+                  color: isSelected ? AppColors.catBoard : (isDark ? AppColors.divider.withValues(alpha: 0.4) : AppColors.divider),
                   width: isSelected ? 5 : 1.5,
                 ),
                 color: Colors.transparent,
@@ -991,7 +968,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                   subtitle,
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 11,
-                    color: AppColors.charcoal.withValues(alpha: 0.4),
+                    color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.4),
                   ),
                 ),
               ],
@@ -1003,79 +980,10 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
   }
 
   Widget _buildYearInputFields() {
-    if (_yearInputType == 'single') {
-      return _buildYearTextField(
-        controller: _yearController,
-        label: 'Year',
-        hint: 'e.g. 1996',
-      );
-    }
-    if (_yearInputType == 'range') {
-      return Row(
-        children: [
-          Expanded(
-            child: _buildYearTextField(
-              controller: _fromYearController,
-              label: 'From Year',
-              hint: '1961',
-            ),
-          ),
-          AppSpacing.horizontal(12),
-          Container(width: 10, height: 1.5, color: AppColors.divider),
-          AppSpacing.horizontal(12),
-          Expanded(
-            child: _buildYearTextField(
-              controller: _toYearController,
-              label: 'To Year',
-              hint: '1996',
-            ),
-          ),
-        ],
-      );
-    }
-    return Row(
-      children: [
-        Expanded(
-          child: _buildYearTextField(
-            controller: _fromYearController,
-            label: 'From Year',
-            hint: '2025',
-          ),
-        ),
-        AppSpacing.horizontal(12),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-            decoration: BoxDecoration(
-              color: AppColors.gdaGreen.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.gdaGreen.withValues(alpha: 0.2),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Ongoing',
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.gdaGreen,
-                  ),
-                ),
-                Text(
-                  'No end year',
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 9,
-                    color: AppColors.charcoal.withValues(alpha: 0.4),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+    return _buildYearTextField(
+      controller: _yearController,
+      label: 'Year',
+      hint: 'e.g. 1996',
     );
   }
 
@@ -1084,21 +992,29 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     required String label,
     required String hint,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return TextFormField(
       controller: controller,
       onChanged: (_) => setState(() {}),
       keyboardType: TextInputType.number,
       maxLength: 4,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      style: AppTextStyles.dmSans.copyWith(fontSize: 14),
+      style: AppTextStyles.dmSans.copyWith(
+        fontSize: 14,
+        color: isDark ? AppColors.darkText : AppColors.charcoal,
+      ),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(
+          color: isDark ? AppColors.darkText.withValues(alpha: 0.7) : AppColors.charcoal.withValues(alpha: 0.7),
+        ),
         hintText: hint,
+        hintStyle: TextStyle(
+          color: isDark ? AppColors.darkText.withValues(alpha: 0.3) : AppColors.charcoal.withValues(alpha: 0.3),
+        ),
         counterText: '',
         filled: true,
-        fillColor: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.darkCard
-            : Colors.white,
+        fillColor: isDark ? AppColors.darkCard : Colors.white,
         prefixIcon: const Icon(
           Icons.calendar_today,
           size: 18,
@@ -1111,6 +1027,12 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                 color: AppColors.gdaGreen,
               )
             : null,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.divider,
+          ),
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.divider),
@@ -1131,7 +1053,9 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.12) : AppColors.divider,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -1158,8 +1082,10 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                 _buildDetailRow(
                   icon: Icons.folder_rounded,
                   label: 'Category',
-                  value: category.name,
-                  valueColor: category.color,
+                  value: _selectedCategoryId != null 
+                      ? _categories.firstWhere((c) => c.id == _selectedCategoryId).name
+                      : category.name,
+                  valueColor: isDark ? Colors.white : category.color,
                   isDark: isDark,
                 ),
                 const Divider(height: 1),
@@ -1234,7 +1160,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
               label,
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 12,
-                color: AppColors.charcoal.withValues(alpha: 0.5),
+                color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.5),
               ),
             ),
           ),

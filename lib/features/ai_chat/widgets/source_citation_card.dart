@@ -15,10 +15,10 @@ class SourceCitationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: citation.categoryColor.withValues(alpha: 0.05),
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : citation.categoryColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: citation.categoryColor.withValues(alpha: 0.15),
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : citation.categoryColor.withValues(alpha: 0.15),
           width: 0.8,
         ),
       ),
@@ -77,7 +77,7 @@ class SourceCitationCard extends StatelessWidget {
                       citation.categoryName,
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 9,
-                        color: AppColors.charcoal.withValues(alpha: 0.45),
+                        color: isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.charcoal.withValues(alpha: 0.45),
                       ),
                     ),
                     if (citation.pageNumbers.isNotEmpty)
@@ -85,7 +85,7 @@ class SourceCitationCard extends StatelessWidget {
                         " · pp. ${citation.pageNumbers.join(', ')}",
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 9,
-                          color: AppColors.charcoal.withValues(alpha: 0.45),
+                          color: isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.charcoal.withValues(alpha: 0.45),
                         ),
                       ),
                   ],

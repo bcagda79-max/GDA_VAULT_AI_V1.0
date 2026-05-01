@@ -168,7 +168,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   PreferredSizeWidget _buildAppBar(int selectedCount, bool isDark) {
     return AppBar(
-      backgroundColor: AppColors.navyDark,
+      backgroundColor: Colors.transparent,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
+                : [AppColors.navyDark, AppColors.navyLight],
+          ),
+        ),
+      ),
       elevation: 0,
       toolbarHeight: 62,
       leading: IconButton(
@@ -247,7 +258,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   Widget _buildTabHeader(int selectedCount) {
     return Container(
-      color: AppColors.navyDark,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.9)],
+        ),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -325,7 +342,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildCategoryRequiredBanner(bool isDark) {
-    final categories = ref.read(chatProvider).categories;
+    final categories = ref.read(chatProvider).categories.where((c) => c.parentId == null).toList();
     
     return Container(
       color: isDark ? AppColors.darkBg : AppColors.paper,
@@ -344,7 +361,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: Icon(
                 Icons.auto_awesome_rounded,
                 size: 36,
-                color: AppColors.navyDark.withValues(alpha: 0.3),
+                color: isDark ? Colors.white.withValues(alpha: 0.25) : AppColors.navyDark.withValues(alpha: 0.3),
               ),
             ),
           ),
@@ -363,7 +380,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             textAlign: TextAlign.center,
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 13,
-              color: AppColors.charcoal.withValues(alpha: 0.5),
+              color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 20),
@@ -395,7 +412,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         cat.name,
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 12,
-                          color: cat.isSelected ? cat.color : AppColors.charcoal.withValues(alpha: 0.6),
+                          color: cat.isSelected 
+                              ? cat.color 
+                              : (isDark ? Colors.white.withValues(alpha: 0.7) : AppColors.charcoal.withValues(alpha: 0.6)),
                           fontWeight: cat.isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
@@ -452,7 +471,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             "Searching in:",
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 11,
-              color: AppColors.charcoal.withValues(alpha: 0.45),
+              color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.45),
             ),
           ),
           const SizedBox(width: 8),
@@ -542,7 +561,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               textAlign: TextAlign.center,
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 12,
-                color: AppColors.charcoal.withValues(alpha: 0.45),
+                color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.45),
               ),
             ),
             const SizedBox(height: 32),
@@ -586,11 +605,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               height: 42,
               decoration: BoxDecoration(
                 color: state.categoriesSelected 
-                    ? AppColors.catBoard.withValues(alpha: 0.1) 
-                    : (isDark ? Colors.black.withValues(alpha: 0.2) : AppColors.charcoal.withValues(alpha: 0.05)),
+                    ? AppColors.gold.withValues(alpha: 0.15) 
+                    : (isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.charcoal.withValues(alpha: 0.05)),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: state.categoriesSelected ? AppColors.catBoard.withValues(alpha: 0.3) : AppColors.divider,
+                  color: state.categoriesSelected 
+                      ? AppColors.gold.withValues(alpha: 0.4) 
+                      : (isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.divider),
                   width: 1,
                 ),
               ),
@@ -598,7 +619,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 child: Icon(
                   state.categoriesSelected ? Icons.tune_rounded : Icons.add_rounded,
                   size: 19,
-                  color: state.categoriesSelected ? AppColors.catBoard : AppColors.charcoal.withValues(alpha: 0.4),
+                  color: state.categoriesSelected 
+                      ? AppColors.gold 
+                      : (isDark ? Colors.white.withValues(alpha: 0.4) : AppColors.charcoal.withValues(alpha: 0.4)),
                 ),
               ),
             ),
@@ -631,7 +654,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   hintText: state.categoriesSelected ? "Ask about GDA documents..." : "Select categories first...",
                   hintStyle: AppTextStyles.dmSans.copyWith(
                     fontSize: 13,
-                    color: AppColors.charcoal.withValues(alpha: 0.35),
+                    color: isDark ? Colors.white.withValues(alpha: 0.3) : AppColors.charcoal.withValues(alpha: 0.35),
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -655,7 +678,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 gradient: canSend
                     ? const LinearGradient(colors: [AppColors.navyDark, Color(0xFF1A3A6B)])
                     : null,
-                color: canSend ? null : (isDark ? AppColors.darkCard : AppColors.charcoal.withValues(alpha: 0.08)),
+                color: canSend 
+                    ? null 
+                    : (isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.charcoal.withValues(alpha: 0.08)),
+                border: canSend ? null : Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
+                  width: 1,
+                ),
                 boxShadow: canSend
                     ? [
                         BoxShadow(
@@ -670,7 +699,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 child: Icon(
                   Icons.send_rounded,
                   size: 18,
-                  color: canSend ? Colors.white : AppColors.charcoal.withValues(alpha: 0.25),
+                  color: canSend 
+                      ? Colors.white 
+                      : (isDark ? Colors.white.withValues(alpha: 0.2) : AppColors.charcoal.withValues(alpha: 0.25)),
                 ),
               ),
             ),

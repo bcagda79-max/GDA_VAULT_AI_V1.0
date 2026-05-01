@@ -55,7 +55,18 @@ class AddScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
       appBar: AppBar(
-        backgroundColor: AppColors.navyDark,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
+                  : [AppColors.navyDark, AppColors.navyLight],
+            ),
+          ),
+        ),
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Column(
@@ -95,7 +106,7 @@ class AddScreen extends StatelessWidget {
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.charcoal.withValues(alpha: 0.45),
+                  color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.5),
                   letterSpacing: 1.0,
                 ),
               ),
@@ -105,6 +116,16 @@ class AddScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                _buildFileImportCard(
+                      context: context,
+                      isDark: isDark,
+                      onTap: () => _pickPDFFile(context),
+                      isRecommended: true,
+                    )
+                    .animate(delay: 150.ms)
+                    .fadeIn(duration: 400.ms)
+                    .slideX(begin: 0.04, end: 0),
+                AppSpacing.vertical(14),
                 _buildMethodCard(
                       context: context,
                       isDark: isDark,
@@ -113,7 +134,7 @@ class AddScreen extends StatelessWidget {
                       icon: Icons.document_scanner_rounded,
                       gradient: const [AppColors.catBoard, Color(0xFF1A3A6B)],
                       onTap: () => context.push('/dashboard/add/scanner'),
-                      isRecommended: true,
+                      isRecommended: false,
                       features: const [
                         _Feature(Icons.auto_fix_high, "Auto Edge Detect"),
                         _Feature(Icons.brightness_6, "Auto Enhance"),
@@ -121,15 +142,6 @@ class AddScreen extends StatelessWidget {
                         _Feature(Icons.picture_as_pdf, "Export PDF"),
                       ],
                       actionLabel: "Open Scanner",
-                    )
-                    .animate(delay: 150.ms)
-                    .fadeIn(duration: 400.ms)
-                    .slideX(begin: 0.04, end: 0),
-                AppSpacing.vertical(14),
-                _buildFileImportCard(
-                      context: context,
-                      isDark: isDark,
-                      onTap: () => _pickPDFFile(context),
                     )
                     .animate(delay: 250.ms)
                     .fadeIn(duration: 400.ms)
@@ -344,15 +356,20 @@ class AddScreen extends StatelessWidget {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.gdaGreen.withValues(alpha: 0.1),
+                                    color: isDark 
+                                        ? AppColors.gdaGreen.withValues(alpha: 0.25) 
+                                        : AppColors.gdaGreen.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(20),
+                                    border: isDark 
+                                        ? Border.all(color: AppColors.gdaGreen.withValues(alpha: 0.5), width: 0.5) 
+                                        : null,
                                   ),
                                   child: Text(
                                     "RECOMMENDED",
                                     style: AppTextStyles.dmSans.copyWith(
                                       fontSize: 8,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.gdaGreen,
+                                      color: isDark ? const Color(0xFF4ADE80) : AppColors.gdaGreen,
                                       letterSpacing: 0.8,
                                     ),
                                   ),
@@ -379,7 +396,7 @@ class AddScreen extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: features
-                        .map((f) => _buildFeaturePill(f.icon, f.text))
+                        .map((f) => _buildFeaturePill(f.icon, f.text, isDark))
                         .toList(),
                   ),
                 ),
@@ -417,25 +434,33 @@ class AddScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeaturePill(IconData icon, String text) {
+  Widget _buildFeaturePill(IconData icon, String text, bool isDark) {
     return Container(
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.catBoard.withValues(alpha: 0.07),
+        color: isDark 
+            ? AppColors.catBoard.withValues(alpha: 0.15) 
+            : AppColors.catBoard.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.catBoard.withValues(alpha: 0.15)),
+        border: Border.all(
+          color: isDark 
+              ? AppColors.catBoard.withValues(alpha: 0.3) 
+              : AppColors.catBoard.withValues(alpha: 0.15),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: AppColors.catBoard.withValues(alpha: 0.7)),
+          Icon(icon, size: 12, color: isDark ? AppColors.catBoard.withValues(alpha: 0.9) : AppColors.catBoard.withValues(alpha: 0.7)),
           AppSpacing.horizontal(4),
           Text(
             text,
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 10,
-              color: AppColors.charcoal.withValues(alpha: 0.6),
+              color: isDark 
+                  ? Colors.white.withValues(alpha: 0.8) 
+                  : AppColors.charcoal.withValues(alpha: 0.6),
             ),
           ),
         ],
@@ -447,6 +472,7 @@ class AddScreen extends StatelessWidget {
     required BuildContext context,
     required bool isDark,
     required VoidCallback onTap,
+    bool isRecommended = false,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -501,15 +527,45 @@ class AddScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "Choose from Device",
-                            style: AppTextStyles.dmSans.copyWith(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: isDark
-                                  ? AppColors.darkText
-                                  : AppColors.charcoal,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Choose from Device",
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark
+                                      ? AppColors.darkText
+                                      : AppColors.charcoal,
+                                ),
+                              ),
+                              if (isRecommended)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isDark 
+                                        ? AppColors.gdaGreen.withValues(alpha: 0.25) 
+                                        : AppColors.gdaGreen.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: isDark 
+                                        ? Border.all(color: AppColors.gdaGreen.withValues(alpha: 0.5), width: 0.5) 
+                                        : null,
+                                  ),
+                                  child: Text(
+                                    "RECOMMENDED",
+                                    style: AppTextStyles.dmSans.copyWith(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? const Color(0xFF4ADE80) : AppColors.gdaGreen,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                           AppSpacing.vertical(4),
                           Text(
@@ -532,16 +588,16 @@ class AddScreen extends StatelessWidget {
                     _buildInfoBadge(
                       icon: Icons.picture_as_pdf,
                       color: AppColors.gdaGreen,
-                      title: "PDF Files Only",
-                      subtitle: "Maximum 50 MB per file",
+                      title: "Only PDF Files",
+                      subtitle: "No size limit",
                       isDark: isDark,
                     ),
                     AppSpacing.horizontal(12),
                     _buildInfoBadge(
-                      icon: Icons.security_rounded,
+                      icon: Icons.auto_awesome_rounded,
                       color: AppColors.gold,
-                      title: "Secure Upload",
-                      subtitle: "Encrypted transfer",
+                      title: "Clear Document",
+                      subtitle: "High resolution",
                       isDark: isDark,
                     ),
                   ],

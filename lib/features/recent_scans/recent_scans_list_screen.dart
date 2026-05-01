@@ -52,7 +52,6 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
     final doc = DocumentModel(
       id: file.path,
       categoryId: 'scan',
-      yearLabel: DateFormat('yyyy').format(modDate),
       yearStart: modDate.year,
       fileName: name,
       storagePath: file.path,

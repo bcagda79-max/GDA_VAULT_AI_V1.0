@@ -128,7 +128,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: AppColors.charcoal.withValues(alpha: 0.4),
+                color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.5),
                 letterSpacing: 1.2,
               ),
             ),
@@ -137,10 +137,8 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               context: context,
               title: 'Categories',
               subtitle: 'Board, Trust, Town & more',
-              badge: null,
               icon: Icons.folder_copy_rounded,
-              isPrimary: true,
-              isDark: isDark,
+              bgColors: [AppColors.navyDark, AppColors.navyLight],
               onTap: () => context.push('/categories'),
             ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
             const SizedBox(height: 10),
@@ -149,8 +147,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               title: 'Add New File',
               subtitle: 'Scan or import a document',
               icon: Icons.add_circle_outline_rounded,
-              isPrimary: false,
-              isDark: isDark,
+              bgColors: [AppColors.gdaGreen, AppColors.gdaGreenMid],
               onTap: () => context.go('/dashboard/add'),
             ).animate().fadeIn(delay: 250.ms, duration: 400.ms),
             const SizedBox(height: 10),
@@ -159,8 +156,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               title: 'Offline Files',
               subtitle: 'Open cached documents without internet',
               icon: Icons.cloud_done_rounded,
-              isPrimary: false,
-              isDark: isDark,
+              bgColors: [AppColors.catAdmin, const Color(0xFF6A2699)],
               onTap: () => context.push('/dashboard/offline-documents'),
             ).animate().fadeIn(delay: 275.ms, duration: 400.ms),
             const SizedBox(height: 24),
@@ -181,19 +177,25 @@ class _HomeTabState extends ConsumerState<HomeTab> {
   Widget _buildGreetingCard(bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.navyDark, AppColors.navyLight],
+          colors: isDark
+              ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
+              : [AppColors.navyDark, AppColors.navyLight],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: isDark ? 0.08 : 0.15),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withValues(alpha: 0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: AppColors.navyDark.withValues(alpha: isDark ? 0.6 : 0.35),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -206,57 +208,62 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
+                    horizontal: 12,
+                    vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.gold.withValues(alpha: 0.18),
+                    color: AppColors.gold.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: AppColors.gold.withValues(alpha: 0.35),
+                      color: AppColors.gold.withValues(alpha: 0.4),
+                      width: 0.8,
                     ),
                   ),
                   child: Text(
                     'GDA VAULT',
                     style: AppTextStyles.dmSans.copyWith(
                       fontSize: 9,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                       color: AppColors.gold,
                       letterSpacing: 1.5,
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Text(
                   _getGreeting(),
                   style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 22,
+                    fontSize: 24,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                     height: 1.1,
+                    letterSpacing: -0.5,
                   ),
                 ),
+                const SizedBox(height: 4),
                 Text(
                   'Galiyat Development Authority',
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withValues(alpha: 0.65),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
                 Row(
                   children: [
                     Icon(
                       Icons.calendar_today_rounded,
-                      size: 11,
-                      color: Colors.white.withValues(alpha: 0.5),
+                      size: 12,
+                      color: AppColors.gold.withValues(alpha: 0.8),
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(width: 6),
                     Text(
                       _getFormattedDate(),
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 11,
-                        color: Colors.white.withValues(alpha: 0.55),
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -265,9 +272,19 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             ),
           ),
           const SizedBox(width: 14),
-          SizedBox(
-            width: 80,
-            height: 80,
+          Container(
+            width: 86,
+            height: 86,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
             child: Image.asset(
               'assets/images/gda_logo.png',
               fit: BoxFit.contain,
@@ -336,38 +353,27 @@ class _HomeTabState extends ConsumerState<HomeTab> {
     required BuildContext context,
     required String title,
     required String subtitle,
-    String? badge,
     required IconData icon,
     required VoidCallback onTap,
-    required bool isPrimary,
-    bool isDark = false,
+    required List<Color> bgColors,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        height: 64,
+        height: 68,
         decoration: BoxDecoration(
-          gradient: isPrimary
-              ? const LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [AppColors.navyDark, AppColors.navyLight],
-                )
-              : null,
-          color: isPrimary
-              ? null
-              : (isDark
-                    ? AppColors.darkCard
-                    : AppColors.navyDark.withValues(alpha: 0.05)),
-          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: bgColors,
+          ),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: isPrimary
-                  ? AppColors.navyDark.withValues(alpha: 0.3)
-                  : AppColors.gdaGreen.withValues(alpha: 0.08),
-              blurRadius: 14,
-              offset: const Offset(0, 5),
+              color: bgColors.first.withValues(alpha: 0.35),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -378,26 +384,23 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             Row(
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    color: isPrimary
-                        ? Colors.white.withValues(alpha: 0.12)
-                        : null,
-                    gradient: isPrimary
-                        ? null
-                        : const LinearGradient(
-                            colors: [AppColors.gdaGreen, AppColors.navyLight],
-                          ),
-                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      width: 0.5,
+                    ),
                   ),
                   child: Icon(
                     icon,
-                    size: isPrimary ? 20 : 22,
+                    size: 22,
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,56 +410,27 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: isPrimary
-                            ? Colors.white
-                            : (isDark
-                                  ? AppColors.darkText
-                                  : AppColors.charcoal),
+                        color: Colors.white,
+                        letterSpacing: -0.2,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
                       style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 10,
-                        color: isPrimary
-                            ? Colors.white.withValues(alpha: 0.55)
-                            : AppColors.charcoal.withValues(alpha: 0.5),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withValues(alpha: 0.65),
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-            Row(
-              children: [
-                if (badge != null) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      badge,
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 10,
-                        color: Colors.white.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: isPrimary
-                      ? Colors.white.withValues(alpha: 0.6)
-                      : AppColors.charcoal.withValues(alpha: 0.3),
-                ),
-              ],
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: Colors.white.withValues(alpha: 0.6),
             ),
           ],
         ),
@@ -476,7 +450,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: AppColors.charcoal.withValues(alpha: 0.4),
+                color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.5),
                 letterSpacing: 1.2,
               ),
             ),
@@ -498,10 +472,10 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               decoration: BoxDecoration(
-                color: AppColors.navyDark.withValues(alpha: 0.07),
+                color: isDark ? AppColors.gold.withValues(alpha: 0.1) : AppColors.navyDark.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppColors.navyDark.withValues(alpha: 0.12),
+                  color: isDark ? AppColors.gold.withValues(alpha: 0.3) : AppColors.navyDark.withValues(alpha: 0.12),
                 ),
               ),
               child: Row(
@@ -510,15 +484,15 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                     'See All',
                     style: AppTextStyles.dmSans.copyWith(
                       fontSize: 12,
-                      color: AppColors.navyDark,
+                      color: isDark ? AppColors.gold : AppColors.navyDark,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
+                  Icon(
                     Icons.arrow_forward_ios_rounded,
                     size: 11,
-                    color: AppColors.navyDark,
+                    color: isDark ? AppColors.gold : AppColors.navyDark,
                   ),
                 ],
               ),
@@ -531,11 +505,11 @@ class _HomeTabState extends ConsumerState<HomeTab> {
   Widget _buildRecentDocsBody(BuildContext context, bool isDark) {
     if (_recentOpenedLoading) {
       return SizedBox(
-        height: 180,
+        height: 190,
         child: Center(
           child: CircularProgressIndicator(
-            color: AppColors.navyDark,
-            strokeWidth: 2,
+            color: isDark ? AppColors.gold : AppColors.navyDark,
+            strokeWidth: 2.5,
           ),
         ),
       );
@@ -550,28 +524,42 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.3)
+                  : AppColors.navyDark.withValues(alpha: 0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
           ],
-          border: Border.all(color: AppColors.divider, width: 1),
+          border: Border.all(
+            color: isDark ? AppColors.divider : AppColors.navyDark.withValues(alpha: 0.05),
+            width: 1,
+          ),
         ),
         child: Column(
           children: [
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.navyDark.withValues(alpha: 0.05),
+                color: isDark
+                    ? AppColors.darkSurface
+                    : AppColors.navyDark.withValues(alpha: 0.04),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.divider
+                      : AppColors.navyDark.withValues(alpha: 0.08),
+                ),
               ),
               child: Icon(
                 Icons.insert_drive_file_outlined,
                 size: 32,
-                color: AppColors.navyDark.withValues(alpha: 0.4),
+                color: isDark
+                    ? AppColors.darkText.withValues(alpha: 0.3)
+                    : AppColors.navyDark.withValues(alpha: 0.4),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             Text(
               'No Recent Documents',
               style: AppTextStyles.dmSans.copyWith(
@@ -586,6 +574,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               textAlign: TextAlign.center,
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 12,
+                fontWeight: FontWeight.w500,
                 color: (isDark ? AppColors.darkText : AppColors.charcoal)
                     .withValues(alpha: 0.5),
               ),
@@ -596,12 +585,12 @@ class _HomeTabState extends ConsumerState<HomeTab> {
     }
 
     return SizedBox(
-      height: 190,
+      height: 200,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         itemCount: _recentlyOpened.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 14),
+        separatorBuilder: (context, index) => const SizedBox(width: 16),
         itemBuilder: (context, index) {
           final doc = _recentlyOpened[index];
           return _RecentDocumentCard(
@@ -642,18 +631,23 @@ class _RecentDocumentCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 145,
+        width: 155,
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkCard : Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.25)
+                  : AppColors.navyDark.withValues(alpha: 0.05),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
           ],
-          border: Border.all(color: AppColors.divider, width: 1),
+          border: Border.all(
+            color: isDark ? AppColors.divider : AppColors.navyDark.withValues(alpha: 0.04),
+            width: 1,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -662,25 +656,49 @@ class _RecentDocumentCard extends StatelessWidget {
             Expanded(
               child: Container(
                 width: double.infinity,
-                color: AppColors.navyDark.withValues(alpha: 0.03),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? categoryColor.withValues(alpha: 0.1)
+                      : categoryColor.withValues(alpha: 0.05),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isDark ? AppColors.divider : AppColors.navyDark.withValues(alpha: 0.03),
+                    ),
+                  ),
+                ),
                 child: Stack(
                   children: [
                     Center(
-                      child: Icon(
-                        Icons.picture_as_pdf_rounded,
-                        size: 48,
-                        color: categoryColor.withValues(alpha: 0.7),
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkSurface : Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: categoryColor.withValues(alpha: 0.2),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.picture_as_pdf_rounded,
+                          size: 28,
+                          color: categoryColor,
+                        ),
                       ),
                     ),
                     Positioned(
-                      right: -10,
-                      top: 20,
-                      bottom: 20,
+                      right: -15,
+                      top: 10,
+                      bottom: 10,
                       child: Container(
-                        width: 20,
+                        width: 30,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
+                          color: categoryColor.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(15),
                         ),
                       ),
                     ),
@@ -689,7 +707,7 @@ class _RecentDocumentCard extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -698,29 +716,30 @@ class _RecentDocumentCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                       color: isDark ? AppColors.darkText : AppColors.charcoal,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
                       Icon(
                         Icons.access_time_rounded,
-                        size: 10,
+                        size: 11,
                         color:
                             (isDark ? AppColors.darkText : AppColors.charcoal)
-                                .withValues(alpha: 0.4),
+                                .withValues(alpha: 0.5),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 5),
                       Text(
                         DateFormat('MMM d, yyyy').format(document.uploadedAt),
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 10,
+                          fontWeight: FontWeight.w500,
                           color:
                               (isDark ? AppColors.darkText : AppColors.charcoal)
-                                  .withValues(alpha: 0.4),
+                                  .withValues(alpha: 0.5),
                         ),
                       ),
                     ],
@@ -753,16 +772,21 @@ class _StatBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider, width: 0.8),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? AppColors.divider : AppColors.navyDark.withValues(alpha: 0.05),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.2)
+                : AppColors.navyDark.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -770,32 +794,36 @@ class _StatBox extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              color: isDark
+                  ? iconColor.withValues(alpha: 0.15)
+                  : iconColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: iconColor.withValues(alpha: isDark ? 0.3 : 0.1),
+                width: 0.5,
+              ),
             ),
-            child: Icon(icon, size: 16, color: iconColor),
+            child: Icon(icon, size: 18, color: iconColor),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             number,
             style:
-                (isDark
-                        ? AppTextStyles.statNumberDark
-                        : AppTextStyles.statNumber)
-                    .copyWith(fontSize: 20),
+                (isDark ? AppTextStyles.statNumberDark : AppTextStyles.statNumber)
+                    .copyWith(fontSize: 22, height: 1.0, letterSpacing: -0.5),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             label,
             style: AppTextStyles.dmSans.copyWith(
-              fontSize: 9,
+              fontSize: 10,
               color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                  .withValues(alpha: 0.45),
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.3,
+                  .withValues(alpha: 0.55),
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
             ),
             textAlign: TextAlign.center,
           ),

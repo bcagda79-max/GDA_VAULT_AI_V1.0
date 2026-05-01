@@ -58,6 +58,7 @@ class ChatCategory {
   final String shortName;  // "BOARD", "TRUST" etc
   final Color color;
   final IconData icon;
+  final String? parentId;
   bool isSelected;
 
   ChatCategory({
@@ -66,6 +67,7 @@ class ChatCategory {
     required this.shortName,
     required this.color,
     required this.icon,
+    this.parentId,
     this.isSelected = false,
   });
 }

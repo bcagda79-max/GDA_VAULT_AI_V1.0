@@ -11,11 +11,13 @@ import 'package:gda_vault_ai/core/constants/supabase_constants.dart';
 class SubcategoryScreen extends StatelessWidget {
   final String categoryId;
   final String categoryName;
+  final Color categoryColor;
 
   const SubcategoryScreen({
     super.key,
     required this.categoryId,
     required this.categoryName,
+    required this.categoryColor,
   });
 
   @override
@@ -24,7 +26,19 @@ class SubcategoryScreen extends StatelessWidget {
       canPop: true,
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: AppColors.navyDark,
+          backgroundColor: Colors.transparent,
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: Theme.of(context).brightness == Brightness.dark
+                    ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
+                    : [AppColors.navyDark, AppColors.navyLight],
+              ),
+            ),
+          ),
+          elevation: 0,
           leading: const BackButton(color: Colors.white),
           title: Column(
             children: [
@@ -51,7 +65,7 @@ class SubcategoryScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ParentCategoryHeroBanner(categoryName: categoryName)
+              _ParentCategoryHeroBanner(categoryName: categoryName, categoryColor: categoryColor)
                   .animate()
                   .fadeIn(duration: 300.ms)
                   .scale(begin: const Offset(0.97, 0.97)),
@@ -127,7 +141,8 @@ class SubcategoryScreen extends StatelessWidget {
 
 class _ParentCategoryHeroBanner extends StatelessWidget {
   final String categoryName;
-  const _ParentCategoryHeroBanner({required this.categoryName});
+  final Color categoryColor;
+  const _ParentCategoryHeroBanner({required this.categoryName, required this.categoryColor});
 
   @override
   Widget build(BuildContext context) {
@@ -135,16 +150,23 @@ class _ParentCategoryHeroBanner extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.catBoard, Color(0xFF0D1B3E)],
+          colors: [categoryColor, categoryColor.withValues(alpha: 0.7)],
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.gdaGold.withValues(alpha: 0.2),
+          color: Colors.white.withValues(alpha: 0.15),
           width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: categoryColor.withValues(alpha: 0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -242,13 +264,20 @@ class _SubCategoryCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: theme.dividerColor, width: 0.8),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.brightness == Brightness.dark 
+              ? categoryColor.withValues(alpha: 0.3) 
+              : AppColors.divider, 
+          width: 1
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withValues(alpha: 0.07),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
+            color: theme.brightness == Brightness.dark
+                ? Colors.black.withValues(alpha: 0.25)
+                : categoryColor.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -342,13 +371,13 @@ class _SubCategoryCard extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: categoryColor.withValues(alpha: 0.1),
+                        color: categoryColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         Icons.arrow_forward_rounded,
                         size: 20,
-                        color: categoryColor,
+                        color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.9) : categoryColor,
                       ),
                     ),
                   ],
@@ -412,20 +441,26 @@ class _Tag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isLight
-            ? color.withValues(alpha: 0.1)
-            : color.withValues(alpha: 0.12),
+        color: isDark 
+            ? color.withValues(alpha: 0.2)
+            : (isLight ? color.withValues(alpha: 0.1) : color.withValues(alpha: 0.12)),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? color.withValues(alpha: 0.3) : Colors.transparent,
+          width: 0.5,
+        ),
       ),
       child: Text(
         label,
         style: AppTextStyles.dmSans.copyWith(
           fontSize: 9,
-          fontWeight: isLight ? FontWeight.normal : FontWeight.bold,
-          color: isLight ? color : color,
+          fontWeight: FontWeight.bold,
+          color: isDark ? Colors.white.withValues(alpha: 0.95) : color,
           letterSpacing: isLight ? 0.0 : 1.0,
         ),
       ),

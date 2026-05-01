@@ -30,6 +30,24 @@ class ChatNotifier extends Notifier<ChatState> {
         isSelected: false,
       ),
       ChatCategory(
+        id: 'board-minutes',
+        name: 'Board of Authority Minutes 1996-2026',
+        shortName: 'MINUTES',
+        color: AppColors.catBoard,
+        icon: Icons.history_edu_rounded,
+        parentId: 'board-authority',
+        isSelected: false,
+      ),
+      ChatCategory(
+        id: 'trust-minutes-sub',
+        name: 'Trust Minutes 1961-1996',
+        shortName: 'TRUST',
+        color: AppColors.catBoard,
+        icon: Icons.handshake_rounded,
+        parentId: 'board-authority',
+        isSelected: false,
+      ),
+      ChatCategory(
         id: 'town-plots',
         name: 'Town (Plot) Files',
         shortName: 'TOWNS',
@@ -55,7 +73,7 @@ class ChatNotifier extends Notifier<ChatState> {
       ),
       ChatCategory(
         id: 'trust-minutes',
-        name: 'Trust Minutes',
+        name: 'Trust Minutes Archive',
         shortName: 'TRUST',
         color: AppColors.catTrust,
         icon: Icons.handshake_rounded,
@@ -74,6 +92,7 @@ class ChatNotifier extends Notifier<ChatState> {
           shortName: cat.shortName,
           color: cat.color,
           icon: cat.icon,
+          parentId: cat.parentId,
           isSelected: !cat.isSelected,
         );
       }
@@ -97,6 +116,7 @@ class ChatNotifier extends Notifier<ChatState> {
         shortName: cat.shortName,
         color: cat.color,
         icon: cat.icon,
+        parentId: cat.parentId,
         isSelected: true,
       );
     }).toList();
@@ -116,6 +136,7 @@ class ChatNotifier extends Notifier<ChatState> {
         shortName: cat.shortName,
         color: cat.color,
         icon: cat.icon,
+        parentId: cat.parentId,
         isSelected: false,
       );
     }).toList();

@@ -13,6 +13,10 @@ class CategorySelectorSheet extends ConsumerWidget {
     switch (id) {
       case 'board-authority':
         return "452";
+      case 'board-minutes':
+        return "248";
+      case 'trust-minutes-sub':
+        return "412";
       case 'town-plots':
         return "1,284";
       case 'administration':
@@ -163,13 +167,34 @@ class CategorySelectorSheet extends ConsumerWidget {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  Padding(
+                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
-                      children: chatState.categories.map((cat) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 10.0),
-                          child: _buildCategoryRow(ref, cat),
+                      children: chatState.categories
+                          .where((c) => c.parentId == null)
+                          .map((cat) {
+                        final children = chatState.categories
+                            .where((c) => c.parentId == cat.id)
+                            .toList();
+                        return Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 10.0),
+                              child: _buildCategoryRow(context, ref, cat, isDark),
+                            ),
+                            if (cat.isSelected && children.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 16, bottom: 10),
+                                child: Column(
+                                  children: children.map((sub) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 8.0),
+                                      child: _buildCategoryRow(context, ref, sub, isDark, isSub: true),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                          ],
                         );
                       }).toList(),
                     ),
@@ -198,9 +223,9 @@ class CategorySelectorSheet extends ConsumerWidget {
                         child: Row(
                           children: [
                             Icon(
-                              Icons.search_rounded,
+                              Icons.info_outline_rounded,
                               size: 14,
-                              color: AppColors.charcoal.withValues(alpha: 0.4),
+                              color: isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.charcoal.withValues(alpha: 0.4),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -208,9 +233,7 @@ class CategorySelectorSheet extends ConsumerWidget {
                                 "Searching across $selectedCount ${selectedCount == 1 ? 'category' : 'categories'}: $selectedCatNames",
                                 style: AppTextStyles.dmSans.copyWith(
                                   fontSize: 11,
-                                  color: AppColors.charcoal.withValues(
-                                    alpha: 0.55,
-                                  ),
+                                  color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.55),
                                 ),
                                 maxLines: 2,
                               ),
@@ -229,40 +252,40 @@ class CategorySelectorSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildCategoryRow(WidgetRef ref, ChatCategory cat) {
+  Widget _buildCategoryRow(BuildContext context, WidgetRef ref, ChatCategory cat, bool isDark, {bool isSub = false}) {
     return GestureDetector(
       onTap: () => ref.read(chatProvider.notifier).toggleCategory(cat.id),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: EdgeInsets.symmetric(horizontal: isSub ? 12 : 14, vertical: isSub ? 10 : 14),
         decoration: BoxDecoration(
           color: cat.isSelected
-              ? cat.color.withValues(alpha: 0.07)
-              : Colors.transparent,
+              ? cat.color.withValues(alpha: isDark ? 0.12 : 0.07)
+              : (isDark ? AppColors.darkCard : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: cat.isSelected
-                ? cat.color.withValues(alpha: 0.3)
-                : AppColors.divider,
-            width: cat.isSelected ? 1.2 : 0.8,
+                ? cat.color.withValues(alpha: isDark ? 0.5 : 0.3)
+                : (isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.divider),
+            width: cat.isSelected ? 1.5 : 0.8,
           ),
         ),
         child: Row(
           children: [
             // Category icon
             Container(
-              width: 40,
-              height: 40,
+              width: isSub ? 32 : 40,
+              height: isSub ? 32 : 40,
               decoration: BoxDecoration(
                 color: cat.color.withValues(
-                  alpha: cat.isSelected ? 0.15 : 0.08,
+                  alpha: cat.isSelected ? (isDark ? 0.25 : 0.15) : 0.08,
                 ),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(isSub ? 8 : 10),
               ),
               child: Center(
                 child: Icon(
                   cat.icon,
-                  size: 20,
+                  size: isSub ? 16 : 20,
                   color: cat.color.withValues(
                     alpha: cat.isSelected ? 1.0 : 0.6,
                   ),
@@ -278,21 +301,21 @@ class CategorySelectorSheet extends ConsumerWidget {
                   Text(
                     cat.name,
                     style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 14,
+                      fontSize: isSub ? 13 : 14,
                       fontWeight: cat.isSelected
                           ? FontWeight.bold
                           : FontWeight.w500,
                       color: cat.isSelected
-                          ? AppColors.charcoal
-                          : AppColors.charcoal.withValues(alpha: 0.7),
+                          ? (isDark ? Colors.white : AppColors.charcoal)
+                          : (isDark ? Colors.white.withValues(alpha: 0.7) : AppColors.charcoal.withValues(alpha: 0.7)),
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     "${cat.shortName} · ${_getCatDocCount(cat.id)} docs",
                     style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 10,
-                      color: AppColors.charcoal.withValues(alpha: 0.4),
+                      fontSize: 9,
+                      color: isDark ? Colors.white.withValues(alpha: 0.4) : AppColors.charcoal.withValues(alpha: 0.4),
                     ),
                   ),
                 ],

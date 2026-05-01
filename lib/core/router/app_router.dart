@@ -81,6 +81,7 @@ class AppRouter {
                   return SubcategoryScreen(
                     categoryId: state.pathParameters['categoryId']!,
                     categoryName: extra['categoryName'] as String,
+                    categoryColor: extra['categoryColor'] as Color,
                   );
                 },
                 routes: [
