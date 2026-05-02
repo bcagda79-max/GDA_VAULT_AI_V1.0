@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:intl/intl.dart';
 import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
 
@@ -197,7 +198,7 @@ class _RecentDocumentTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${document.categoryName ?? 'Document'} · ${document.yearLabel}',
+                      '${document.categoryName ?? 'Document'} · ${document.yearLabel} · ${document.pageCount ?? 0} pages',
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 11,
                         color: AppColors.charcoal.withValues(alpha: 0.55),
@@ -205,7 +206,7 @@ class _RecentDocumentTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Opened ${document.uploadedAt}',
+                      'Opened ${DateFormat('dd MMM yyyy, hh:mm a').format(document.uploadedAt)}',
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 10,
                         color: AppColors.charcoal.withValues(alpha: 0.4),

@@ -61,24 +61,40 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       final all = rows.map(CategoryModel.fromMap).toList()
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
-      final counts = <String, int>{};
-      for (final category in all) {
-        final parentId = category.parentId;
-        if (parentId == null) continue;
-        counts[parentId] = (counts[parentId] ?? 0) + 1;
+      final subCountMap = <String, int>{};
+      final docCountMap = <String, int>{};
+      
+      // First pass: identify children and their counts
+      for (final cat in all) {
+        if (cat.parentId != null) {
+          subCountMap[cat.parentId!] = (subCountMap[cat.parentId!] ?? 0) + 1;
+        }
+        // Store individual counts
+        docCountMap[cat.id] = cat.docCount;
       }
 
       if (!mounted) return;
       setState(() {
         _subCountByParent
           ..clear()
-          ..addAll(counts);
+          ..addAll(subCountMap);
+        
         _topCategories = all
             .where((category) => category.parentId == null)
             .map(
-              (category) => category.copyWith(
-                hasSubCategories: counts.containsKey(category.id),
-              ),
+              (category) {
+                // Aggregate counts: parent count + all its children's counts
+                int aggregatedDocCount = category.docCount;
+                final children = all.where((c) => c.parentId == category.id);
+                for (final child in children) {
+                  aggregatedDocCount += child.docCount;
+                }
+
+                return category.copyWith(
+                  hasSubCategories: subCountMap.containsKey(category.id),
+                  docCount: aggregatedDocCount,
+                );
+              },
             )
             .toList();
         _isLoading = false;

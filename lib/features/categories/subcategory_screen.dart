@@ -7,8 +7,10 @@ import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/constants/supabase_constants.dart';
+import 'package:gda_vault_ai/core/services/supabase_service.dart';
+import 'package:gda_vault_ai/models/category_model.dart';
 
-class SubcategoryScreen extends StatelessWidget {
+class SubcategoryScreen extends StatefulWidget {
   final String categoryId;
   final String categoryName;
   final Color categoryColor;
@@ -21,10 +23,47 @@ class SubcategoryScreen extends StatelessWidget {
   });
 
   @override
+  State<SubcategoryScreen> createState() => _SubcategoryScreenState();
+}
+
+class _SubcategoryScreenState extends State<SubcategoryScreen> {
+  final _supa = SupabaseService.instance;
+  bool _isLoading = true;
+  List<CategoryModel> _subCategories = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSubCategories();
+  }
+
+  Future<void> _loadSubCategories() async {
+    setState(() => _isLoading = true);
+    try {
+      final rows = await _supa.getSubCategories(widget.categoryId);
+      final subCats = rows.map(CategoryModel.fromMap).toList()
+        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+
+      if (!mounted) return;
+      setState(() {
+        _subCategories = subCats;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading subcategories: $e');
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return PopScope(
       canPop: true,
       child: Scaffold(
+        backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           flexibleSpace: Container(
@@ -32,7 +71,7 @@ class SubcategoryScreen extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: Theme.of(context).brightness == Brightness.dark
+                colors: isDark
                     ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
                     : [AppColors.navyDark, AppColors.navyLight],
               ),
@@ -43,7 +82,7 @@ class SubcategoryScreen extends StatelessWidget {
           title: Column(
             children: [
               Text(
-                categoryName,
+                widget.categoryName,
                 style: AppTextStyles.playfairDisplay.copyWith(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
@@ -61,80 +100,101 @@ class SubcategoryScreen extends StatelessWidget {
           ),
           centerTitle: true,
         ),
-        body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _ParentCategoryHeroBanner(categoryName: categoryName, categoryColor: categoryColor)
-                  .animate()
-                  .fadeIn(duration: 300.ms)
-                  .scale(begin: const Offset(0.97, 0.97)),
-              Padding(
-                padding: const EdgeInsets.only(left: 16.0, top: 8.0),
-                child: Text(
-                  "Sub-categories",
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.color?.withValues(alpha: 0.5),
-                    letterSpacing: 0.8,
+        body: RefreshIndicator(
+          color: AppColors.gold,
+          onRefresh: _loadSubCategories,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _ParentCategoryHeroBanner(
+                  categoryName: widget.categoryName,
+                  categoryColor: widget.categoryColor,
+                ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.97, 0.97)),
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0, top: 8.0, bottom: 8.0),
+                  child: Text(
+                    "Sub-categories",
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: (isDark ? Colors.white : AppColors.charcoal).withValues(alpha: 0.5),
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
-              ),
-              _SubCategoryCard(
-                categoryColor: AppColors.catBoard,
-                docCount: 248,
-                yearRange: "1996–2026",
-                firstYear: "1996",
-                lastYear: "2026",
-                yearCount: "31 years",
-                subCategoryFullName: "Board of Authority Minutes 1996–2026",
-                description:
-                    "Annual board meeting minutes, resolutions and decisions",
-                shortTag: "MINUTES",
-                onTap: () {
-                  context.push(
-                    '/categories/sub/${SupabaseConstants.idBoardAuthorityMinutes}/years',
-                    extra: {
-                      'categoryName': "Board of Authority Minutes",
-                      'subCategoryName': "Board of Authority Minutes 1996–2026",
-                      'categoryColor': AppColors.catBoard,
-                      'yearFrom': 1996,
-                      'yearTo': 2026,
-                      'subCategoryId': SupabaseConstants.idBoardAuthorityMinutes,
-                    },
-                  );
-                },
-              ).animate(delay: 100.ms).fadeIn().slideY(begin: 0.05),
-              _SubCategoryCard(
-                categoryColor: AppColors.catTrust,
-                docCount: 412,
-                yearRange: "1961–1996",
-                firstYear: "1961",
-                lastYear: "1996",
-                yearCount: "36 years",
-                subCategoryFullName: "Trust Minutes 1961–1996",
-                description:
-                    "Historical trust records and land allocation documents",
-                shortTag: "TRUST",
-                onTap: () {
-                  context.push(
-                    '/categories/sub/${SupabaseConstants.idTrustMinutes}/years',
-                    extra: {
-                      'categoryName': "Trust Minutes",
-                      'subCategoryName': "Trust Minutes 1961–1996",
-                      'categoryColor': AppColors.catTrust,
-                      'yearFrom': 1961,
-                      'yearTo': 1996,
-                      'subCategoryId': SupabaseConstants.idTrustMinutes,
-                    },
-                  );
-                },
-              ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.05),
-            ],
+                if (_isLoading)
+                  const Padding(
+                    padding: EdgeInsets.all(40.0),
+                    child: Center(child: CircularProgressIndicator(color: AppColors.gold)),
+                  )
+                else if (_subCategories.isEmpty)
+                  _buildEmptyState(isDark)
+                else
+                  ..._subCategories.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final sub = entry.value;
+                    return _SubCategoryCard(
+                      categoryColor: sub.color,
+                      docCount: sub.docCount,
+                      yearRange: sub.yearRange,
+                      firstYear: sub.yearFrom?.toString() ?? "N/A",
+                      lastYear: sub.yearTo?.toString() ?? "Now",
+                      yearCount: _calculateYearCount(sub),
+                      subCategoryFullName: sub.name,
+                      description: "Official documents for ${sub.name}",
+                      shortTag: sub.slug.toUpperCase(),
+                      onTap: () {
+                        context.push(
+                          '/categories/sub/${sub.id}/years',
+                          extra: {
+                            'categoryName': widget.categoryName,
+                            'subCategoryName': sub.name,
+                            'categoryColor': sub.color,
+                            'yearFrom': sub.yearFrom ?? 1961,
+                            'yearTo': sub.yearTo,
+                            'subCategoryId': sub.id,
+                          },
+                        );
+                      },
+                    ).animate(delay: (100 * index).ms).fadeIn().slideY(begin: 0.05);
+                  }),
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  String _calculateYearCount(CategoryModel sub) {
+    if (sub.yearFrom == null) return "Unknown";
+    final to = sub.yearTo ?? DateTime.now().year;
+    final diff = to - sub.yearFrom! + 1;
+    return "$diff years";
+  }
+
+  Widget _buildEmptyState(bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 24),
+        child: Column(
+          children: [
+            Icon(
+              Icons.folder_open_rounded,
+              size: 48,
+              color: (isDark ? Colors.white : AppColors.charcoal).withValues(alpha: 0.2),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "No sub-categories found",
+              style: AppTextStyles.playfairDisplay.copyWith(
+                fontSize: 18,
+                color: (isDark ? Colors.white : AppColors.charcoal).withValues(alpha: 0.6),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
+import 'package:gda_vault_ai/core/utils/pdf_utils.dart';
 
 /// Modal popup for adding new documents with 2 quick options
 class AddDocumentModal extends ConsumerWidget {
@@ -24,6 +25,11 @@ class AddDocumentModal extends ConsumerWidget {
         final file = result.files.first;
         if (!context.mounted) return;
 
+        // Get actual page count
+        final int actualPageCount = await PdfUtils.getPageCount(file.path!);
+
+        if (!context.mounted) return;
+
         // Close modal first
         Navigator.pop(context);
 
@@ -35,7 +41,7 @@ class AddDocumentModal extends ConsumerWidget {
             'fileName': file.name,
             'fileSize': file.size,
             'filePath': file.path,
-            'pageCount': 45,
+            'pageCount': actualPageCount,
           },
         );
       }

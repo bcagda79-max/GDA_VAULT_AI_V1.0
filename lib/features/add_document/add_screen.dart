@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
+import 'package:gda_vault_ai/core/utils/pdf_utils.dart';
 
 /// The hub for adding new documents via scan or file import.
 class AddScreen extends StatelessWidget {
@@ -23,6 +24,11 @@ class AddScreen extends StatelessWidget {
         final file = result.files.first;
         if (!context.mounted) return;
 
+        // Get actual page count
+        final int actualPageCount = await PdfUtils.getPageCount(file.path!);
+
+        if (!context.mounted) return;
+
         // Navigate to category selector with actual file data
         context.push(
           '/dashboard/add/select-category',
@@ -31,8 +37,7 @@ class AddScreen extends StatelessWidget {
             'fileName': file.name,
             'fileSize': file.size,
             'filePath': file.path,
-            'pageCount':
-                45, // Default estimate (would need PDF parsing for accuracy)
+            'pageCount': actualPageCount,
           },
         );
       }

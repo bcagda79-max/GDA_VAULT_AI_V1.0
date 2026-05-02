@@ -725,21 +725,32 @@ class _RecentDocumentCard extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        Icons.access_time_rounded,
+                        Icons.description_rounded,
                         size: 11,
                         color:
                             (isDark ? AppColors.darkText : AppColors.charcoal)
                                 .withValues(alpha: 0.5),
                       ),
-                      const SizedBox(width: 5),
+                      const SizedBox(width: 4),
                       Text(
-                        DateFormat('MMM d, yyyy').format(document.uploadedAt),
+                        '${document.pageCount ?? 0} pgs',
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
                           color:
                               (isDark ? AppColors.darkText : AppColors.charcoal)
                                   .withValues(alpha: 0.5),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        DateFormat('MMM d').format(document.uploadedAt),
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color:
+                              (isDark ? AppColors.darkText : AppColors.charcoal)
+                                  .withValues(alpha: 0.4),
                         ),
                       ),
                     ],

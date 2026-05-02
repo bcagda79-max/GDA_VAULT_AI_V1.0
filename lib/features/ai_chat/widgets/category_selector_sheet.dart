@@ -8,26 +8,11 @@ import '../../../core/constants/app_text_styles.dart';
 class CategorySelectorSheet extends ConsumerWidget {
   const CategorySelectorSheet({super.key});
 
-  String _getCatDocCount(String id) {
-    // Mock counts for realism
-    switch (id) {
-      case 'board-authority':
-        return "452";
-      case 'board-minutes':
-        return "248";
-      case 'trust-minutes-sub':
-        return "412";
-      case 'town-plots':
-        return "1,284";
-      case 'administration':
-        return "89";
-      case 'private-properties':
-        return "215";
-      case 'trust-minutes':
-        return "342";
-      default:
-        return "0";
+  String _formatCount(int count) {
+    if (count >= 1000) {
+      return "${(count / 1000).toStringAsFixed(1)}k";
     }
+    return count.toString();
   }
 
   @override
@@ -312,7 +297,7 @@ class CategorySelectorSheet extends ConsumerWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    "${cat.shortName} · ${_getCatDocCount(cat.id)} docs",
+                    "${cat.shortName} · ${_formatCount(cat.docCount)} docs",
                     style: AppTextStyles.dmSans.copyWith(
                       fontSize: 9,
                       color: isDark ? Colors.white.withValues(alpha: 0.4) : AppColors.charcoal.withValues(alpha: 0.4),

@@ -59,6 +59,7 @@ class ChatCategory {
   final Color color;
   final IconData icon;
   final String? parentId;
+  final int docCount;
   bool isSelected;
 
   ChatCategory({
@@ -68,6 +69,7 @@ class ChatCategory {
     required this.color,
     required this.icon,
     this.parentId,
+    this.docCount = 0,
     this.isSelected = false,
   });
 }

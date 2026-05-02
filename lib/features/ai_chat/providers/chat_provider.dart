@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../models/chat_state.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/supabase_constants.dart';
+import '../../../core/services/supabase_service.dart';
 
 const _uuid = Uuid();
 
@@ -11,6 +13,9 @@ class ChatNotifier extends Notifier<ChatState> {
   
   @override
   ChatState build() {
+    // Initial load of categories
+    Future.microtask(() => syncCategories());
+    
     return ChatState(
       messages: const [],
       categories: _buildInitialCategories(),
@@ -22,56 +27,114 @@ class ChatNotifier extends Notifier<ChatState> {
   List<ChatCategory> _buildInitialCategories() {
     return [
       ChatCategory(
-        id: '11111111-1111-1111-1111-111111111111', // idBoardOfAuthority
+        id: SupabaseConstants.idBoardOfAuthority,
         name: 'Board of Authority',
         shortName: 'BOARD',
         color: AppColors.catBoard,
         icon: Icons.gavel_rounded,
         isSelected: false,
+        docCount: 0,
       ),
       ChatCategory(
-        id: '22222222-2222-2222-2222-222222222222', // idBoardAuthorityMinutes
+        id: SupabaseConstants.idBoardAuthorityMinutes,
         name: 'Board Authority Minutes',
         shortName: 'MINUTES',
         color: AppColors.catBoard,
         icon: Icons.history_edu_rounded,
-        parentId: '11111111-1111-1111-1111-111111111111',
+        parentId: SupabaseConstants.idBoardOfAuthority,
         isSelected: false,
+        docCount: 0,
       ),
       ChatCategory(
-        id: '33333333-3333-3333-3333-333333333333', // idTrustMinutes
+        id: SupabaseConstants.idTrustMinutes,
         name: 'Trust Minutes Archive',
         shortName: 'TRUST',
         color: AppColors.catBoard,
         icon: Icons.handshake_rounded,
-        parentId: '11111111-1111-1111-1111-111111111111',
+        parentId: SupabaseConstants.idBoardOfAuthority,
         isSelected: false,
+        docCount: 0,
       ),
       ChatCategory(
-        id: '44444444-4444-4444-4444-444444444444', // idTownPlots
+        id: SupabaseConstants.idTownPlots,
         name: 'Town (Plot) Files',
         shortName: 'TOWNS',
         color: AppColors.catTown,
         icon: Icons.location_city_rounded,
         isSelected: false,
+        docCount: 0,
       ),
       ChatCategory(
-        id: '55555555-5555-5555-5555-555555555555', // idAdministration
+        id: SupabaseConstants.idAdministration,
         name: 'Administration',
         shortName: 'ADMIN',
         color: AppColors.catAdmin,
         icon: Icons.admin_panel_settings_rounded,
         isSelected: false,
+        docCount: 0,
       ),
       ChatCategory(
-        id: '66666666-6666-6666-6666-666666666666', // idPrivateProperties
+        id: SupabaseConstants.idPrivateProperties,
         name: 'Private Properties',
         shortName: 'PRIVATE',
         color: AppColors.catPrivate,
         icon: Icons.home_work_rounded,
         isSelected: false,
+        docCount: 0,
       ),
     ];
+  }
+
+  Future<void> syncCategories() async {
+    try {
+      final rows = await SupabaseService.instance.getAllCategories();
+      if (rows.isEmpty) return;
+
+      final updatedCategories = state.categories.map((cat) {
+        final dbRow = rows.firstWhere(
+          (row) => row['id'].toString() == cat.id,
+          orElse: () => <String, dynamic>{},
+        );
+
+        if (dbRow.isEmpty) {
+          // If it's a parent, aggregate its children's counts from DB
+          int aggregated = 0;
+          for (final row in rows) {
+            if (row['parent_id']?.toString() == cat.id) {
+              aggregated += (row['document_count'] as num?)?.toInt() ?? 0;
+            }
+          }
+          if (aggregated > 0) {
+            return ChatCategory(
+              id: cat.id,
+              name: cat.name,
+              shortName: cat.shortName,
+              color: cat.color,
+              icon: cat.icon,
+              parentId: cat.parentId,
+              docCount: aggregated,
+              isSelected: cat.isSelected,
+            );
+          }
+          return cat;
+        }
+
+        return ChatCategory(
+          id: cat.id,
+          name: cat.name,
+          shortName: cat.shortName,
+          color: cat.color,
+          icon: cat.icon,
+          parentId: cat.parentId,
+          docCount: (dbRow['document_count'] as num?)?.toInt() ?? 0,
+          isSelected: cat.isSelected,
+        );
+      }).toList();
+
+      state = state.copyWith(categories: updatedCategories);
+    } catch (e) {
+      debugPrint('Error syncing chat categories: $e');
+    }
   }
 
   // Smart Selection for PDF View context
@@ -87,6 +150,7 @@ class ChatNotifier extends Notifier<ChatState> {
         color: cat.color,
         icon: cat.icon,
         parentId: cat.parentId,
+        docCount: cat.docCount,
         isSelected: cat.id == targetId || cat.id == categoryId,
       );
     }).toList();
@@ -108,6 +172,7 @@ class ChatNotifier extends Notifier<ChatState> {
           color: cat.color,
           icon: cat.icon,
           parentId: cat.parentId,
+          docCount: cat.docCount,
           isSelected: !cat.isSelected,
         );
       }
@@ -132,6 +197,7 @@ class ChatNotifier extends Notifier<ChatState> {
         color: cat.color,
         icon: cat.icon,
         parentId: cat.parentId,
+        docCount: cat.docCount,
         isSelected: true,
       );
     }).toList();
@@ -152,6 +218,7 @@ class ChatNotifier extends Notifier<ChatState> {
         color: cat.color,
         icon: cat.icon,
         parentId: cat.parentId,
+        docCount: cat.docCount,
         isSelected: false,
       );
     }).toList();

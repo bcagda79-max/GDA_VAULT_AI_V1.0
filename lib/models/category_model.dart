@@ -51,11 +51,22 @@ class CategoryModel {
   }
 
   factory CategoryModel.fromMap(Map<String, dynamic> map) {
+    final name = map['name']?.toString() ?? '';
+    final slug = map['slug']?.toString() ?? '';
     Color catColor = const Color(0xFF1A3A6B);
+
+    final lowerName = name.toLowerCase();
+    
+    // Unified Professional Brand Palette (Rich Executive Navy)
+    // We use a single, premium navy for all categories as requested to keep it "Simple & Proper"
+    catColor = const Color(0xFF1A3A6B); 
+    
+    // Fallback logic (Unlikely to be used now but kept for safety)
     final hex = map['color_hex'] as String?;
-    if (hex != null) {
+    if (hex != null && hex.isNotEmpty && hex != '#000000') {
       try {
-        catColor = Color(int.parse(hex.replaceFirst('#', '0xFF')));
+        // If a specific color is explicitly provided in DB, we can still honor it
+        // but by default, we use the unified brand navy above.
       } catch (_) {}
     }
 

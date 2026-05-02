@@ -7,6 +7,7 @@ import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/providers/theme_provider.dart';
+import 'package:gda_vault_ai/features/dashboard/providers/dashboard_stats_provider.dart';
 
 /// The settings tab, allowing user to configure the app.
 class SettingsTab extends ConsumerWidget {
@@ -17,6 +18,7 @@ class SettingsTab extends ConsumerWidget {
     final isDark = ref.watch(
       themeProvider.select((mode) => mode == ThemeMode.dark),
     );
+    final statsAsync = ref.watch(dashboardStatsProvider);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
@@ -32,7 +34,11 @@ class SettingsTab extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 20),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _buildStorageCard(isDark),
+                statsAsync.when(
+                  data: (stats) => _buildStorageCard(isDark, stats),
+                  loading: () => _buildStorageCard(isDark, null, isLoading: true),
+                  error: (_, __) => _buildStorageCard(isDark, null),
+                ),
                 const SizedBox(height: 24),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -90,7 +96,11 @@ class SettingsTab extends ConsumerWidget {
     ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.2, end: 0);
   }
 
-  Widget _buildStorageCard(bool isDark) {
+  Widget _buildStorageCard(bool isDark, Map<String, dynamic>? stats, {bool isLoading = false}) {
+    final double totalSizeGb = (stats?['total_size_gb'] as num?)?.toDouble() ?? 0.0;
+    const double maxStorageGb = 100.0;
+    final double percentage = (totalSizeGb / maxStorageGb).clamp(0.0, 1.0);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(20),
@@ -114,7 +124,7 @@ class SettingsTab extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.cloud_done_rounded,
                 color: AppColors.gold,
                 size: 20,
@@ -134,7 +144,7 @@ class SettingsTab extends ConsumerWidget {
           Row(
             children: [
               Text(
-                "42.6 GB",
+                isLoading ? "..." : "${totalSizeGb.toStringAsFixed(1)} GB",
                 style: AppTextStyles.dmSans.copyWith( // Simplified font
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -142,7 +152,7 @@ class SettingsTab extends ConsumerWidget {
                 ),
               ),
               Text(
-                " / 100 GB used",
+                " / ${maxStorageGb.toInt()} GB used",
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 12,
                   color: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.5),
@@ -156,7 +166,7 @@ class SettingsTab extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  "42%",
+                  isLoading ? "..." : "${(percentage * 100).toStringAsFixed(0)}%",
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -170,7 +180,7 @@ class SettingsTab extends ConsumerWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
-              value: 0.426,
+              value: isLoading ? null : percentage,
               backgroundColor: isDark ? AppColors.darkBg : AppColors.slate.withValues(alpha: 0.5),
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.gold),
               minHeight: 8,

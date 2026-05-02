@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:gda_vault_ai/core/utils/pdf_utils.dart';
 import 'package:gda_vault_ai/features/add_document/providers/recent_scans_provider.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
 
@@ -46,18 +47,27 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
         .toList();
   }
 
-  void _openFile(BuildContext context, File file) {
+  Future<void> _openFile(BuildContext context, File file) async {
     final name = file.uri.pathSegments.last;
     final modDate = file.statSync().modified;
+    
+    // Get actual page count for PDF, otherwise default to 1 for images
+    int actualPageCount = 1;
+    if (name.toLowerCase().endsWith('.pdf')) {
+      actualPageCount = await PdfUtils.getPageCount(file.path);
+    }
+
     final doc = DocumentModel(
       id: file.path,
       categoryId: 'scan',
       yearStart: modDate.year,
       fileName: name,
       storagePath: file.path,
-      pageCount: 1,
+      pageCount: actualPageCount,
       uploadedAt: modDate,
     );
+    
+    if (!context.mounted) return;
     context.push(
       '/categories/sub/scan/years/pdf',
       extra: {
@@ -68,11 +78,18 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
     );
   }
 
-  void _editFile(BuildContext context, File file) {
+  Future<void> _editFile(BuildContext context, File file) async {
+    final name = file.uri.pathSegments.last;
+    int actualPageCount = 1;
+    if (name.toLowerCase().endsWith('.pdf')) {
+      actualPageCount = await PdfUtils.getPageCount(file.path);
+    }
+
+    if (!context.mounted) return;
     context.push(
       '/dashboard/add/review',
       extra: {
-        'pageCount': 1,
+        'pageCount': actualPageCount,
         'source': 'existing_pdf',
         'imagePaths': <String>[],
         'filePath': file.path,
