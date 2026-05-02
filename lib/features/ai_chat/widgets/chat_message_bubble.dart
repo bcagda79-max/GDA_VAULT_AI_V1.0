@@ -29,18 +29,26 @@ class ChatMessageBubble extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
-      child: Column(
-        crossAxisAlignment:
-            message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: [
-          if (message.isUser) _buildUserMessage(context) else _buildAiMessage(context, isDark),
-        ],
-      ).animate().fadeIn(duration: 300.ms).slideY(
-            begin: 0.05,
-            end: 0,
-            duration: 300.ms,
-            curve: Curves.easeOut,
-          ),
+      child:
+          Column(
+                crossAxisAlignment: message.isUser
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
+                children: [
+                  if (message.isUser)
+                    _buildUserMessage(context)
+                  else
+                    _buildAiMessage(context, isDark),
+                ],
+              )
+              .animate()
+              .fadeIn(duration: 300.ms)
+              .slideY(
+                begin: 0.05,
+                end: 0,
+                duration: 300.ms,
+                curve: Curves.easeOut,
+              ),
     );
   }
 
@@ -49,49 +57,50 @@ class ChatMessageBubble extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // Time
+        Flexible(
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.72,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.navyDark, Color(0xFF1A3A6B)],
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
+                bottomLeft: Radius.circular(18),
+                bottomRight: Radius.circular(4),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.navyDark.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Text(
+              message.content,
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 13,
+                color: Colors.white,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
         Padding(
-          padding: const EdgeInsets.only(right: 8.0, bottom: 4.0),
+          padding: const EdgeInsets.only(bottom: 4.0),
           child: Text(
             _formatTime(message.timestamp),
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 9,
               color: AppColors.charcoal.withValues(alpha: 0.35),
-            ),
-          ),
-        ),
-        // Bubble
-        Container(
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.72,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.navyDark, Color(0xFF1A3A6B)],
-            ),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(18),
-              topRight: Radius.circular(18),
-              bottomLeft: Radius.circular(18),
-              bottomRight: Radius.circular(4),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.navyDark.withValues(alpha: 0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Text(
-            message.content,
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 13,
-              color: Colors.white,
-              height: 1.5,
             ),
           ),
         ),
@@ -113,12 +122,16 @@ class ChatMessageBubble extends StatelessWidget {
               colors: [Color(0xFF1A3A6B), AppColors.navyDark],
             ),
             border: Border.all(
-              color: AppColors.gold.withValues(alpha: 0.3),
+              color: AppColors.navyLight.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
           child: const Center(
-            child: Icon(Icons.auto_awesome_rounded, size: 15, color: AppColors.gold),
+            child: Icon(
+              Icons.auto_awesome_rounded,
+              size: 15,
+              color: AppColors.navyLight,
+            ),
           ),
         ),
         const SizedBox(width: 8),
@@ -129,12 +142,18 @@ class ChatMessageBubble extends StatelessWidget {
               // AI label
               Row(
                 children: [
-                  Text(
-                    "GDA Vault AI",
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.darkText.withValues(alpha: 0.5) : AppColors.navyDark.withValues(alpha: 0.5),
+                  Expanded(
+                    child: Text(
+                      "GDA Vault AI",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.dmSans.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isDark
+                            ? AppColors.darkText.withValues(alpha: 0.5)
+                            : AppColors.navyDark.withValues(alpha: 0.5),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -150,10 +169,10 @@ class ChatMessageBubble extends StatelessWidget {
               const SizedBox(height: 5),
               // Message bubble
               Container(
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.78,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.darkCard : Colors.white,
                   borderRadius: const BorderRadius.only(
@@ -185,32 +204,50 @@ class ChatMessageBubble extends StatelessWidget {
                     if (message.citations.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.navyDark.withValues(alpha: 0.04),
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : AppColors.navyDark.withValues(alpha: 0.04),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.divider, width: 0.8),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : AppColors.divider,
+                            width: 0.8,
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.verified_rounded, size: 13, color: AppColors.gold),
+                            const Icon(
+                              Icons.verified_rounded,
+                              size: 13,
+                              color: AppColors.navyLight,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               "Sources",
                               style: AppTextStyles.dmSans.copyWith(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.5),
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.6)
+                                    : AppColors.charcoal.withValues(alpha: 0.5),
                               ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 8),
-                      ...message.citations.map((citation) => Padding(
-                            padding: const EdgeInsets.only(bottom: 6.0),
-                            child: SourceCitationCard(citation: citation),
-                          )),
+                      ...message.citations.map(
+                        (citation) => Padding(
+                          padding: const EdgeInsets.only(bottom: 6.0),
+                          child: SourceCitationCard(citation: citation),
+                        ),
+                      ),
                     ],
                   ],
                 ),

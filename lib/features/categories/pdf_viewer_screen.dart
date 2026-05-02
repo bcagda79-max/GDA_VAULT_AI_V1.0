@@ -12,12 +12,14 @@ class PdfViewerScreen extends StatefulWidget {
   final DocumentModel document;
   final Color categoryColor;
   final String categoryName;
+  final int? initialPage;
 
   const PdfViewerScreen({
     super.key,
     required this.document,
     required this.categoryColor,
     required this.categoryName,
+    this.initialPage,
   });
 
   @override
@@ -25,6 +27,7 @@ class PdfViewerScreen extends StatefulWidget {
 }
 
 class _PdfViewerScreenState extends State<PdfViewerScreen> {
+  late PdfViewerController _pdfViewerController;
   bool _showThumbnails = true;
   bool _isLoading = true;
   bool _isDownloading = false;
@@ -39,6 +42,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
   @override
   void initState() {
     super.initState();
+    _pdfViewerController = PdfViewerController();
     _checkConnectivity();
     PdfViewerService.instance.recordRecentlyOpened(widget.document);
     _loadPdf();
@@ -247,24 +251,32 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
             else if (_localPdfPath != null)
               SfPdfViewer.file(
                 File(_localPdfPath!),
+                controller: _pdfViewerController,
                 canShowScrollHead: false,
                 canShowScrollStatus: false,
                 pageSpacing: 4,
                 onDocumentLoaded: (details) {
                   if (mounted) {
                     setState(() => _totalPages = details.document.pages.count);
+                    if (widget.initialPage != null && widget.initialPage! > 0) {
+                      _pdfViewerController.jumpToPage(widget.initialPage!);
+                    }
                   }
                 },
               )
             else if (_pdfUrl != null)
               SfPdfViewer.network(
                 _pdfUrl!,
+                controller: _pdfViewerController,
                 canShowScrollHead: false,
                 canShowScrollStatus: false,
                 pageSpacing: 4,
                 onDocumentLoaded: (details) {
                   if (mounted) {
                     setState(() => _totalPages = details.document.pages.count);
+                    if (widget.initialPage != null && widget.initialPage! > 0) {
+                      _pdfViewerController.jumpToPage(widget.initialPage!);
+                    }
                   }
                 },
               )

@@ -6,6 +6,7 @@ import '../../features/ai_chat/models/chat_state.dart';
 class ChatHistoryService {
   static final ChatHistoryService instance = ChatHistoryService._init();
   static Database? _database;
+  static const _defaultCategoryIdsKey = 'default_category_ids';
 
   ChatHistoryService._init();
 
@@ -21,8 +22,9 @@ class ChatHistoryService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -50,6 +52,24 @@ class ChatHistoryService {
         FOREIGN KEY (session_id) REFERENCES chat_sessions (id) ON DELETE CASCADE
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT
+      )
+    ''');
+  }
+
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS app_settings (
+          key TEXT PRIMARY KEY,
+          value TEXT
+        )
+      ''');
+    }
   }
 
   // --- Session Operations ---
@@ -61,17 +81,13 @@ class ChatHistoryService {
     required List<String> categoryIds,
   }) async {
     final db = await instance.database;
-    await db.insert(
-      'chat_sessions',
-      {
-        'id': id,
-        'title': title,
-        'last_message': lastMessage,
-        'updated_at': DateTime.now().toIso8601String(),
-        'category_ids': jsonEncode(categoryIds),
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('chat_sessions', {
+      'id': id,
+      'title': title,
+      'last_message': lastMessage,
+      'updated_at': DateTime.now().toIso8601String(),
+      'category_ids': jsonEncode(categoryIds),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<List<Map<String, dynamic>>> getAllSessions() async {
@@ -82,34 +98,85 @@ class ChatHistoryService {
   Future<void> deleteSession(String sessionId) async {
     final db = await instance.database;
     await db.delete('chat_sessions', where: 'id = ?', whereArgs: [sessionId]);
-    await db.delete('chat_messages', where: 'session_id = ?', whereArgs: [sessionId]);
+    await db.delete(
+      'chat_messages',
+      where: 'session_id = ?',
+      whereArgs: [sessionId],
+    );
+  }
+
+  Future<void> deleteAllSessions() async {
+    final db = await instance.database;
+    await db.transaction((txn) async {
+      await txn.delete('chat_messages');
+      await txn.delete('chat_sessions');
+    });
+  }
+
+  Future<void> saveAppSetting(String key, String value) async {
+    final db = await instance.database;
+    await db.insert('app_settings', {
+      'key': key,
+      'value': value,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<String?> getAppSetting(String key) async {
+    final db = await instance.database;
+    final rows = await db.query(
+      'app_settings',
+      columns: ['value'],
+      where: 'key = ?',
+      whereArgs: [key],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return rows.first['value'] as String?;
+  }
+
+  Future<void> saveDefaultCategoryIds(List<String> ids) async {
+    await saveAppSetting(_defaultCategoryIdsKey, jsonEncode(ids));
+  }
+
+  Future<List<String>> getDefaultCategoryIds() async {
+    final raw = await getAppSetting(_defaultCategoryIdsKey);
+    if (raw == null || raw.isEmpty) return const [];
+    final decoded = jsonDecode(raw);
+    if (decoded is! List) return const [];
+    return decoded.map((item) => item.toString()).toList();
+  }
+
+  Future<void> deleteAllChats() async {
+    await deleteAllSessions();
   }
 
   // --- Message Operations ---
 
   Future<void> saveMessage(String sessionId, ChatMessage msg) async {
     final db = await instance.database;
-    
-    // Convert citations to JSON
-    final citationsJson = jsonEncode(msg.citations.map((c) => {
-      'category_name': c.categoryName,
-      'year': c.yearLabel,
-      'page_number': c.pageNumber,
-      'display_path': c.displayPath,
-    }).toList());
 
-    await db.insert(
-      'chat_messages',
-      {
-        'id': msg.id,
-        'session_id': sessionId,
-        'content': msg.content,
-        'is_user': msg.isUser ? 1 : 0,
-        'timestamp': msg.timestamp.toIso8601String(),
-        'citations_json': citationsJson,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
+    // Convert citations to JSON
+    final citationsJson = jsonEncode(
+      msg.citations
+          .map(
+            (c) => {
+              'category_name': c.categoryName,
+              'year': c.yearLabel,
+              'page_number': c.pageNumber,
+              'display_path': c.displayPath,
+            },
+          )
+          .toList(),
     );
+
+    await db.insert('chat_messages', {
+      'id': msg.id,
+      'session_id': sessionId,
+      'content': msg.content,
+      'is_user': msg.isUser ? 1 : 0,
+      'timestamp': msg.timestamp.toIso8601String(),
+      'citations_json': citationsJson,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
 
     // Update session timestamp and last message
     if (msg.content.isNotEmpty) {
@@ -141,7 +208,9 @@ class ChatHistoryService {
         content: row['content'] as String,
         isUser: (row['is_user'] as int) == 1,
         timestamp: DateTime.parse(row['timestamp'] as String),
-        citations: citationsRaw.map((c) => SourceCitation.fromJson(c as Map<String, dynamic>)).toList(),
+        citations: citationsRaw
+            .map((c) => SourceCitation.fromJson(c as Map<String, dynamic>))
+            .toList(),
       );
     }).toList();
   }

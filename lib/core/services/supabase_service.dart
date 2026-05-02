@@ -93,6 +93,52 @@ class SupabaseService {
   // DOCUMENT OPERATIONS
   // ══════════════════════════════════════════════
 
+  /// Get a single document by its storage path.
+  Future<Map<String, dynamic>?> getDocumentByPath(String path) async {
+    try {
+      final response = await client
+          .from('documents')
+          .select('*, categories(*)')
+          .eq('storage_path', path)
+          .maybeSingle();
+      return response;
+    } catch (e) {
+      debugPrint('getDocumentByPath error: $e');
+      return null;
+    }
+  }
+
+  /// Find a document by its metadata (Category, Year, FileName).
+  /// Used for deep-linking from AI citations when direct path is unreliable.
+  Future<Map<String, dynamic>?> findDocumentByMetadata({
+    required String categoryName,
+    required String fileName,
+    required String year,
+    String? subCategoryName,
+  }) async {
+    try {
+      var query = client
+          .from('documents')
+          .select('*, categories!inner(*)')
+          .ilike('file_name', '%$fileName%')
+          .eq('year', int.tryParse(year) ?? 0)
+          .ilike('categories.name', '%$categoryName%');
+
+      final results = await query;
+      if (results.isNotEmpty) {
+        // If multiple, try to find the best match for sub-category if provided
+        if (subCategoryName != null) {
+          // This would require another join or manual filter if subcategories are also in categories table
+        }
+        return results.first;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('findDocumentByMetadata error: $e');
+      return null;
+    }
+  }
+
   /// Get documents for a category or sub-category.
   Future<List<Map<String, dynamic>>> getDocumentsByCategory(
     String categoryKey, {
@@ -113,8 +159,10 @@ class SupabaseService {
           .or('category.eq.$categoryId,sub_category.eq.$categoryId')
           .order('year', ascending: true)
           .order('uploaded_at', ascending: false);
-      
-      debugPrint('getDocumentsByCategory: found ${response.length} rows for $categoryId');
+
+      debugPrint(
+        'getDocumentsByCategory: found ${response.length} rows for $categoryId',
+      );
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -157,7 +205,9 @@ class SupabaseService {
       final response = await client
           .from('documents')
           .select('year')
-          .or('category.eq.$resolvedCategoryId,sub_category.eq.$resolvedCategoryId')
+          .or(
+            'category.eq.$resolvedCategoryId,sub_category.eq.$resolvedCategoryId',
+          )
           .order('year', ascending: false);
 
       final years =

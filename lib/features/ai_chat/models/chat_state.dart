@@ -2,26 +2,35 @@ import 'package:flutter/material.dart';
 
 /// Message source citation (matches n8n SourcePage)
 class SourceCitation {
-  final String categoryName;   // e.g. "Board of Authority"
-  final String yearLabel;      // e.g. "1972"
-  final int pageNumber;        // e.g. 23
-  final String? displayPath;   // Optional path for PDF mapping
-  final Color? categoryColor;  // Optional UI color
+  final String categoryName; // e.g. "Board of Authority"
+  final String yearLabel; // e.g. "1972"
+  final int pageNumber; // e.g. 23
+  final String? displayPath; // Optional path for PDF mapping
+  final String? fileName; // Original file name
+  final String? storagePath; // Full storage path
+  final Color? categoryColor; // Optional UI color
 
   const SourceCitation({
     required this.categoryName,
     required this.yearLabel,
     required this.pageNumber,
     this.displayPath,
+    this.fileName,
+    this.storagePath,
     this.categoryColor,
   });
 
   factory SourceCitation.fromJson(Map<String, dynamic> json) {
     return SourceCitation(
-      categoryName: json['category_name']?.toString() ?? '',
+      categoryName:
+          json['category_name']?.toString() ??
+          json['category']?.toString() ??
+          'General',
       yearLabel: json['year']?.toString() ?? '',
       pageNumber: (json['page_number'] as num?)?.toInt() ?? 0,
       displayPath: json['display_path']?.toString(),
+      fileName: json['file_name']?.toString(),
+      storagePath: json['storage_path']?.toString(),
     );
   }
 }
@@ -33,7 +42,7 @@ class ChatMessage {
   final bool isUser;
   final DateTime timestamp;
   final List<SourceCitation> citations; // empty for user messages
-  final bool isTyping;  // true = show typing bubble
+  final bool isTyping; // true = show typing bubble
 
   const ChatMessage({
     required this.id,
@@ -64,7 +73,7 @@ class ChatMessage {
 class ChatCategory {
   final String id;
   final String name;
-  final String shortName;  // "BOARD", "TRUST" etc
+  final String shortName; // "BOARD", "TRUST" etc
   final Color color;
   final IconData icon;
   final String? parentId;
@@ -90,7 +99,8 @@ class ChatState {
   final List<Map<String, dynamic>> recentSessions;
   final List<ChatMessage> messages;
   final List<ChatCategory> categories;
-  final bool isLoading;          // AI is "thinking"
+  final List<String> defaultCategoryIds;
+  final bool isLoading; // AI is "thinking"
   final bool categoriesSelected; // at least 1 category selected
   final String? errorMessage;
   final String? yearFrom;
@@ -103,6 +113,7 @@ class ChatState {
     this.recentSessions = const [],
     this.messages = const [],
     this.categories = const [],
+    this.defaultCategoryIds = const [],
     this.isLoading = false,
     this.categoriesSelected = false,
     this.errorMessage,
@@ -112,10 +123,14 @@ class ChatState {
   });
 
   bool get canSendMessage =>
-    categoriesSelected && inputText.trim().isNotEmpty && !isLoading;
+      categoriesSelected &&
+      inputText.trim().isNotEmpty &&
+      !isLoading &&
+      // Require at least one year (from or to) to be selected before sending
+      (yearFrom != null || yearTo != null);
 
   List<ChatCategory> get selectedCategories =>
-    categories.where((c) => c.isSelected).toList();
+      categories.where((c) => c.isSelected).toList();
 
   ChatState copyWith({
     String? sessionId,
@@ -123,11 +138,14 @@ class ChatState {
     List<Map<String, dynamic>>? recentSessions,
     List<ChatMessage>? messages,
     List<ChatCategory>? categories,
+    List<String>? defaultCategoryIds,
     bool? isLoading,
     bool? categoriesSelected,
     String? errorMessage,
     String? yearFrom,
+    bool clearYearFrom = false,
     String? yearTo,
+    bool clearYearTo = false,
     String? inputText,
   }) {
     return ChatState(
@@ -136,11 +154,12 @@ class ChatState {
       recentSessions: recentSessions ?? this.recentSessions,
       messages: messages ?? this.messages,
       categories: categories ?? this.categories,
+      defaultCategoryIds: defaultCategoryIds ?? this.defaultCategoryIds,
       isLoading: isLoading ?? this.isLoading,
       categoriesSelected: categoriesSelected ?? this.categoriesSelected,
       errorMessage: errorMessage,
-      yearFrom: yearFrom ?? this.yearFrom,
-      yearTo: yearTo ?? this.yearTo,
+      yearFrom: clearYearFrom ? null : (yearFrom ?? this.yearFrom),
+      yearTo: clearYearTo ? null : (yearTo ?? this.yearTo),
       inputText: inputText ?? this.inputText,
     );
   }

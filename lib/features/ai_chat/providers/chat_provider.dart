@@ -12,15 +12,15 @@ import '../../../core/services/chat_history_service.dart';
 const _uuid = Uuid();
 
 class ChatNotifier extends Notifier<ChatState> {
-  
   @override
   ChatState build() {
     // Initial load
     Future.microtask(() {
       syncCategories();
+      loadDefaultCategoryIds();
       loadRecentSessions();
     });
-    
+
     return ChatState(
       sessionId: _uuid.v4(),
       messages: const [],
@@ -108,15 +108,29 @@ class ChatNotifier extends Notifier<ChatState> {
           orElse: () => <String, dynamic>{},
         );
 
-        if (dbRow.isEmpty) {
-          // If it's a parent, aggregate its children's counts from DB
-          int aggregated = 0;
-          for (final row in rows) {
-            if (row['parent_id']?.toString() == cat.id) {
-              aggregated += (row['document_count'] as num?)?.toInt() ?? 0;
-            }
+        int aggregatedChildren = 0;
+        for (final row in rows) {
+          if (row['parent_id']?.toString() == cat.id) {
+            aggregatedChildren += (row['document_count'] as num?)?.toInt() ?? 0;
           }
-          if (aggregated > 0) {
+        }
+
+        if (cat.id == SupabaseConstants.idBoardOfAuthority &&
+            aggregatedChildren > 0) {
+          return ChatCategory(
+            id: cat.id,
+            name: cat.name,
+            shortName: cat.shortName,
+            color: cat.color,
+            icon: cat.icon,
+            parentId: cat.parentId,
+            docCount: aggregatedChildren,
+            isSelected: cat.isSelected,
+          );
+        }
+
+        if (dbRow.isEmpty) {
+          if (aggregatedChildren > 0) {
             return ChatCategory(
               id: cat.id,
               name: cat.name,
@@ -124,7 +138,7 @@ class ChatNotifier extends Notifier<ChatState> {
               color: cat.color,
               icon: cat.icon,
               parentId: cat.parentId,
-              docCount: aggregated,
+              docCount: aggregatedChildren,
               isSelected: cat.isSelected,
             );
           }
@@ -146,6 +160,46 @@ class ChatNotifier extends Notifier<ChatState> {
       state = state.copyWith(categories: updatedCategories);
     } catch (e) {
       debugPrint('Error syncing chat categories: $e');
+    }
+  }
+
+  Future<void> loadDefaultCategoryIds() async {
+    final ids = await ChatHistoryService.instance.getDefaultCategoryIds();
+    state = state.copyWith(defaultCategoryIds: ids);
+
+    if (state.messages.isEmpty && ids.isNotEmpty) {
+      _applyDefaultCategories(ids);
+    }
+  }
+
+  void _applyDefaultCategories(List<String> ids) {
+    final limited = ids.take(2).toSet();
+    final updatedCategories = state.categories.map((cat) {
+      return ChatCategory(
+        id: cat.id,
+        name: cat.name,
+        shortName: cat.shortName,
+        color: cat.color,
+        icon: cat.icon,
+        parentId: cat.parentId,
+        docCount: cat.docCount,
+        isSelected: limited.contains(cat.id),
+      );
+    }).toList();
+
+    state = state.copyWith(
+      categories: updatedCategories,
+      categoriesSelected: updatedCategories.any((c) => c.isSelected),
+    );
+  }
+
+  Future<void> updateDefaultCategoryIds(List<String> ids) async {
+    final unique = ids.take(2).toList();
+    await ChatHistoryService.instance.saveDefaultCategoryIds(unique);
+    state = state.copyWith(defaultCategoryIds: unique);
+
+    if (state.messages.isEmpty) {
+      _applyDefaultCategories(unique);
     }
   }
 
@@ -177,7 +231,7 @@ class ChatNotifier extends Notifier<ChatState> {
   void toggleCategory(String categoryId) {
     final currentSelected = state.selectedCategories;
     final isAlreadySelected = currentSelected.any((c) => c.id == categoryId);
-    
+
     if (!isAlreadySelected && currentSelected.length >= 2) {
       // Limit reached, do not select more
       debugPrint('Maximum 2 categories allowed for selection');
@@ -243,7 +297,9 @@ class ChatNotifier extends Notifier<ChatState> {
   void updateYearRange(String? from, String? to) {
     state = state.copyWith(
       yearFrom: from,
+      clearYearFrom: from == null,
       yearTo: to,
+      clearYearTo: to == null,
     );
   }
 
@@ -255,15 +311,25 @@ class ChatNotifier extends Notifier<ChatState> {
       messages: const [],
       isLoading: false,
       inputText: '',
+      clearYearFrom: true,
+      clearYearTo: true,
     );
+
+    if (state.defaultCategoryIds.isNotEmpty) {
+      _applyDefaultCategories(state.defaultCategoryIds);
+    } else {
+      clearAllCategories();
+    }
   }
 
   // Load specific session
   Future<void> loadSession(String sessionId) async {
-    final messages = await ChatHistoryService.instance.getMessagesForSession(sessionId);
+    final messages = await ChatHistoryService.instance.getMessagesForSession(
+      sessionId,
+    );
     final sessions = state.recentSessions;
     final currentSession = sessions.firstWhere((s) => s['id'] == sessionId);
-    
+
     state = state.copyWith(
       sessionId: sessionId,
       sessionTitle: currentSession['title'],
@@ -295,7 +361,9 @@ class ChatNotifier extends Notifier<ChatState> {
 
     // Save/Update session first if it's the first message
     if (state.messages.isEmpty) {
-      final title = userText.length > 30 ? "${userText.substring(0, 27)}..." : userText;
+      final title = userText.length > 30
+          ? "${userText.substring(0, 27)}..."
+          : userText;
       await ChatHistoryService.instance.saveSession(
         id: state.sessionId,
         title: title,
@@ -341,19 +409,30 @@ class ChatNotifier extends Notifier<ChatState> {
 
       final answer = response['answer']?.toString() ?? 'No response from AI.';
       final sourcesData = response['sources'] as List? ?? [];
-      
+
       final citations = sourcesData.map((s) {
         final citation = SourceCitation.fromJson(s as Map<String, dynamic>);
+
+        // Use currently selected category if n8n didn't provide one
+        String catName = citation.categoryName;
+        if (catName == 'General' && selected.isNotEmpty) {
+          catName = selected.first.name;
+        }
+
         // Map category color for UI consistency
         final cat = state.categories.firstWhere(
-          (c) => c.name.toLowerCase().contains(citation.categoryName.toLowerCase()),
-          orElse: () => state.categories.first,
+          (c) => c.name.toLowerCase().contains(catName.toLowerCase()),
+          orElse: () =>
+              selected.isNotEmpty ? selected.first : state.categories.first,
         );
+
         return SourceCitation(
-          categoryName: citation.categoryName,
+          categoryName: catName,
           yearLabel: citation.yearLabel,
           pageNumber: citation.pageNumber,
           displayPath: citation.displayPath,
+          fileName: citation.fileName,
+          storagePath: citation.storagePath,
           categoryColor: cat.color,
         );
       }).toList();
@@ -371,9 +450,7 @@ class ChatNotifier extends Notifier<ChatState> {
       await loadRecentSessions(); // Refresh list
 
       // Remove typing indicator, add AI response
-      final updatedMessages = state.messages
-        .where((m) => !m.isTyping)
-        .toList();
+      final updatedMessages = state.messages.where((m) => !m.isTyping).toList();
 
       state = state.copyWith(
         messages: [...updatedMessages, aiMsg],
@@ -381,19 +458,21 @@ class ChatNotifier extends Notifier<ChatState> {
       );
     } catch (e) {
       debugPrint('Chat error: $e');
-      
+
       // Remove typing, add error message
-      final updatedMessages = state.messages
-        .where((m) => !m.isTyping)
-        .toList();
-        
+      final updatedMessages = state.messages.where((m) => !m.isTyping).toList();
+
       state = state.copyWith(
-        messages: [...updatedMessages, ChatMessage(
-          id: _uuid.v4(),
-          content: 'I encountered an error connecting to the AI server. Please try again.',
-          isUser: false,
-          timestamp: DateTime.now(),
-        )],
+        messages: [
+          ...updatedMessages,
+          ChatMessage(
+            id: _uuid.v4(),
+            content:
+                'I encountered an error connecting to the AI server. Please try again.',
+            isUser: false,
+            timestamp: DateTime.now(),
+          ),
+        ],
         isLoading: false,
       );
     }
@@ -402,6 +481,12 @@ class ChatNotifier extends Notifier<ChatState> {
   // Clear chat history
   void clearChat() {
     state = state.copyWith(messages: const []);
+  }
+
+  Future<void> deleteAllChats() async {
+    await ChatHistoryService.instance.deleteAllChats();
+    await loadRecentSessions();
+    startNewChat();
   }
 }
 

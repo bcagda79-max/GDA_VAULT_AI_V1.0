@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:gda_vault_ai/features/ai_chat/providers/chat_provider.dart';
+import 'package:gda_vault_ai/features/ai_chat/models/chat_state.dart';
+import 'package:gda_vault_ai/features/ai_chat/widgets/default_category_selector_sheet.dart';
 import 'package:gda_vault_ai/providers/theme_provider.dart';
 import 'package:gda_vault_ai/features/dashboard/providers/dashboard_stats_provider.dart';
 
@@ -18,6 +21,7 @@ class SettingsTab extends ConsumerWidget {
       themeProvider.select((mode) => mode == ThemeMode.dark),
     );
     final statsAsync = ref.watch(dashboardStatsProvider);
+    final chatState = ref.watch(chatProvider);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
@@ -25,9 +29,7 @@ class SettingsTab extends ConsumerWidget {
         physics: const BouncingScrollPhysics(),
         slivers: [
           // Professional Centered Header Section (Sub-AppBar style)
-          SliverToBoxAdapter(
-            child: _buildSectionHeader(context, isDark),
-          ),
+          SliverToBoxAdapter(child: _buildSectionHeader(context, isDark)),
 
           SliverPadding(
             padding: const EdgeInsets.symmetric(vertical: 20),
@@ -35,23 +37,28 @@ class SettingsTab extends ConsumerWidget {
               delegate: SliverChildListDelegate([
                 statsAsync.when(
                   data: (stats) => _buildStorageCard(isDark, stats),
-                  loading: () => _buildStorageCard(isDark, null, isLoading: true),
+                  loading: () =>
+                      _buildStorageCard(isDark, null, isLoading: true),
                   error: (_, _) => _buildStorageCard(isDark, null),
                 ),
                 const SizedBox(height: 24),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   child: Text(
                     "Preferences",
                     style: AppTextStyles.dmSans.copyWith(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
-                      color: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.5),
+                      color: (isDark ? Colors.white : AppColors.navyDark)
+                          .withValues(alpha: 0.5),
                     ),
                   ),
                 ),
-                _buildSettingsList(context, ref, isDark),
+                _buildSettingsList(context, ref, isDark, chatState),
                 const SizedBox(height: 40),
                 _buildFooter(isDark),
               ]),
@@ -67,7 +74,9 @@ class SettingsTab extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0A1D37), // Specific professional dark navy background
+        color: const Color(
+          0xFF0A1D37,
+        ), // Specific professional dark navy background
         border: Border(
           bottom: BorderSide(
             color: Colors.white.withValues(alpha: 0.1),
@@ -95,8 +104,13 @@ class SettingsTab extends ConsumerWidget {
     ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.2, end: 0);
   }
 
-  Widget _buildStorageCard(bool isDark, Map<String, dynamic>? stats, {bool isLoading = false}) {
-    final double totalSizeGb = (stats?['total_size_gb'] as num?)?.toDouble() ?? 0.0;
+  Widget _buildStorageCard(
+    bool isDark,
+    Map<String, dynamic>? stats, {
+    bool isLoading = false,
+  }) {
+    final double totalSizeGb =
+        (stats?['total_size_gb'] as num?)?.toDouble() ?? 0.0;
     const double maxStorageGb = 100.0;
     final double percentage = (totalSizeGb / maxStorageGb).clamp(0.0, 1.0);
 
@@ -144,7 +158,8 @@ class SettingsTab extends ConsumerWidget {
             children: [
               Text(
                 isLoading ? "..." : "${totalSizeGb.toStringAsFixed(1)} GB",
-                style: AppTextStyles.dmSans.copyWith( // Simplified font
+                style: AppTextStyles.dmSans.copyWith(
+                  // Simplified font
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: isDark ? AppColors.gold : AppColors.navyDark,
@@ -154,7 +169,8 @@ class SettingsTab extends ConsumerWidget {
                 " / ${maxStorageGb.toInt()} GB used",
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 12,
-                  color: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.5),
+                  color: (isDark ? Colors.white : AppColors.navyDark)
+                      .withValues(alpha: 0.5),
                 ),
               ),
               const Spacer(),
@@ -165,7 +181,9 @@ class SettingsTab extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  isLoading ? "..." : "${(percentage * 100).toStringAsFixed(0)}%",
+                  isLoading
+                      ? "..."
+                      : "${(percentage * 100).toStringAsFixed(0)}%",
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -180,7 +198,9 @@ class SettingsTab extends ConsumerWidget {
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: isLoading ? null : percentage,
-              backgroundColor: isDark ? AppColors.darkBg : AppColors.slate.withValues(alpha: 0.5),
+              backgroundColor: isDark
+                  ? AppColors.darkBg
+                  : AppColors.slate.withValues(alpha: 0.5),
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.gold),
               minHeight: 8,
             ),
@@ -190,7 +210,21 @@ class SettingsTab extends ConsumerWidget {
     ).animate().fadeIn(delay: 200.ms).slideX(begin: 0.05);
   }
 
-  Widget _buildSettingsList(BuildContext context, WidgetRef ref, bool isDark) {
+  Widget _buildSettingsList(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDark,
+    ChatState chatState,
+  ) {
+    final defaultCategoryNames = chatState.categories
+        .where(
+          (cat) =>
+              cat.parentId == null &&
+              chatState.defaultCategoryIds.contains(cat.id),
+        )
+        .map((cat) => cat.name)
+        .toList();
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
@@ -225,7 +259,43 @@ class SettingsTab extends ConsumerWidget {
             iconBgColor: AppColors.catBoard.withValues(alpha: 0.1),
             iconColor: AppColors.catBoard,
             title: "Manage Categories",
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: Colors.grey,
+              size: 18,
+            ),
+          ),
+          _SettingsListItem(
+            isDark: isDark,
+            icon: Icons.auto_awesome_rounded,
+            iconBgColor: AppColors.navyLight.withValues(alpha: 0.1),
+            iconColor: AppColors.navyLight,
+            title: "Default Chat Categories",
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  defaultCategoryNames.isEmpty
+                      ? "Configure"
+                      : defaultCategoryNames.join(', '),
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.navyLight,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
+              ],
+            ),
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (ctx) => const DefaultCategorySelectorSheet(),
+              );
+            },
           ),
           _SettingsListItem(
             isDark: isDark,
@@ -233,7 +303,11 @@ class SettingsTab extends ConsumerWidget {
             iconBgColor: AppColors.gdaGreen.withValues(alpha: 0.1),
             iconColor: AppColors.gdaGreen,
             title: "Sync Settings",
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: Colors.grey,
+              size: 18,
+            ),
           ),
           _SettingsListItem(
             isDark: isDark,
@@ -261,9 +335,28 @@ class SettingsTab extends ConsumerWidget {
             isDark: isDark,
             icon: Icons.help_outline_rounded,
             iconBgColor: isDark ? AppColors.darkSurface : AppColors.paper,
-            iconColor: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.6),
+            iconColor: (isDark ? Colors.white : AppColors.navyDark).withValues(
+              alpha: 0.6,
+            ),
             title: "Help & Documentation",
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: Colors.grey,
+              size: 18,
+            ),
+          ),
+          _SettingsListItem(
+            isDark: isDark,
+            icon: Icons.delete_sweep_rounded,
+            iconBgColor: AppColors.catPrivate.withValues(alpha: 0.1),
+            iconColor: AppColors.catPrivate,
+            title: "Delete All Chats",
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: Colors.grey,
+              size: 18,
+            ),
+            onTap: () => _showDeleteAllChatsDialog(context, ref),
           ),
           _SettingsListItem(
             isDark: isDark,
@@ -287,7 +380,9 @@ class SettingsTab extends ConsumerWidget {
           style: AppTextStyles.dmSans.copyWith(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.3),
+            color: (isDark ? Colors.white : AppColors.navyDark).withValues(
+              alpha: 0.3,
+            ),
           ),
         ),
         const SizedBox(height: 4),
@@ -295,7 +390,9 @@ class SettingsTab extends ConsumerWidget {
           "Galiyat Development Authority · Abbottabad",
           style: AppTextStyles.dmSans.copyWith(
             fontSize: 10,
-            color: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.2),
+            color: (isDark ? Colors.white : AppColors.navyDark).withValues(
+              alpha: 0.2,
+            ),
           ),
         ),
       ],
@@ -308,8 +405,15 @@ class SettingsTab extends ConsumerWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text("Sign Out?", style: AppTextStyles.playfairDisplay.copyWith(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            "Sign Out?",
+            style: AppTextStyles.playfairDisplay.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           content: Text(
             "Are you sure you want to sign out from the GDA Vault AI system?",
             style: AppTextStyles.dmSans.copyWith(fontSize: 14),
@@ -320,9 +424,58 @@ class SettingsTab extends ConsumerWidget {
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: const Text("Sign Out", style: TextStyle(color: AppColors.catPrivate, fontWeight: FontWeight.bold)),
+              child: const Text(
+                "Sign Out",
+                style: TextStyle(
+                  color: AppColors.catPrivate,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteAllChatsDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Theme.of(dialogContext).cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            "Delete all chats?",
+            style: AppTextStyles.playfairDisplay.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            "This will permanently remove every locally saved chat session and message from this device.",
+            style: AppTextStyles.dmSans.copyWith(fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              child: Text("Cancel", style: TextStyle(color: Colors.grey[600])),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+            TextButton(
+              child: const Text(
+                "Delete All",
+                style: TextStyle(
+                  color: AppColors.catPrivate,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                await ref.read(chatProvider.notifier).deleteAllChats();
               },
             ),
           ],
@@ -361,15 +514,14 @@ class _SettingsListItem extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
             border: hasDivider
                 ? Border(
                     bottom: BorderSide(
-                      color: AppColors.divider.withValues(alpha: isDark ? 0.05 : 0.1),
+                      color: AppColors.divider.withValues(
+                        alpha: isDark ? 0.05 : 0.1,
+                      ),
                       width: 1,
                     ),
                   )
@@ -397,7 +549,7 @@ class _SettingsListItem extends StatelessWidget {
                   ),
                 ),
               ),
-              if (trailing != null) trailing!,
+              trailing ?? const SizedBox.shrink(),
             ],
           ),
         ),
@@ -405,4 +557,3 @@ class _SettingsListItem extends StatelessWidget {
     );
   }
 }
-

@@ -151,6 +151,7 @@ class AppRouter {
                             document: extra['document'] as DocumentModel,
                             categoryColor: extra['categoryColor'] as Color,
                             categoryName: extra['categoryName'] as String,
+                            initialPage: extra['initialPage'] as int?,
                           );
                         },
                       ),
@@ -232,6 +233,20 @@ class AppRouter {
             initialCategoryId: extra?['categoryId'] as String?,
             initialSubCategoryId: extra?['subCategoryId'] as String?,
             initialYear: extra?['year'] as String?,
+          );
+        },
+      ),
+      // PDF Viewer (Global Entry)
+      GoRoute(
+        path: '/pdf-viewer',
+        name: 'pdf-viewer',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return PdfViewerScreen(
+            document: extra['document'] as DocumentModel,
+            categoryColor: extra['categoryColor'] as Color,
+            categoryName: extra['categoryName'] as String,
+            initialPage: extra['initialPage'] as int?,
           );
         },
       ),
