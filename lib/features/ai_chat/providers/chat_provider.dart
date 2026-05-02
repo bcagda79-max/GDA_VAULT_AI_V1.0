@@ -6,6 +6,8 @@ import '../models/chat_state.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/supabase_constants.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/ai_chat_service.dart';
+import '../../../core/services/chat_history_service.dart';
 
 const _uuid = Uuid();
 
@@ -13,15 +15,25 @@ class ChatNotifier extends Notifier<ChatState> {
   
   @override
   ChatState build() {
-    // Initial load of categories
-    Future.microtask(() => syncCategories());
+    // Initial load
+    Future.microtask(() {
+      syncCategories();
+      loadRecentSessions();
+    });
     
     return ChatState(
+      sessionId: _uuid.v4(),
       messages: const [],
       categories: _buildInitialCategories(),
       isLoading: false,
       categoriesSelected: false,
     );
+  }
+
+  // Load history from DB
+  Future<void> loadRecentSessions() async {
+    final sessions = await ChatHistoryService.instance.getAllSessions();
+    state = state.copyWith(recentSessions: sessions);
   }
 
   List<ChatCategory> _buildInitialCategories() {
@@ -161,8 +173,17 @@ class ChatNotifier extends Notifier<ChatState> {
     );
   }
 
-  // Toggle category selection
+  // Toggle category selection (Limited to max 2)
   void toggleCategory(String categoryId) {
+    final currentSelected = state.selectedCategories;
+    final isAlreadySelected = currentSelected.any((c) => c.id == categoryId);
+    
+    if (!isAlreadySelected && currentSelected.length >= 2) {
+      // Limit reached, do not select more
+      debugPrint('Maximum 2 categories allowed for selection');
+      return;
+    }
+
     final updatedCategories = state.categories.map((cat) {
       if (cat.id == categoryId) {
         return ChatCategory(
@@ -187,25 +208,9 @@ class ChatNotifier extends Notifier<ChatState> {
     );
   }
 
-  // Select all categories
+  // Disabled Select All as we now limit to 2
   void selectAllCategories() {
-    final updatedCategories = state.categories.map((cat) {
-      return ChatCategory(
-        id: cat.id,
-        name: cat.name,
-        shortName: cat.shortName,
-        color: cat.color,
-        icon: cat.icon,
-        parentId: cat.parentId,
-        docCount: cat.docCount,
-        isSelected: true,
-      );
-    }).toList();
-
-    state = state.copyWith(
-      categories: updatedCategories,
-      categoriesSelected: true,
-    );
+    debugPrint('Select All is disabled due to 2-category limit');
   }
 
   // Clear all selections
@@ -234,7 +239,50 @@ class ChatNotifier extends Notifier<ChatState> {
     state = state.copyWith(inputText: text);
   }
 
-  // Send message + get mock AI response
+  // Update year range for filtering
+  void updateYearRange(String? from, String? to) {
+    state = state.copyWith(
+      yearFrom: from,
+      yearTo: to,
+    );
+  }
+
+  // Start a fresh session
+  void startNewChat() {
+    state = state.copyWith(
+      sessionId: _uuid.v4(),
+      sessionTitle: null,
+      messages: const [],
+      isLoading: false,
+      inputText: '',
+    );
+  }
+
+  // Load specific session
+  Future<void> loadSession(String sessionId) async {
+    final messages = await ChatHistoryService.instance.getMessagesForSession(sessionId);
+    final sessions = state.recentSessions;
+    final currentSession = sessions.firstWhere((s) => s['id'] == sessionId);
+    
+    state = state.copyWith(
+      sessionId: sessionId,
+      sessionTitle: currentSession['title'],
+      messages: messages,
+      isLoading: false,
+      inputText: '',
+    );
+  }
+
+  // Delete session
+  Future<void> deleteSession(String sessionId) async {
+    await ChatHistoryService.instance.deleteSession(sessionId);
+    await loadRecentSessions();
+    if (state.sessionId == sessionId) {
+      startNewChat();
+    }
+  }
+
+  // Send message + get real AI response from n8n
   Future<void> sendMessage(String userText) async {
     if (!state.canSendMessage) return;
 
@@ -244,6 +292,21 @@ class ChatNotifier extends Notifier<ChatState> {
       isUser: true,
       timestamp: DateTime.now(),
     );
+
+    // Save/Update session first if it's the first message
+    if (state.messages.isEmpty) {
+      final title = userText.length > 30 ? "${userText.substring(0, 27)}..." : userText;
+      await ChatHistoryService.instance.saveSession(
+        id: state.sessionId,
+        title: title,
+        lastMessage: userText,
+        categoryIds: state.selectedCategories.map((c) => c.id).toList(),
+      );
+      state = state.copyWith(sessionTitle: title);
+    }
+
+    // Save user message
+    await ChatHistoryService.instance.saveMessage(state.sessionId, userMsg);
 
     // Add user message + typing indicator
     final typingMsg = ChatMessage(
@@ -260,181 +323,85 @@ class ChatNotifier extends Notifier<ChatState> {
       inputText: '',
     );
 
-    // Simulate AI thinking delay (1.5 - 2.5 seconds)
-    final delay = 1500 + (DateTime.now().millisecond % 1000);
-    await Future.delayed(Duration(milliseconds: delay));
+    try {
+      // Get selected category IDs
+      final selected = state.selectedCategories;
+      final mainId = selected.isNotEmpty ? selected.first.id : null;
+      final subId = selected.length > 1 ? selected[1].id : null;
 
-    // Get mock response based on selected categories + query
-    final mockResponse = _getMockResponse(
-      userText,
-      state.selectedCategories,
-    );
+      // Call n8n service
+      final response = await AiChatService.sendMessage(
+        message: userText,
+        sessionId: state.sessionId,
+        categoryId: mainId,
+        subCategoryId: subId,
+        yearFrom: state.yearFrom,
+        yearTo: state.yearTo,
+      );
 
-    // Remove typing indicator, add AI response
-    final updatedMessages = state.messages
-      .where((m) => !m.isTyping)
-      .toList();
+      final answer = response['answer']?.toString() ?? 'No response from AI.';
+      final sourcesData = response['sources'] as List? ?? [];
+      
+      final citations = sourcesData.map((s) {
+        final citation = SourceCitation.fromJson(s as Map<String, dynamic>);
+        // Map category color for UI consistency
+        final cat = state.categories.firstWhere(
+          (c) => c.name.toLowerCase().contains(citation.categoryName.toLowerCase()),
+          orElse: () => state.categories.first,
+        );
+        return SourceCitation(
+          categoryName: citation.categoryName,
+          yearLabel: citation.yearLabel,
+          pageNumber: citation.pageNumber,
+          displayPath: citation.displayPath,
+          categoryColor: cat.color,
+        );
+      }).toList();
 
-    final aiMsg = ChatMessage(
-      id: _uuid.v4(),
-      content: mockResponse.content,
-      isUser: false,
-      timestamp: DateTime.now(),
-      citations: mockResponse.citations,
-    );
+      final aiMsg = ChatMessage(
+        id: _uuid.v4(),
+        content: answer,
+        isUser: false,
+        timestamp: DateTime.now(),
+        citations: citations,
+      );
 
-    state = state.copyWith(
-      messages: [...updatedMessages, aiMsg],
-      isLoading: false,
-    );
+      // Save AI message
+      await ChatHistoryService.instance.saveMessage(state.sessionId, aiMsg);
+      await loadRecentSessions(); // Refresh list
+
+      // Remove typing indicator, add AI response
+      final updatedMessages = state.messages
+        .where((m) => !m.isTyping)
+        .toList();
+
+      state = state.copyWith(
+        messages: [...updatedMessages, aiMsg],
+        isLoading: false,
+      );
+    } catch (e) {
+      debugPrint('Chat error: $e');
+      
+      // Remove typing, add error message
+      final updatedMessages = state.messages
+        .where((m) => !m.isTyping)
+        .toList();
+        
+      state = state.copyWith(
+        messages: [...updatedMessages, ChatMessage(
+          id: _uuid.v4(),
+          content: 'I encountered an error connecting to the AI server. Please try again.',
+          isUser: false,
+          timestamp: DateTime.now(),
+        )],
+        isLoading: false,
+      );
+    }
   }
 
   // Clear chat history
   void clearChat() {
     state = state.copyWith(messages: const []);
-  }
-
-  // Mock response generator
-  ({String content, List<SourceCitation> citations}) _getMockResponse(
-    String query,
-    List<ChatCategory> selectedCats,
-  ) {
-    final q = query.toLowerCase();
-    final catNames = selectedCats.map((c) => c.shortName).join(', ');
-
-    // Board / Minutes related
-    if (q.contains('resolution') || q.contains('board') ||
-        q.contains('minutes') || q.contains('decision')) {
-      return (
-        content: 'Based on the Board of Authority records, '
-          'Resolution 47 was passed on 14 March 1972 regarding land '
-          'allocation in the Galiyat region. The resolution established '
-          'a five-member board of trustees to oversee development '
-          'activities. Subsequent resolutions in 1996 expanded the '
-          'authority\'s jurisdiction to include urban planning and '
-          'plot registration under the new GDA framework.',
-        citations: [
-          SourceCitation(
-            documentName: 'Board Minutes Vol. IV',
-            yearLabel: '1972',
-            categoryName: 'Board of Authority',
-            pageNumbers: const [23, 67],
-            categoryColor: AppColors.catBoard,
-          ),
-          SourceCitation(
-            documentName: 'Board Resolutions 1996',
-            yearLabel: '1996',
-            categoryName: 'Board of Authority',
-            pageNumbers: const [12],
-            categoryColor: AppColors.catBoard,
-          ),
-        ],
-      );
-    }
-
-    // Trust related
-    if (q.contains('trust') || q.contains('land') ||
-        q.contains('formed') || q.contains('constitution')) {
-      return (
-        content: 'The Galiyat land trust was formally constituted on '
-          '14 March 1972 under Resolution 47, as recorded in Trust '
-          'Minutes Volume IV. It superseded the 1968 ad-hoc arrangement '
-          'and established a structured framework for land management '
-          'in the Galiyat region. The trust operated continuously until '
-          '1996 when authority structure was reorganised.',
-        citations: [
-          SourceCitation(
-            documentName: 'Trust Minutes Vol. IV',
-            yearLabel: '1972',
-            categoryName: 'Trust Minutes',
-            pageNumbers: const [23, 24, 67],
-            categoryColor: AppColors.catTrust,
-          ),
-        ],
-      );
-    }
-
-    // Plot / Town related
-    if (q.contains('plot') || q.contains('town') ||
-        q.contains('registry') || q.contains('property')) {
-      return (
-        content: 'Plot registry records from 1983 to 2024 are available '
-          'in the Town Files archive. Plot 47-A in Nathiagali was '
-          'registered in 1983 with a total area of 4 kanals. Ownership '
-          'transfer documents are filed under the 2008 registry update. '
-          'Current plot status can be verified in the 2024 Plot Registry.',
-        citations: [
-          SourceCitation(
-            documentName: 'Plot Registry 1983',
-            yearLabel: '1983',
-            categoryName: 'Town (Plot) Files',
-            pageNumbers: const [32],
-            categoryColor: AppColors.catTown,
-          ),
-          SourceCitation(
-            documentName: 'Plot Registry 2024',
-            yearLabel: '2024',
-            categoryName: 'Town (Plot) Files',
-            pageNumbers: const [8, 9],
-            categoryColor: AppColors.catTown,
-          ),
-        ],
-      );
-    }
-
-    // Admin related
-    if (q.contains('admin') || q.contains('order') ||
-        q.contains('notification') || q.contains('circular')) {
-      return (
-        content: 'Administrative Order 12/2021 issued on 15 June 2021 '
-          'outlines the revised standard operating procedures for '
-          'document processing and archival. The order mandates digital '
-          'backup of all records dated after 2015. Previous circular '
-          'from 2018 regarding staff transfers is also available in '
-          'the Administration Files.',
-        citations: [
-          SourceCitation(
-            documentName: 'Admin Order 12/2021',
-            yearLabel: '2021',
-            categoryName: 'Administration',
-            pageNumbers: const [4, 5, 11],
-            categoryColor: AppColors.catAdmin,
-          ),
-        ],
-      );
-    }
-
-    // Private properties
-    if (q.contains('private') || q.contains('karim') ||
-        q.contains('ownership') || q.contains('transfer')) {
-      return (
-        content: 'Private property records are maintained from 1975 '
-          'onwards. The Karim property file (2008) documents ownership '
-          'transfer and boundary demarcation for a 2-kanal residential '
-          'plot in Changla Gali. All private property files require '
-          'authorised officer access for full document viewing.',
-        citations: [
-          SourceCitation(
-            documentName: 'Property File — Karim',
-            yearLabel: '2008',
-            categoryName: 'Private Properties',
-            pageNumbers: const [12, 13, 62],
-            categoryColor: AppColors.catPrivate,
-          ),
-        ],
-      );
-    }
-
-    // Generic response
-    return (
-      content: 'I have searched through the selected categories '
-        '($catNames) and found relevant information. The GDA archive '
-        'contains records spanning from 1961 to 2026 across ${selectedCats.length} '
-        'selected categories. Please refine your query with specific '
-        'keywords such as year, document type, resolution number, or '
-        'plot number for more precise results.',
-      citations: const [],
-    );
   }
 }
 

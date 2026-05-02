@@ -96,6 +96,73 @@ class CategorySelectorSheet extends ConsumerWidget {
             ),
           ),
           const Divider(color: AppColors.divider, height: 1),
+          
+          // Year Range Selector
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_month_rounded, size: 14, color: AppColors.gold),
+                    const SizedBox(width: 6),
+                    Text(
+                      "Historical Time Window (Optional)",
+                      style: AppTextStyles.dmSans.copyWith(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.gold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildYearDropdown(
+                        context,
+                        ref,
+                        label: "Year From",
+                        value: chatState.yearFrom,
+                        onChanged: (val) => ref.read(chatProvider.notifier).updateYearRange(val, chatState.yearTo),
+                        isDark: isDark,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildYearDropdown(
+                        context,
+                        ref,
+                        label: "Year To",
+                        value: chatState.yearTo,
+                        onChanged: (val) => ref.read(chatProvider.notifier).updateYearRange(chatState.yearFrom, val),
+                        isDark: isDark,
+                      ),
+                    ),
+                  ],
+                ),
+                if (chatState.yearFrom != null || chatState.yearTo != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: GestureDetector(
+                      onTap: () => ref.read(chatProvider.notifier).updateYearRange(null, null),
+                      child: Text(
+                        "Clear Time Filter",
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.catPrivate,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          const Divider(color: AppColors.divider, height: 1),
           // Select All / Clear
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -113,29 +180,9 @@ class CategorySelectorSheet extends ConsumerWidget {
                   children: [
                     GestureDetector(
                       onTap: () =>
-                          ref.read(chatProvider.notifier).selectAllCategories(),
-                      child: Text(
-                        "Select All",
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.gold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      "·",
-                      style: TextStyle(
-                        color: AppColors.charcoal.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: () =>
                           ref.read(chatProvider.notifier).clearAllCategories(),
                       child: Text(
-                        "Clear",
+                        "Clear Categories",
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 11,
                           color: AppColors.charcoal.withValues(alpha: 0.5),
@@ -332,6 +379,54 @@ class CategorySelectorSheet extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildYearDropdown(
+    BuildContext context,
+    WidgetRef ref, {
+    required String label,
+    required String? value,
+    required Function(String?) onChanged,
+    required bool isDark,
+  }) {
+    final years = List.generate(2026 - 1960 + 1, (index) => (1960 + index).toString()).reversed.toList();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.dmSans.copyWith(
+            fontSize: 10,
+            color: isDark ? Colors.white.withValues(alpha: 0.4) : AppColors.charcoal.withValues(alpha: 0.4),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.divider, width: 0.8),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              hint: Text("Select Year", style: TextStyle(fontSize: 12, color: AppColors.charcoal.withValues(alpha: 0.3))),
+              isExpanded: true,
+              icon: Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: AppColors.gold.withValues(alpha: 0.5)),
+              dropdownColor: isDark ? AppColors.darkSurface : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              items: years.map((y) => DropdownMenuItem(
+                value: y,
+                child: Text(y, style: AppTextStyles.dmSans.copyWith(fontSize: 13, color: isDark ? Colors.white : AppColors.charcoal)),
+              )).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

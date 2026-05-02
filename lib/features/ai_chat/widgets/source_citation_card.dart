@@ -11,14 +11,15 @@ class SourceCitationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = citation.categoryColor ?? AppColors.navyDark;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : citation.categoryColor.withValues(alpha: 0.05),
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.1) : citation.categoryColor.withValues(alpha: 0.15),
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : color.withValues(alpha: 0.15),
           width: 0.8,
         ),
       ),
@@ -29,7 +30,7 @@ class SourceCitationCard extends StatelessWidget {
             width: 3,
             height: 36,
             decoration: BoxDecoration(
-              color: citation.categoryColor,
+              color: color,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -42,7 +43,7 @@ class SourceCitationCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        citation.documentName,
+                        citation.categoryName,
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -56,7 +57,7 @@ class SourceCitationCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                       decoration: BoxDecoration(
-                        color: citation.categoryColor.withValues(alpha: 0.1),
+                        color: color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -64,7 +65,7 @@ class SourceCitationCard extends StatelessWidget {
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
-                          color: citation.categoryColor,
+                          color: color,
                         ),
                       ),
                     ),
@@ -74,15 +75,15 @@ class SourceCitationCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      citation.categoryName,
+                      "Document Source",
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 9,
                         color: isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.charcoal.withValues(alpha: 0.45),
                       ),
                     ),
-                    if (citation.pageNumbers.isNotEmpty)
+                    if (citation.pageNumber > 0)
                       Text(
-                        " · pp. ${citation.pageNumbers.join(', ')}",
+                        " · p. ${citation.pageNumber}",
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 9,
                           color: isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.charcoal.withValues(alpha: 0.45),
@@ -99,7 +100,7 @@ class SourceCitationCard extends StatelessWidget {
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text("Opening ${citation.documentName}..."),
+                  content: Text("Opening ${citation.categoryName} (Page ${citation.pageNumber})..."),
                   duration: const Duration(seconds: 1),
                 ),
               );
@@ -107,7 +108,7 @@ class SourceCitationCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
-                color: citation.categoryColor.withValues(alpha: 0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -115,7 +116,7 @@ class SourceCitationCard extends StatelessWidget {
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 9,
                   fontWeight: FontWeight.bold,
-                  color: citation.categoryColor,
+                  color: color,
                 ),
               ),
             ),

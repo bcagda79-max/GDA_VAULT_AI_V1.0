@@ -5,6 +5,7 @@ import 'providers/chat_provider.dart';
 import 'package:gda_vault_ai/features/ai_chat/models/chat_state.dart';
 import 'widgets/chat_message_bubble.dart';
 import 'widgets/category_selector_sheet.dart';
+import 'widgets/ai_chat_drawer.dart';
 import 'widgets/suggested_questions.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
@@ -64,9 +65,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         
         // If year is provided, pre-fill it for the user
         if (widget.initialYear != null) {
-          final yearText = "Year ${widget.initialYear}: ";
-          _inputController.text = yearText;
-          ref.read(chatProvider.notifier).updateInput(yearText);
+          ref.read(chatProvider.notifier).updateYearRange(
+            widget.initialYear,
+            widget.initialYear,
+          );
         }
       } else if (widget.isPushed) {
         // If just pushed without specific context, select all for convenience
@@ -165,18 +167,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
       appBar: widget.isPushed ? _buildAppBar(selectedCount, isDark) : null,
+      drawer: const AiChatDrawer(),
       body: Column(
         children: [
-          if (!widget.isPushed) _buildTabHeader(selectedCount),
+          if (!widget.isPushed) _buildTabHeader(selectedCount, isDark),
           
-          // Category required banner or selection summary
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: !chatState.categoriesSelected && chatState.messages.isEmpty
-                ? _buildCategoryRequiredBanner(isDark)
-                : (chatState.categoriesSelected ? _buildSelectedCategoriesBar(chatState, isDark) : const SizedBox.shrink()),
-          ),
+          _buildFilterChipsBar(chatState, isDark),
+          
+          if (!chatState.categoriesSelected && chatState.messages.isEmpty)
+            _buildCategoryRequiredBanner(isDark),
           
           // Messages List
           Expanded(
@@ -287,90 +286,238 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  Widget _buildTabHeader(int selectedCount) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.9)],
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "AI Chat",
-                style: AppTextStyles.playfairDisplay.copyWith(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                "Ask anything about GDA documents",
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 9,
-                  color: Colors.white.withValues(alpha: 0.5),
-                ),
-              ),
-            ],
+  Widget _buildTabHeader(int selectedCount, bool isDark) {
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.9)],
+            ),
           ),
-          Row(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (ref.read(chatProvider).messages.isNotEmpty)
-                GestureDetector(
-                  onTap: _confirmClearChat,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(Icons.delete_sweep_rounded, size: 15, color: Colors.white.withValues(alpha: 0.6)),
-                  ),
-                ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: _openCategorySheet,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: selectedCount > 0 ? AppColors.gold.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(20),
-                    border: selectedCount > 0 ? Border.all(color: AppColors.gold.withValues(alpha: 0.3)) : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.tune_rounded,
-                        size: 13,
-                        color: selectedCount > 0 ? AppColors.gold : Colors.white.withValues(alpha: 0.6),
+              Row(
+                children: [
+                  Builder(
+                    builder: (context) => GestureDetector(
+                      onTap: () => Scaffold.of(context).openDrawer(),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.menu_rounded, color: Colors.white, size: 18),
                       ),
-                      const SizedBox(width: 4),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        selectedCount > 0 ? "$selectedCount selected" : "Filters",
+                        "AI Chat",
+                        style: AppTextStyles.playfairDisplay.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        "Ask anything about GDA documents",
                         style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 10,
-                          fontWeight: selectedCount > 0 ? FontWeight.bold : FontWeight.normal,
-                          color: selectedCount > 0 ? AppColors.gold : Colors.white.withValues(alpha: 0.5),
+                          fontSize: 9,
+                          color: Colors.white.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
                   ),
-                ),
+                ],
+              ),
+              Row(
+                children: [
+                  if (ref.read(chatProvider).messages.isNotEmpty)
+                    GestureDetector(
+                      onTap: _confirmClearChat,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.delete_sweep_rounded, size: 15, color: Colors.white.withValues(alpha: 0.6)),
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _openCategorySheet,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: selectedCount > 0 ? AppColors.gold.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(20),
+                        border: selectedCount > 0 ? Border.all(color: AppColors.gold.withValues(alpha: 0.3)) : null,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.tune_rounded,
+                            size: 13,
+                            color: selectedCount > 0 ? AppColors.gold : Colors.white.withValues(alpha: 0.6),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            selectedCount > 0 ? "$selectedCount selected" : "Filters",
+                            style: AppTextStyles.dmSans.copyWith(
+                              fontSize: 10,
+                              fontWeight: selectedCount > 0 ? FontWeight.bold : FontWeight.normal,
+                              color: selectedCount > 0 ? AppColors.gold : Colors.white.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
+
+Widget _buildFilterChipsBar(ChatState state, bool isDark) {
+  final categories = state.selectedCategories;
+  final hasYearFilter = state.yearFrom != null || state.yearTo != null;
+  
+  String yearRangeText = "All Years";
+  if (hasYearFilter) {
+    if (state.yearFrom != null && state.yearTo != null) {
+      yearRangeText = state.yearFrom == state.yearTo ? state.yearFrom! : "${state.yearFrom} — ${state.yearTo}";
+    } else {
+      yearRangeText = state.yearFrom ?? state.yearTo ?? "All Years";
+    }
+  }
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    decoration: BoxDecoration(
+      color: isDark ? AppColors.darkSurface : Colors.white,
+      border: Border(bottom: BorderSide(color: AppColors.divider, width: 0.8)),
+    ),
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          _buildFilterChip(
+            icon: Icons.auto_awesome_motion_rounded,
+            label: categories.isEmpty ? "All Archives" : categories.map((c) => c.shortName).join(", "),
+            isActive: categories.isNotEmpty,
+            onTap: _openCategorySheet,
+            isDark: isDark,
+          ),
+          const SizedBox(width: 8),
+          _buildFilterChip(
+            icon: Icons.history_toggle_off_rounded,
+            label: yearRangeText,
+            isActive: hasYearFilter,
+            onTap: _openCategorySheet,
+            isDark: isDark,
+          ),
+          if (categories.isNotEmpty || hasYearFilter) ...[
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () {
+                ref.read(chatProvider.notifier).clearAllCategories();
+                ref.read(chatProvider.notifier).updateYearRange(null, null);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                child: Text(
+                  "Reset",
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.catPrivate,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildFilterChip({
+  required IconData icon,
+  required String label,
+  required bool isActive,
+  required VoidCallback onTap,
+  required bool isDark,
+}) {
+  return GestureDetector(
+    onTap: onTap,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: isActive 
+          ? AppColors.navyDark 
+          : (isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.navyDark.withValues(alpha: 0.04)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isActive 
+            ? AppColors.gold.withValues(alpha: 0.5) 
+            : (isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.divider),
+          width: 0.8,
+        ),
+        boxShadow: isActive ? [
+          BoxShadow(
+            color: AppColors.navyDark.withValues(alpha: 0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          )
+        ] : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 13,
+            color: isActive ? AppColors.gold : (isDark ? Colors.white.withValues(alpha: 0.4) : AppColors.charcoal.withValues(alpha: 0.4)),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 10,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+              color: isActive ? Colors.white : (isDark ? Colors.white.withValues(alpha: 0.7) : AppColors.charcoal.withValues(alpha: 0.7)),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            Icons.keyboard_arrow_down_rounded,
+            size: 12,
+            color: isActive ? Colors.white.withValues(alpha: 0.5) : (isDark ? Colors.white.withValues(alpha: 0.2) : AppColors.charcoal.withValues(alpha: 0.2)),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   Widget _buildCategoryRequiredBanner(bool isDark) {
     final categories = ref.read(chatProvider).categories.where((c) => c.parentId == null).toList();
@@ -407,7 +554,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            "Choose which document categories you want\nto search and ask questions about.",
+            "Choose up to 2 document categories you want\nto search and ask questions about.",
             textAlign: TextAlign.center,
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 13,
@@ -422,7 +569,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             alignment: WrapAlignment.center,
             children: categories.map((cat) {
               return GestureDetector(
-                onTap: () => ref.read(chatProvider.notifier).toggleCategory(cat.id),
+                onTap: () {
+                  final chatState = ref.read(chatProvider);
+                  if (!cat.isSelected && chatState.selectedCategories.length >= 2) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text("Maximum 2 categories allowed for focused AI context"),
+                        backgroundColor: AppColors.navyDark,
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                    return;
+                  }
+                  ref.read(chatProvider.notifier).toggleCategory(cat.id);
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -455,103 +617,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 16),
-          // Select All button
-          GestureDetector(
-            onTap: () => ref.read(chatProvider.notifier).selectAllCategories(),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.navyDark,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.check_circle_outline_rounded, size: 16, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Text(
-                    "Select All Categories",
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+          const SizedBox(height: 24),
+          // Info Badge instead of Select All
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.gold.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.gold.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 14, color: AppColors.gold),
+                const SizedBox(width: 6),
+                Text(
+                  "Multi-category search enabled (Max 2)",
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.gold,
                   ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSelectedCategoriesBar(ChatState state, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.black.withValues(alpha: 0.2) : AppColors.navyDark.withValues(alpha: 0.04),
-        border: Border(bottom: BorderSide(color: AppColors.divider, width: 0.8)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.search_rounded, size: 14, color: AppColors.charcoal.withValues(alpha: 0.4)),
-          const SizedBox(width: 6),
-          Text(
-            "Searching in:",
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 11,
-              color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.45),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                children: state.selectedCategories.map((cat) {
-                  return Container(
-                    margin: const EdgeInsets.only(right: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: cat.color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: cat.color.withValues(alpha: 0.3), width: 1),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 5,
-                          height: 5,
-                          decoration: BoxDecoration(color: cat.color, shape: BoxShape.circle),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          cat.shortName,
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: cat.color,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: _openCategorySheet,
-            child: Text(
-              "Edit",
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: AppColors.gold,
-              ),
+                ),
+              ],
             ),
           ),
         ],
