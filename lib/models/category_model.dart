@@ -51,11 +51,7 @@ class CategoryModel {
   }
 
   factory CategoryModel.fromMap(Map<String, dynamic> map) {
-    final name = map['name']?.toString() ?? '';
-    final slug = map['slug']?.toString() ?? '';
     Color catColor = const Color(0xFF1A3A6B);
-
-    final lowerName = name.toLowerCase();
     
     // Unified Professional Brand Palette (Rich Executive Navy)
     // We use a single, premium navy for all categories as requested to keep it "Simple & Proper"

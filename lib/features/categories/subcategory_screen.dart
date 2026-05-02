@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/core/constants/supabase_constants.dart';
 import 'package:gda_vault_ai/core/services/supabase_service.dart';
 import 'package:gda_vault_ai/models/category_model.dart';
 

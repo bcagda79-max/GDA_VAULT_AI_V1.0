@@ -33,7 +33,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
       key: 'town-plots',
       title: 'Town (Plots) Files',
       fallbackRange: '1999 – 2026',
-      color: AppColors.catTown,
+      color: AppColors.catBoard,
       icon: Icons.location_city_rounded,
       routeType: _OfflineFolderRouteType.yearBrowser,
       categoryId: SupabaseConstants.idTownPlots,
@@ -51,7 +51,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
       key: 'administration',
       title: 'Administration Files',
       fallbackRange: '1999 – 2026',
-      color: AppColors.catAdmin,
+      color: AppColors.catBoard,
       icon: Icons.admin_panel_settings_rounded,
       routeType: _OfflineFolderRouteType.yearBrowser,
       categoryId: SupabaseConstants.idAdministration,
@@ -69,7 +69,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
       key: 'private-properties',
       title: 'Private Properties Files',
       fallbackRange: '1999 – 2026',
-      color: AppColors.catPrivate,
+      color: AppColors.catBoard,
       icon: Icons.home_work_rounded,
       routeType: _OfflineFolderRouteType.yearBrowser,
       categoryId: SupabaseConstants.idPrivateProperties,
@@ -294,12 +294,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
   Widget _buildModernHeader(BuildContext context, bool isDark, int catCount, int totalDocs) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 10,
-        bottom: 18,
-        left: 16,
-        right: 16,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -318,25 +313,13 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
       ),
       child: Column(
         children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned(
-                left: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Colors.white),
-                  onPressed: () => context.pop(),
-                ),
-              ),
-              Text(
-                'Offline Files',
-                style: AppTextStyles.playfairDisplay.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+          Text(
+            'Offline Files',
+            style: AppTextStyles.playfairDisplay.copyWith(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(height: 4),
           Text(

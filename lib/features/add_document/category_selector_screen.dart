@@ -41,7 +41,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
   int _currentStep = 0;
   String? _selectedCategoryId;
   String? _selectedSubId;
-  String _yearInputType = 'single';
+  final String _yearInputType = 'single';
   bool _isLoading = true;
   bool _isUploading = false;
   double _uploadProgress = 0.0;

@@ -1,10 +1,8 @@
-// ignore_for_file: prefer_final_fields, unused_field, unused_element
 import 'dart:io';
-
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
-import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
@@ -27,10 +25,10 @@ class PdfViewerScreen extends StatefulWidget {
 }
 
 class _PdfViewerScreenState extends State<PdfViewerScreen> {
-  int _currentPage = 1;
   bool _showThumbnails = true;
   bool _isLoading = true;
   bool _isDownloading = false;
+  bool _hasInternet = true;
   String? _localPdfPath;
   String? _pdfUrl;
   String? _errorMessage;
@@ -41,13 +39,24 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
   @override
   void initState() {
     super.initState();
+    _checkConnectivity();
     PdfViewerService.instance.recordRecentlyOpened(widget.document);
     _loadPdf();
+  }
+
+  Future<void> _checkConnectivity() async {
+    final result = await Connectivity().checkConnectivity();
+    if (mounted) {
+      setState(() {
+        _hasInternet = result.any((r) => r != ConnectivityResult.none);
+      });
+    }
   }
 
   Future<void> _loadPdf() async {
     setState(() => _isLoading = true);
     try {
+      // Prioritize local file if it exists
       if (widget.document.isLocalPath &&
           await File(widget.document.storagePath).exists()) {
         if (!mounted) return;
@@ -68,6 +77,17 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
           _localPdfPath = localPath.path;
           _isLoading = false;
         });
+        return;
+      }
+
+      // If no local file, we must have internet to load from network
+      if (!_hasInternet) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'No internet connection and file not cached.';
+          });
+        }
         return;
       }
 
@@ -136,8 +156,20 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
     }
   }
 
+  Future<void> _deleteDocument() async {
+    final success = await PdfViewerService.instance.removeOfflineDocument(widget.document.storagePath);
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('File removed from offline storage')),
+      );
+      context.pop(); // Go back as the file is gone
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isOfflineFile = _localPdfPath != null;
+
     return PopScope(
       canPop: true,
       child: Scaffold(
@@ -166,11 +198,12 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
           ),
           centerTitle: true,
           actions: [
-            IconButton(
-              icon: const Icon(Icons.download_rounded, color: Colors.white),
-              onPressed: _isDownloading ? null : _downloadOffline,
-              tooltip: 'Download offline',
-            ),
+            if (!isOfflineFile && _hasInternet)
+              IconButton(
+                icon: const Icon(Icons.download_rounded, color: Colors.white),
+                onPressed: _isDownloading ? null : _downloadOffline,
+                tooltip: 'Download offline',
+              ),
             IconButton(
               icon: const Icon(Icons.view_sidebar_rounded, color: Colors.white),
               onPressed: () =>
@@ -187,6 +220,8 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                       ),
                     ),
                   );
+                } else if (value == 'delete_offline') {
+                  _deleteDocument();
                 }
               },
               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -194,6 +229,11 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                   value: 'view_file_info',
                   child: Text('View File Info'),
                 ),
+                if (isOfflineFile)
+                  const PopupMenuItem<String>(
+                    value: 'delete_offline',
+                    child: Text('Delete Offline Copy', style: TextStyle(color: Colors.red)),
+                  ),
               ],
             ),
           ],
@@ -237,7 +277,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                   ),
                 ),
               ),
-            if (!_isLoading && _totalPages > 0 && !widget.document.isLocalPath)
+            if (!_isLoading && _totalPages > 0 && _hasInternet)
               _BottomAskAIButton(
                 document: widget.document,
                 bottomOffset: _isDownloading ? 110 : 14,
@@ -293,187 +333,6 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ThumbnailRail extends StatelessWidget {
-  final bool showThumbnails;
-  final int pageCount;
-  final int currentPage;
-  final Color categoryColor;
-  final ValueChanged<int> onPageSelected;
-
-  const _ThumbnailRail({
-    required this.showThumbnails,
-    required this.pageCount,
-    required this.currentPage,
-    required this.categoryColor,
-    required this.onPageSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeInOut,
-      width: showThumbnails ? 44 : 0,
-      color: const Color(0xFF1A1A1A),
-      child: ListView.builder(
-        itemCount: pageCount,
-        itemBuilder: (context, index) {
-          final pageNum = index + 1;
-          final isSelected = pageNum == currentPage;
-          return GestureDetector(
-            onTap: () => onPageSelected(pageNum),
-            child: Container(
-              height: 48,
-              margin: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? Colors.white
-                    : Colors.white.withValues(alpha: 0.2),
-                border: isSelected
-                    ? Border.all(color: categoryColor, width: 1.5)
-                    : null,
-                borderRadius: BorderRadius.circular(3),
-              ),
-              child: Center(
-                child: Text(
-                  '$pageNum',
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 8,
-                    color: isSelected
-                        ? Colors.black
-                        : Colors.white.withValues(alpha: 0.5),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _BottomPageControls extends StatelessWidget {
-  final int currentPage;
-  final int pageCount;
-  final Color categoryColor;
-  final VoidCallback onPrevious;
-  final VoidCallback onNext;
-
-  const _BottomPageControls({
-    required this.currentPage,
-    required this.pageCount,
-    required this.categoryColor,
-    required this.onPrevious,
-    required this.onNext,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        height: 72,
-        decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1E).withValues(alpha: 0.95),
-          border: Border(
-            top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-          ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _NavButton(
-              icon: Icons.chevron_left_rounded,
-              label: 'Previous',
-              enabled: currentPage > 1,
-              onTap: onPrevious,
-            ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '$currentPage / $pageCount',
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                AppSpacing.vertical(4),
-                Container(
-                  width: 120,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                  child: FractionallySizedBox(
-                    widthFactor: pageCount == 0 ? 0 : currentPage / pageCount,
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: categoryColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            _NavButton(
-              icon: Icons.chevron_right_rounded,
-              label: 'Next',
-              enabled: currentPage < pageCount,
-              onTap: onNext,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NavButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  const _NavButton({
-    required this.icon,
-    required this.label,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: Opacity(
-        opacity: enabled ? 1.0 : 0.3,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 22, color: Colors.white),
-            Text(
-              label,
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 9,
-                color: Colors.white.withValues(alpha: 0.6),
-              ),
-            ),
           ],
         ),
       ),

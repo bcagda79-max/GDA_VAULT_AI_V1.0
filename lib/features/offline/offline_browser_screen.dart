@@ -3,8 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:gda_vault_ai/core/constants/supabase_constants.dart';
 import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
-import 'package:gda_vault_ai/models/document_model.dart';
 
 enum OfflineBrowserViewType { subcategories, years, files }
 
@@ -37,10 +37,10 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
   List<OfflineDocumentRecord> _allRecords = [];
   
   // For subcategories view
-  Map<String, List<OfflineDocumentRecord>> _subCategoryGroups = {};
+  final Map<String, List<OfflineDocumentRecord>> _subCategoryGroups = {};
   
   // For years view
-  Map<int, List<OfflineDocumentRecord>> _yearGroups = {};
+  final Map<int, List<OfflineDocumentRecord>> _yearGroups = {};
   
   // For files view
   List<OfflineDocumentRecord> _filteredFiles = [];
@@ -56,8 +56,15 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
     
     final records = await PdfViewerService.instance.getOfflineDocuments();
     
-    // Filter by main category
-    final catRecords = records.where((r) => r.categoryId == widget.categoryId).toList();
+    // Filter by main category, including subcategories for Board of Authority
+    final catRecords = records.where((r) {
+      if (widget.categoryId == SupabaseConstants.idBoardOfAuthority) {
+        return r.categoryId == SupabaseConstants.idBoardOfAuthority || 
+               r.categoryId == SupabaseConstants.idBoardAuthorityMinutes || 
+               r.categoryId == SupabaseConstants.idTrustMinutes;
+      }
+      return r.categoryId == widget.categoryId;
+    }).toList();
     
     setState(() {
       _allRecords = catRecords;
@@ -69,15 +76,19 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
   void _applyViewFilter() {
     if (widget.viewType == OfflineBrowserViewType.subcategories) {
       _subCategoryGroups.clear();
+      
+      // Initialize standard subcategories for Board of Authority to ensure they always show up
+      if (widget.categoryId == SupabaseConstants.idBoardOfAuthority) {
+        _subCategoryGroups["Board Authority Minutes (1996-2026)"] = [];
+        _subCategoryGroups["Trust Minutes Archive (1961-1996)"] = [];
+      }
+      
       for (final r in _allRecords) {
-        // Use categoryName as subcategory name if it's different from the parent categoryName
         final key = r.categoryName;
-        if (key != widget.categoryName) {
+        if (key.isNotEmpty && key != widget.categoryName) {
            _subCategoryGroups.putIfAbsent(key, () => []).add(r);
         } else {
-           // If it's the same, it means it's a direct file under the category (like Admin/Town files often are)
-           // but we'll handle this by showing a "General" or similar if needed.
-           // However, for Board Authority, they are always in subcategories.
+           // Fallback grouping
            _subCategoryGroups.putIfAbsent("General", () => []).add(r);
         }
       }
@@ -163,12 +174,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
   Widget _buildHeader(BuildContext context, bool isDark, String title) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 10,
-        bottom: 18,
-        left: 16,
-        right: 16,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -192,9 +198,13 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
             children: [
               Positioned(
                 left: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Colors.white),
-                  onPressed: () => context.pop(),
+                child: GestureDetector(
+                  onTap: () => context.pop(),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 18,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               Text(
@@ -211,7 +221,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'OFFLINE MODE',
+            'OFFLINE ARCHIVE',
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 9,
               color: AppColors.gdaGold.withValues(alpha: 0.8),
@@ -418,6 +428,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () => _openPdf(record),
+          onLongPress: () => _showDeleteDialog(record),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -458,6 +469,10 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                     ],
                   ),
                 ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                  onPressed: () => _showDeleteDialog(record),
+                ),
                 const Icon(Icons.chevron_right_rounded, color: AppColors.gold, size: 20),
               ],
             ),
@@ -465,6 +480,28 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
         ),
       ),
     ).animate(delay: (index * 50).ms).fadeIn().slideY(begin: 0.1);
+  }
+
+  Future<void> _showDeleteDialog(OfflineDocumentRecord record) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Remove File"),
+        content: Text("Are you sure you want to remove '${record.fileName}' from offline storage?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await PdfViewerService.instance.removeOfflineDocument(record.storagePath);
+      _loadData(); // Refresh list
+    }
   }
 
   Widget _buildEmptyState(bool isDark) {

@@ -115,16 +115,16 @@ const List<_CategoryMeta> _knownCategories = <_CategoryMeta>[
   _CategoryMeta(
     id: SupabaseConstants.idBoardAuthorityMinutes,
     slug: 'board-authority-minutes',
-    name: 'Board Authority Minutes',
+    name: 'Board Authority Minutes (1996-2026)',
     pathPrefixes: [SupabaseConstants.pathBoardAuthorityMinutes],
-    aliases: ['board authority minutes'],
+    aliases: ['board authority minutes', 'board-authority-minutes'],
   ),
   _CategoryMeta(
     id: SupabaseConstants.idTrustMinutes,
     slug: 'trust-minutes',
-    name: 'Trust Minutes',
+    name: 'Trust Minutes Archive (1961-1996)',
     pathPrefixes: [SupabaseConstants.pathTrustMinutes],
-    aliases: ['trust minutes'],
+    aliases: ['trust minutes', 'trust-minutes', 'trust-minutes-archive'],
   ),
   _CategoryMeta(
     id: SupabaseConstants.idTownPlots,
@@ -549,7 +549,17 @@ class PdfViewerService {
   }
 
   Future<List<OfflineDocumentRecord>> getOfflineDocuments() async {
-    return _loadRecords();
+    final records = await _loadRecords();
+    final verified = <OfflineDocumentRecord>[];
+    for (final r in records) {
+      if (await File(r.localPath).exists()) {
+        verified.add(r);
+      }
+    }
+    if (verified.length != records.length) {
+      await _saveRecords(verified);
+    }
+    return verified;
   }
 
   Future<bool> removeOfflineDocument(String storagePath) async {

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
-import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/providers/theme_provider.dart';
 import 'package:gda_vault_ai/features/dashboard/providers/dashboard_stats_provider.dart';
@@ -37,7 +36,7 @@ class SettingsTab extends ConsumerWidget {
                 statsAsync.when(
                   data: (stats) => _buildStorageCard(isDark, stats),
                   loading: () => _buildStorageCard(isDark, null, isLoading: true),
-                  error: (_, __) => _buildStorageCard(isDark, null),
+                  error: (_, _) => _buildStorageCard(isDark, null),
                 ),
                 const SizedBox(height: 24),
                 Padding(

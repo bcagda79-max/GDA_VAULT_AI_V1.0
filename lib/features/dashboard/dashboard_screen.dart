@@ -105,8 +105,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         location.contains('/review') ||
         location.contains('/select-category') ||
         location.contains('/pdf-preview') ||
-        location.contains('/pdf') ||
-        location.contains('/offline-documents');
+        location.contains('/pdf');
   }
 
   @override
