@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -193,6 +194,27 @@ class ChatNotifier extends Notifier<ChatState> {
     );
   }
 
+  void _applySelectedCategories(List<String> ids) {
+    final selectedIds = ids.take(2).toSet();
+    final updatedCategories = state.categories.map((cat) {
+      return ChatCategory(
+        id: cat.id,
+        name: cat.name,
+        shortName: cat.shortName,
+        color: cat.color,
+        icon: cat.icon,
+        parentId: cat.parentId,
+        docCount: cat.docCount,
+        isSelected: selectedIds.contains(cat.id),
+      );
+    }).toList();
+
+    state = state.copyWith(
+      categories: updatedCategories,
+      categoriesSelected: updatedCategories.any((c) => c.isSelected),
+    );
+  }
+
   Future<void> updateDefaultCategoryIds(List<String> ids) async {
     final unique = ids.take(2).toList();
     await ChatHistoryService.instance.saveDefaultCategoryIds(unique);
@@ -324,11 +346,32 @@ class ChatNotifier extends Notifier<ChatState> {
 
   // Load specific session
   Future<void> loadSession(String sessionId) async {
+    final sessions = state.recentSessions;
+    final currentSession = sessions.firstWhere((s) => s['id'] == sessionId);
     final messages = await ChatHistoryService.instance.getMessagesForSession(
       sessionId,
     );
-    final sessions = state.recentSessions;
-    final currentSession = sessions.firstWhere((s) => s['id'] == sessionId);
+
+    final rawCategoryIds = currentSession['category_ids']?.toString();
+    List<String> categoryIds = const [];
+    if (rawCategoryIds != null && rawCategoryIds.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawCategoryIds);
+        if (decoded is List) {
+          categoryIds = decoded.map((item) => item.toString()).toList();
+        }
+      } catch (_) {
+        categoryIds = const [];
+      }
+    }
+
+    if (categoryIds.isEmpty && state.defaultCategoryIds.isNotEmpty) {
+      categoryIds = state.defaultCategoryIds;
+    }
+
+    // Extract year_from and year_to from session
+    final yearFrom = currentSession['year_from']?.toString();
+    final yearTo = currentSession['year_to']?.toString();
 
     state = state.copyWith(
       sessionId: sessionId,
@@ -336,7 +379,15 @@ class ChatNotifier extends Notifier<ChatState> {
       messages: messages,
       isLoading: false,
       inputText: '',
+      yearFrom: yearFrom,
+      yearTo: yearTo,
     );
+
+    if (categoryIds.isNotEmpty) {
+      _applySelectedCategories(categoryIds);
+    } else {
+      clearAllCategories();
+    }
   }
 
   // Delete session
@@ -369,6 +420,8 @@ class ChatNotifier extends Notifier<ChatState> {
         title: title,
         lastMessage: userText,
         categoryIds: state.selectedCategories.map((c) => c.id).toList(),
+        yearFrom: state.yearFrom,
+        yearTo: state.yearTo,
       );
       state = state.copyWith(sessionTitle: title);
     }

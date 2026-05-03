@@ -50,7 +50,13 @@ class DocumentUploadService {
     required int year,
     required String fileName,
     int? pageCount,
-    void Function(String phase, double progress)? onProgress,
+    void Function(
+      String phase,
+      double progress, {
+      int? bytesSent,
+      int? totalBytes,
+    })?
+    onProgress,
   }) async {
     try {
       // Phase 1: Build path
@@ -88,7 +94,12 @@ class DocumentUploadService {
           final fraction = total > 0 ? (sent / total) : 0.0;
           final uiProgress = 0.3 + (fraction * 0.45);
           try {
-            onProgress?.call('Uploading to GDA Vault...', uiProgress);
+            onProgress?.call(
+              'Uploading to GDA Vault...',
+              uiProgress,
+              bytesSent: sent,
+              totalBytes: total,
+            );
           } catch (_) {}
         },
       );
@@ -135,7 +146,13 @@ class DocumentUploadService {
     required String categoryStoragePath,
     required int year,
     required String fileName,
-    void Function(String phase, double progress)? onProgress,
+    void Function(
+      String phase,
+      double progress, {
+      int? bytesSent,
+      int? totalBytes,
+    })?
+    onProgress,
   }) async {
     try {
       // Phase 1: Convert images to PDF
@@ -175,7 +192,12 @@ class DocumentUploadService {
           final fraction = total > 0 ? (sent / total) : 0.0;
           final uiProgress = 0.4 + (fraction * 0.45);
           try {
-            onProgress?.call('Uploading to GDA Vault...', uiProgress);
+            onProgress?.call(
+              'Uploading to GDA Vault...',
+              uiProgress,
+              bytesSent: sent,
+              totalBytes: total,
+            );
           } catch (_) {}
         },
       );

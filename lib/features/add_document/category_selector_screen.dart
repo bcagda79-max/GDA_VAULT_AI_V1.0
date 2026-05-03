@@ -46,6 +46,8 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
   bool _isUploading = false;
   double _uploadProgress = 0.0;
   double? _rawUploadFraction;
+  int? _bytesSent;
+  int? _totalBytes;
   String _uploadStatus = 'Preparing...';
   String? _error;
   List<CategoryModel> _categories = const [];
@@ -134,6 +136,9 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     setState(() {
       _isUploading = true;
       _uploadProgress = 0.0;
+      _rawUploadFraction = null;
+      _bytesSent = null;
+      _totalBytes = null;
       _uploadStatus = 'Preparing...';
     });
 
@@ -154,10 +159,13 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           categoryStoragePath: category.storagePath,
           year: yearStart,
           fileName: widget.fileName,
-          onProgress: (phase, progress) {
+          onProgress: (phase, progress, {bytesSent, totalBytes}) {
             if (!mounted) return;
             setState(() {
               _uploadStatus = phase;
+              _bytesSent = bytesSent;
+              _totalBytes = totalBytes;
+
               // When we're in the uploading phase, the service now reports
               // the raw byte fraction (0.0..1.0). Store that separately
               // so the UI can display a real percent, while the visual
@@ -186,10 +194,13 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           year: yearStart,
           fileName: widget.fileName,
           pageCount: widget.pageCount,
-          onProgress: (phase, progress) {
+          onProgress: (phase, progress, {bytesSent, totalBytes}) {
             if (!mounted) return;
             setState(() {
               _uploadStatus = phase;
+              _bytesSent = bytesSent;
+              _totalBytes = totalBytes;
+
               if (phase.toLowerCase().contains('upload')) {
                 _rawUploadFraction = progress;
                 _uploadProgress = 0.3 + (progress * 0.45);
@@ -1235,58 +1246,147 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
   }
 
   Widget _buildUploadProgress(bool isDark) {
+    final bytesSentStr = _bytesSent != null
+        ? DocumentUploadService.formatBytes(_bytesSent!)
+        : '0 B';
+    final totalBytesStr = _totalBytes != null
+        ? DocumentUploadService.formatBytes(_totalBytes!)
+        : '...';
+    final percent = ((_rawUploadFraction ?? _uploadProgress) * 100).toInt();
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.navyDark.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : AppColors.divider,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              value: _uploadProgress,
-              color: AppColors.gold,
-              backgroundColor: AppColors.divider,
-              strokeWidth: 2.5,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.cloud_upload_rounded,
+                  color: AppColors.gold,
+                  size: 20,
+                ),
+              ),
+              AppSpacing.horizontal(12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Uploading Document',
+                      style: AppTextStyles.dmSans.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.darkText : AppColors.charcoal,
+                      ),
+                    ),
+                    Text(
+                      _uploadStatus,
+                      style: AppTextStyles.dmSans.copyWith(
+                        fontSize: 12,
+                        color:
+                            (isDark ? AppColors.darkText : AppColors.charcoal)
+                                .withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '$percent%',
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.gold,
+                ),
+              ),
+            ],
           ),
-          AppSpacing.horizontal(12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          AppSpacing.vertical(20),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Stack(
+                children: [
+                  Container(
+                    height: 8,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : AppColors.divider.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    height: 8,
+                    width:
+                        constraints.maxWidth *
+                        (_rawUploadFraction ?? _uploadProgress),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.gold, Color(0xFFFFD700)],
+                      ),
+                      borderRadius: BorderRadius.circular(4),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.gold.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          AppSpacing.vertical(12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '$bytesSentStr of $totalBytesStr',
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                      .withValues(alpha: 0.6),
+                ),
+              ),
+              if (_rawUploadFraction != null)
                 Text(
-                  _uploadStatus,
+                  'Processing...',
                   style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 13,
-                    color: isDark ? AppColors.darkText : AppColors.charcoal,
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                    color: AppColors.gdaGreen,
                   ),
                 ),
-                AppSpacing.vertical(4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(
-                    value: _uploadProgress,
-                    backgroundColor: AppColors.divider,
-                    valueColor: const AlwaysStoppedAnimation(AppColors.gold),
-                    minHeight: 4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          AppSpacing.horizontal(12),
-          Text(
-            '${((_rawUploadFraction ?? _uploadProgress) * 100).toInt()}%',
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: AppColors.gold,
-            ),
+            ],
           ),
         ],
       ),

@@ -22,7 +22,7 @@ class ChatHistoryService {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -36,7 +36,9 @@ class ChatHistoryService {
         title TEXT,
         last_message TEXT,
         updated_at TEXT,
-        category_ids TEXT
+        category_ids TEXT,
+        year_from TEXT,
+        year_to TEXT
       )
     ''');
 
@@ -70,6 +72,10 @@ class ChatHistoryService {
         )
       ''');
     }
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE chat_sessions ADD COLUMN year_from TEXT');
+      await db.execute('ALTER TABLE chat_sessions ADD COLUMN year_to TEXT');
+    }
   }
 
   // --- Session Operations ---
@@ -79,6 +85,8 @@ class ChatHistoryService {
     required String title,
     required String lastMessage,
     required List<String> categoryIds,
+    String? yearFrom,
+    String? yearTo,
   }) async {
     final db = await instance.database;
     await db.insert('chat_sessions', {
@@ -87,6 +95,8 @@ class ChatHistoryService {
       'last_message': lastMessage,
       'updated_at': DateTime.now().toIso8601String(),
       'category_ids': jsonEncode(categoryIds),
+      'year_from': yearFrom,
+      'year_to': yearTo,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
