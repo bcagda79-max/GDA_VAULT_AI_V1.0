@@ -45,6 +45,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
   bool _isLoading = true;
   bool _isUploading = false;
   double _uploadProgress = 0.0;
+  double? _rawUploadFraction;
   String _uploadStatus = 'Preparing...';
   String? _error;
   List<CategoryModel> _categories = const [];
@@ -157,7 +158,17 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             if (!mounted) return;
             setState(() {
               _uploadStatus = phase;
-              _uploadProgress = progress;
+              // When we're in the uploading phase, the service now reports
+              // the raw byte fraction (0.0..1.0). Store that separately
+              // so the UI can display a real percent, while the visual
+              // progress bar still maps to overall flow progress.
+              if (phase.toLowerCase().contains('upload')) {
+                _rawUploadFraction = progress;
+                _uploadProgress = 0.3 + (progress * 0.45);
+              } else {
+                _rawUploadFraction = null;
+                _uploadProgress = progress;
+              }
             });
           },
         );
@@ -179,7 +190,13 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             if (!mounted) return;
             setState(() {
               _uploadStatus = phase;
-              _uploadProgress = progress;
+              if (phase.toLowerCase().contains('upload')) {
+                _rawUploadFraction = progress;
+                _uploadProgress = 0.3 + (progress * 0.45);
+              } else {
+                _rawUploadFraction = null;
+                _uploadProgress = progress;
+              }
             });
           },
         );
@@ -188,7 +205,11 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
       if (!mounted) return;
       setState(() => _isUploading = false);
       if (result.success) {
-        _showSuccessSheet(result);
+        final recordedPageCount =
+            result.record != null && result.record?['page_count'] != null
+            ? (result.record!['page_count'] as int)
+            : widget.pageCount;
+        _showSuccessSheet(result, recordedPageCount);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -208,7 +229,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     }
   }
 
-  void _showSuccessSheet(UploadResult result) {
+  void _showSuccessSheet(UploadResult result, int pageCount) {
     showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -218,17 +239,20 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
         categoryName: _selectedCategory?.name ?? '',
         categoryColor: _selectedCategory?.color ?? AppColors.gold,
         finalYearLabel: _finalYearLabel,
-        pageCount: widget.pageCount,
+        pageCount: pageCount,
         onView: () async {
           Navigator.pop(ctx); // Close success sheet
-          
+
           // Slight delay to allow the sheet to dismiss fully before navigation
           await Future.delayed(const Duration(milliseconds: 300));
           if (!mounted) return;
 
           // Find the main category for the route path
           final mainCategory = _selectedCategory?.parentId != null
-              ? _categories.firstWhere((c) => c.id == _selectedCategory!.parentId, orElse: () => _selectedCategory!)
+              ? _categories.firstWhere(
+                  (c) => c.id == _selectedCategory!.parentId,
+                  orElse: () => _selectedCategory!,
+                )
               : _selectedCategory!;
 
           // Use context.go to navigate directly and reset the upload stack
@@ -236,7 +260,9 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             '/categories/sub/${mainCategory.id}/years',
             extra: {
               'categoryName': mainCategory.name,
-              'subCategoryName': _selectedCategory?.parentId != null ? _selectedCategory?.name : null,
+              'subCategoryName': _selectedCategory?.parentId != null
+                  ? _selectedCategory?.name
+                  : null,
               'categoryColor': mainCategory.color,
               'yearFrom': _selectedCategory?.yearFrom ?? 1961,
               'yearTo': _selectedCategory?.yearTo,
@@ -259,6 +285,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         flexibleSpace: Container(
           decoration: BoxDecoration(
@@ -266,33 +293,71 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
-                  ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
-                  : [AppColors.navyDark, AppColors.navyLight],
+                  ? [const Color(0xFF161E35), const Color(0xFF0A0F1E)]
+                  : [AppColors.navyDark, AppColors.navyMid],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.pop(),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Save Document',
+                          style: AppTextStyles.playfairDisplay.copyWith(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          'Step ${_currentStep + 1} of 3',
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withValues(alpha: 0.6),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         elevation: 0,
-        leading: const BackButton(color: Colors.white),
-        title: Column(
-          children: [
-            Text(
-              'Save Document',
-              style: AppTextStyles.playfairDisplay.copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            Text(
-              'Step ${_currentStep + 1} of 3',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 10,
-                color: Colors.white.withValues(alpha: 0.75),
-              ),
-            ),
-          ],
-        ),
-        centerTitle: true,
       ),
       body: Column(
         children: [
@@ -456,7 +521,9 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             'Where should this document be filed?',
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 13,
-              color: isDark ? Colors.white.withValues(alpha: 0.7) : AppColors.charcoal.withValues(alpha: 0.5),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.7)
+                  : AppColors.charcoal.withValues(alpha: 0.5),
             ),
           ),
           AppSpacing.vertical(20),
@@ -467,7 +534,9 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.45),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.6)
+                  : AppColors.charcoal.withValues(alpha: 0.45),
               letterSpacing: 0.8,
             ),
           ),
@@ -506,7 +575,9 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             'When was this document created?',
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 13,
-              color: isDark ? Colors.white.withValues(alpha: 0.7) : AppColors.charcoal.withValues(alpha: 0.5),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.7)
+                  : AppColors.charcoal.withValues(alpha: 0.5),
             ),
           ),
           AppSpacing.vertical(20),
@@ -558,7 +629,9 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
             'Review details before saving',
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 13,
-              color: isDark ? Colors.white.withValues(alpha: 0.7) : AppColors.charcoal.withValues(alpha: 0.5),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.7)
+                  : AppColors.charcoal.withValues(alpha: 0.5),
             ),
           ),
           AppSpacing.vertical(20),
@@ -609,7 +682,9 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.navyDark.withValues(alpha: 0.05),
+        color: isDark
+            ? AppColors.darkCard
+            : AppColors.navyDark.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.divider),
       ),
@@ -647,7 +722,8 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                   sizeStr,
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 11,
-                    color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.45),
+                    color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                        .withValues(alpha: 0.45),
                   ),
                 ),
               ],
@@ -770,7 +846,11 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                             '${category.docCount} docs · ${category.yearRange}',
                             style: AppTextStyles.dmSans.copyWith(
                               fontSize: 11,
-                              color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.4),
+                              color:
+                                  (isDark
+                                          ? AppColors.darkText
+                                          : AppColors.charcoal)
+                                      .withValues(alpha: 0.4),
                             ),
                           ),
                         ],
@@ -826,7 +906,9 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                   'Select sub-type:',
                   style: AppTextStyles.dmSans.copyWith(
                     fontSize: 11,
-                    color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.5),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.6)
+                        : AppColors.charcoal.withValues(alpha: 0.5),
                   ),
                 ),
                 AppSpacing.vertical(8),
@@ -965,11 +1047,15 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(
-          color: isDark ? AppColors.darkText.withValues(alpha: 0.7) : AppColors.charcoal.withValues(alpha: 0.7),
+          color: isDark
+              ? AppColors.darkText.withValues(alpha: 0.7)
+              : AppColors.charcoal.withValues(alpha: 0.7),
         ),
         hintText: hint,
         hintStyle: TextStyle(
-          color: isDark ? AppColors.darkText.withValues(alpha: 0.3) : AppColors.charcoal.withValues(alpha: 0.3),
+          color: isDark
+              ? AppColors.darkText.withValues(alpha: 0.3)
+              : AppColors.charcoal.withValues(alpha: 0.3),
         ),
         counterText: '',
         filled: true,
@@ -989,7 +1075,9 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.divider,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : AppColors.divider,
           ),
         ),
         border: OutlineInputBorder(
@@ -1013,7 +1101,9 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
         color: isDark ? AppColors.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.12) : AppColors.divider,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : AppColors.divider,
         ),
         boxShadow: [
           BoxShadow(
@@ -1041,8 +1131,10 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                 _buildDetailRow(
                   icon: Icons.folder_rounded,
                   label: 'Category',
-                  value: _selectedCategoryId != null 
-                      ? _categories.firstWhere((c) => c.id == _selectedCategoryId).name
+                  value: _selectedCategoryId != null
+                      ? _categories
+                            .firstWhere((c) => c.id == _selectedCategoryId)
+                            .name
                       : category.name,
                   valueColor: isDark ? Colors.white : category.color,
                   isDark: isDark,
@@ -1119,7 +1211,9 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
               label,
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 12,
-                color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.5),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.6)
+                    : AppColors.charcoal.withValues(alpha: 0.5),
               ),
             ),
           ),
@@ -1187,7 +1281,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           ),
           AppSpacing.horizontal(12),
           Text(
-            '${(_uploadProgress * 100).toInt()}%',
+            '${((_rawUploadFraction ?? _uploadProgress) * 100).toInt()}%',
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 13,
               fontWeight: FontWeight.bold,

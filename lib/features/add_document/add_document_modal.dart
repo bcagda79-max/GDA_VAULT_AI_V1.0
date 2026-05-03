@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gda_vault_ai/features/add_document/providers/scan_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/core/constants/app_spacing.dart';
+import 'package:gda_vault_ai/core/services/document_upload_service.dart';
 import 'package:gda_vault_ai/core/utils/pdf_utils.dart';
 
 /// Modal popup for adding new documents with 2 quick options
@@ -24,6 +23,18 @@ class AddDocumentModal extends ConsumerWidget {
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
         if (!context.mounted) return;
+
+        if (file.size > DocumentUploadService.maxPdfUploadSizeBytes) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'PDF is too large. Maximum upload size is ${DocumentUploadService.maxPdfUploadSizeLabel}.',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
 
         // Get actual page count
         final int actualPageCount = await PdfUtils.getPageCount(file.path!);
@@ -60,227 +71,203 @@ class AddDocumentModal extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF121A2E) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag Handle
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 4),
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : AppColors.charcoal.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ],
-        ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+          ),
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+            child: Row(
               children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Add Document",
-                          style: AppTextStyles.playfairDisplay.copyWith(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: isDark
-                                ? AppColors.darkText
-                                : AppColors.charcoal,
-                          ),
-                        ),
-                        AppSpacing.vertical(2),
-                        Text(
-                          "Choose method",
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 11,
-                            color: AppColors.charcoal.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      ],
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: AppColors.charcoal.withValues(alpha: 0.08),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.close_rounded,
-                          size: 16,
-                          color: AppColors.charcoal,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "IMPORT OPTIONS",
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.gold,
+                          letterSpacing: 1.2,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        "Add Document",
+                        style: AppTextStyles.playfairDisplay.copyWith(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : AppColors.navyDark,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                AppSpacing.vertical(24),
-
-                // Scan Option
-                _buildOptionCard(
-                      context: context,
-                      isDark: isDark,
-                      icon: Icons.document_scanner_rounded,
-                      title: "Scan Document",
-                      subtitle: "Use camera to scan physical documents",
-                      badge: "RECOMMENDED",
-                      onTap: () {
-                        ref.read(scanImagesProvider.notifier).clear();
-                        Navigator.pop(context);
-                        context.push('/dashboard/add/camera-scanner');
-                      },
-                    )
-                    .animate()
-                    .fadeIn(duration: 400.ms)
-                    .slideY(begin: 0.05, end: 0),
-                AppSpacing.vertical(12),
-
-                // File Picker Option
-                _buildOptionCard(
-                      context: context,
-                      isDark: isDark,
-                      icon: Icons.upload_file_rounded,
-                      title: "Choose from Device",
-                      subtitle: "Import existing PDF files",
-                      onTap: () => _pickPDFFile(context),
-                    )
-                    .animate()
-                    .fadeIn(delay: 150.ms, duration: 400.ms)
-                    .slideY(begin: 0.05, end: 0),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : AppColors.navyDark.withValues(alpha: 0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 20,
+                      color: isDark ? Colors.white : AppColors.navyDark,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-        ),
+          const SizedBox(height: 8),
+          _buildOption(
+            context,
+            icon: Icons.camera_alt_rounded,
+            title: "Scan Document",
+            subtitle: "Use camera to scan physical files",
+            color: AppColors.navyLight,
+            onTap: () {
+              ref.read(scanImagesProvider.notifier).clear();
+              Navigator.pop(context);
+              context.push('/dashboard/add/camera-scanner');
+            },
+            isDark: isDark,
+          ),
+          _buildOption(
+            context,
+            icon: Icons.upload_file_rounded,
+            title: "Import PDF",
+            subtitle: "Select an existing PDF from device",
+            color: AppColors.gdaGreen,
+            onTap: () => _pickPDFFile(context),
+            isDark: isDark,
+          ),
+          const SizedBox(height: 32),
+        ],
       ),
     );
   }
 
-  Widget _buildOptionCard({
-    required BuildContext context,
-    required bool isDark,
+  Widget _buildOption(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,
-    String? badge,
+    required Color color,
     required VoidCallback onTap,
+    required bool isDark,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.paper,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.divider, width: 0.8),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.navyDark.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: badge != null
-                      ? const LinearGradient(
-                          colors: [AppColors.catBoard, Color(0xFF1A3A6B)],
-                        )
-                      : const LinearGradient(
-                          colors: [AppColors.gdaGreen, Color(0xFF1A8A4A)],
-                        ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                          (badge != null
-                                  ? AppColors.catBoard
-                                  : AppColors.gdaGreen)
-                              .withValues(alpha: 0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.03)
+            : color.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.06)
+              : color.withValues(alpha: 0.1),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [color, color.withValues(alpha: 0.7)],
                     ),
-                  ],
-                ),
-                child: Icon(icon, size: 22, color: Colors.white),
-              ),
-              AppSpacing.horizontal(14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          title,
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: isDark
-                                ? AppColors.darkText
-                                : AppColors.charcoal,
-                          ),
-                        ),
-                        if (badge != null) ...[
-                          AppSpacing.horizontal(8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.gdaGreen.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              badge,
-                              style: AppTextStyles.dmSans.copyWith(
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.gdaGreen,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    AppSpacing.vertical(4),
-                    Text(
-                      subtitle,
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 11,
-                        color: AppColors.charcoal.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 24),
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: AppColors.charcoal.withValues(alpha: 0.3),
-              ),
-            ],
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTextStyles.playfairDisplay.copyWith(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : AppColors.navyDark,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.4)
+                              : AppColors.charcoal.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : AppColors.charcoal.withValues(alpha: 0.2),
+                ),
+              ],
+            ),
           ),
         ),
       ),

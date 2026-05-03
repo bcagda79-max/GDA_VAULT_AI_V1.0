@@ -21,8 +21,8 @@ class AiChatDrawer extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: isDark
-                ? [const Color(0xFF070C1A), AppColors.darkBg]
-                : [const Color(0xFFF7F4EE), AppColors.paper],
+                ? [const Color(0xFF0A0F1E), const Color(0xFF161E35)]
+                : [const Color(0xFFFDFCF9), const Color(0xFFF5F2EB)],
           ),
         ),
         child: SafeArea(
@@ -115,19 +115,19 @@ class AiChatDrawer extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [AppColors.navyDark, AppColors.navyLight],
+            colors: [AppColors.navyDark, AppColors.navyMid],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: AppColors.navyDark.withValues(alpha: 0.2),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
+              color: AppColors.navyDark.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
@@ -137,40 +137,46 @@ class AiChatDrawer extends ConsumerWidget {
             Row(
               children: [
                 Container(
-                  width: 42,
-                  height: 42,
+                  width: 46,
+                  height: 46,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.12),
+                      color: Colors.white.withValues(alpha: 0.15),
+                      width: 1,
                     ),
                   ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    size: 20,
-                    color: AppColors.gold,
+                  child: const Center(
+                    child: Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 22,
+                      color: AppColors.gold,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'GDA Vault AI',
+                        'GDA VAULT AI',
                         style: AppTextStyles.playfairDisplay.copyWith(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.gold,
+                          letterSpacing: 0.5,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Local chat history and quick access',
+                        'Intelligent Archive Assistant',
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.75),
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withValues(alpha: 0.6),
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ],
@@ -178,43 +184,48 @@ class AiChatDrawer extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            InkWell(
-              onTap: () {
-                ref.read(chatProvider.notifier).startNewChat();
-                Navigator.pop(context);
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.12),
+            const SizedBox(height: 20),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  ref.read(chatProvider.notifier).startNewChat();
+                  Navigator.pop(context);
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
                   ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.add_rounded,
-                      size: 20,
-                      color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.15),
                     ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'New Chat',
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.add_rounded,
+                        size: 20,
                         color: Colors.white,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 10),
+                      Text(
+                        'New Conversation',
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

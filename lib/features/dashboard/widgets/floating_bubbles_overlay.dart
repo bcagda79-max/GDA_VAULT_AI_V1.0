@@ -15,7 +15,7 @@ class _FloatingBubblesOverlayState extends State<FloatingBubblesOverlay>
   late AnimationController _controller;
   final List<BubbleModel> _bubbles = [];
   final math.Random _random = math.Random();
-  static const int _bubbleCount = 12;
+  static const int _bubbleCount = 18; // Increased for more density
 
   @override
   void initState() {
@@ -37,21 +37,31 @@ class _FloatingBubblesOverlayState extends State<FloatingBubblesOverlay>
   }
 
   BubbleModel _createBubble({bool isInitial = false}) {
-    final double size =
-        _random.nextDouble() * 6 + 3; // Slightly larger bubbles (3 to 9)
-    // Emerge from the bottom right area where the FAB is located
-    final double startX = 0.82 + (_random.nextDouble() * 0.15);
-    final double startY = 0.82 + (_random.nextDouble() * 0.15);
+    final double size = _random.nextDouble() * 7 + 2; // More delicate sizes
+    // Emerge from the AiChatFab position (bottom: 20, right: 16)
+    // Relative to body height/width
+    final double startX = 0.88 + (_random.nextDouble() * 0.08);
+    final double startY = 0.90; // Start at the FAB center height
+
+    // AI-themed color palette - Professional transparency
+    final List<Color> palette = [
+      AppColors.navyLight.withValues(alpha: 0.4),
+      AppColors.gold.withValues(alpha: 0.25),
+      AppColors.gdaGreenMid.withValues(alpha: 0.15),
+      Colors.white.withValues(alpha: 0.15),
+    ];
 
     return BubbleModel(
       x: startX,
-      y: isInitial ? (0.8 + _random.nextDouble() * 0.2) : startY,
+      y: isInitial ? (0.6 + _random.nextDouble() * 0.3) : startY,
       size: size,
-      speed: _random.nextDouble() * 0.002 + 0.001, // Faster movement
-      drift: _random.nextDouble() * 0.002 - 0.001,
-      maxOpacity: _random.nextDouble() * 0.4 + 0.2,
+      speed: _random.nextDouble() * 0.0035 + 0.0015, // Slightly faster, dynamic
+      drift: _random.nextDouble() * 0.003 - 0.0015,
+      maxOpacity: _random.nextDouble() * 0.15 + 0.05,
       phase: _random.nextDouble() * math.pi * 2,
       scale: 0.0,
+      color: palette[_random.nextInt(palette.length)],
+      isBokeh: _random.nextDouble() > 0.65,
     );
   }
 
@@ -86,6 +96,8 @@ class BubbleModel {
   double maxOpacity;
   double phase;
   double scale;
+  Color color;
+  bool isBokeh;
 
   BubbleModel({
     required this.x,
@@ -96,21 +108,24 @@ class BubbleModel {
     required this.maxOpacity,
     required this.phase,
     required this.scale,
+    required this.color,
+    required this.isBokeh,
   });
 
   void update(math.Random random) {
     y -= speed;
-    phase += 0.02;
-    x += math.sin(phase) * 0.001 + drift;
+    phase += 0.015;
+    x += math.sin(phase) * 0.0008 + drift;
 
     // Smooth emergence
-    if (scale < 1.0) scale += 0.05;
+    if (scale < 1.0) scale += 0.03;
 
-    // Disappear quickly as they go up
-    if (y < 0.6) {
-      y = 0.9; // Reset to FAB area
-      x = 0.85 + (random.nextDouble() * 0.1);
+    // Reset when out of view (higher up or too far left/right)
+    if (y < 0.6 || x < 0.0 || x > 1.0) {
+      y = 0.90 + (random.nextDouble() * 0.02);
+      x = 0.88 + (random.nextDouble() * 0.08);
       scale = 0.0;
+      drift = random.nextDouble() * 0.003 - 0.0015;
     }
   }
 }
@@ -130,26 +145,43 @@ class BubblesPainter extends CustomPainter {
       final double dy = bubble.y * size.height;
       final double currentSize = bubble.size * bubble.scale;
 
-      // Calculate opacity based on vertical position (disappear quickly)
+      // Calculate opacity based on vertical position
       double verticalOpacity = 1.0;
       if (bubble.y < 0.8) verticalOpacity = (bubble.y - 0.6) / 0.2;
       verticalOpacity = verticalOpacity.clamp(0.0, 1.0);
 
-      final paint = Paint()..style = PaintingStyle.fill;
+      final paint = Paint()
+        ..style = PaintingStyle.fill
+        ..maskFilter = bubble.isBokeh
+            ? const MaskFilter.blur(BlurStyle.normal, 3.0)
+            : null;
 
       final rect = Rect.fromCircle(center: Offset(dx, dy), radius: currentSize);
 
       final gradient = RadialGradient(
         colors: [
-          AppColors.navyDark.withValues(
+          bubble.color.withValues(
             alpha: bubble.maxOpacity * verticalOpacity * bubble.scale,
           ),
-          AppColors.navyDark.withValues(alpha: 0.0),
+          bubble.color.withValues(alpha: 0.0),
         ],
+        stops: const [0.2, 1.0],
       ).createShader(rect);
 
       paint.shader = gradient;
       canvas.drawCircle(Offset(dx, dy), currentSize, paint);
+
+      // Add a tiny bright core for non-bokeh bubbles
+      if (!bubble.isBokeh && bubble.scale > 0.5) {
+        canvas.drawCircle(
+          Offset(dx, dy),
+          currentSize * 0.2,
+          Paint()
+            ..color = Colors.white.withValues(
+              alpha: 0.4 * verticalOpacity * bubble.scale,
+            ),
+        );
+      }
     }
   }
 

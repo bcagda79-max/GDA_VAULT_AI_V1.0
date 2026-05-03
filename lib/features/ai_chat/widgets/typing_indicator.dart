@@ -42,34 +42,52 @@ class _TypingIndicatorState extends State<TypingIndicator>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: const LinearGradient(
-              colors: [Color(0xFF1A3A6B), AppColors.navyDark],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.navyDark, AppColors.navyMid],
             ),
             border: Border.all(
-              color: AppColors.gold.withValues(alpha: 0.3),
-              width: 1.5,
+              color: AppColors.gold.withValues(alpha: 0.4),
+              width: 1.2,
             ),
-          ),
-          child: const Center(
-            child: Icon(Icons.auto_awesome_rounded, size: 15, color: AppColors.gold),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkCard : Colors.white,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(4),
-              topRight: Radius.circular(18),
-              bottomLeft: Radius.circular(18),
-              bottomRight: Radius.circular(18),
-            ),
-            border: Border.all(color: AppColors.divider, width: 0.8),
             boxShadow: [
               BoxShadow(
-                color: AppColors.navyDark.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: AppColors.gold.withValues(alpha: 0.1),
+                blurRadius: 4,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Icon(
+              Icons.auto_awesome_rounded,
+              size: 16,
+              color: AppColors.gold,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurface : Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(4),
+              topRight: Radius.circular(20),
+              bottomLeft: Radius.circular(20),
+              bottomRight: Radius.circular(20),
+            ),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : AppColors.divider.withValues(alpha: 0.5),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -79,23 +97,34 @@ class _TypingIndicatorState extends State<TypingIndicator>
               return AnimatedBuilder(
                 animation: _controller,
                 builder: (ctx, child) {
-                  // Staggered bounce: each dot offset by 0.2
                   final offset = i * 0.2;
                   double animValue = (_controller.value - offset);
                   if (animValue < 0) animValue += 1.0;
-                  
-                  // Sine wave bounce
-                  final bounce = sin(animValue * pi) * 5.0;
-                  
+
+                  final bounce = sin(animValue * pi) * 4.0;
+
                   return Transform.translate(
                     offset: Offset(0, -bounce),
                     child: Container(
-                      width: 7,
-                      height: 7,
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: 6,
+                      height: 6,
+                      margin: const EdgeInsets.symmetric(horizontal: 2.5),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.navyDark.withValues(alpha: 0.3 + (1.0 - animValue).clamp(0.0, 1.0) * 0.4),
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            AppColors.gold.withValues(
+                              alpha:
+                                  0.3 + (1.0 - animValue).clamp(0.0, 1.0) * 0.7,
+                            ),
+                            AppColors.gold.withValues(
+                              alpha:
+                                  0.1 + (1.0 - animValue).clamp(0.0, 1.0) * 0.4,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );

@@ -55,6 +55,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _initializeFromContext() {
     // Smart Initialization from PDF Viewer or Home FAB
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(chatProvider.notifier).startNewChat();
+
       if (widget.initialCategoryId != null ||
           widget.initialSubCategoryId != null) {
         // Automatically select the specific category/sub-category
@@ -71,9 +73,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               .read(chatProvider.notifier)
               .updateYearRange(widget.initialYear, widget.initialYear);
         }
-      } else if (widget.isPushed) {
-        // If just pushed without specific context, select all for convenience
-        ref.read(chatProvider.notifier).selectAllCategories();
       }
     });
   }

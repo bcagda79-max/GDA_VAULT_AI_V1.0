@@ -18,47 +18,60 @@ class SourceCitationCard extends ConsumerWidget {
     final color = citation.categoryColor ?? AppColors.navyDark;
 
     return Container(
-      margin: const EdgeInsets.only(top: 8),
+      margin: const EdgeInsets.only(top: 10),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: isDark ? const Color(0xFF1E2638) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.divider,
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.divider.withValues(alpha: 0.5),
           width: 1,
         ),
         boxShadow: [
-          if (!isDark)
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () => _handleOpenSource(context),
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(14.0),
               child: Row(
                 children: [
                   // Icon Section
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          color,
+                          color.withValues(alpha: 0.7),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: Icon(
-                      Icons.picture_as_pdf_rounded,
-                      color: color,
-                      size: 20,
+                    child: const Icon(
+                      Icons.auto_stories_rounded,
+                      color: Colors.white,
+                      size: 18,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
                   // Details Section
                   Expanded(
                     child: Column(
@@ -67,30 +80,42 @@ class SourceCitationCard extends ConsumerWidget {
                         Text(
                           citation.fileName ?? citation.categoryName,
                           style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
                             color: isDark ? Colors.white : AppColors.navyDark,
+                            letterSpacing: 0.1,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
                         Row(
                           children: [
-                            Text(
-                              "Ref: ${citation.categoryName}",
-                              style: AppTextStyles.dmSans.copyWith(
-                                fontSize: 10,
-                                color: isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.charcoal.withValues(alpha: 0.6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: color.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                citation.categoryName.toUpperCase(),
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w900,
+                                  color: color,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
                             if (citation.pageNumber > 0) ...[
+                              const SizedBox(width: 8),
                               Text(
-                                " · Page ${citation.pageNumber}",
+                                "PAGE ${citation.pageNumber}",
                                 style: AppTextStyles.dmSans.copyWith(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
                                   color: AppColors.gold,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ],
@@ -101,10 +126,18 @@ class SourceCitationCard extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   // Action Icon
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 12,
-                    color: isDark ? Colors.white.withValues(alpha: 0.2) : AppColors.charcoal.withValues(alpha: 0.2),
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.charcoal.withValues(alpha: 0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: isDark ? Colors.white.withValues(alpha: 0.3) : AppColors.charcoal.withValues(alpha: 0.3),
+                    ),
                   ),
                 ],
               ),

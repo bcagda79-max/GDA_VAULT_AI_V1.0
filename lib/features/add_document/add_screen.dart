@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
+import 'package:gda_vault_ai/core/services/document_upload_service.dart';
 import 'package:gda_vault_ai/core/utils/pdf_utils.dart';
 
 /// The hub for adding new documents via scan or file import.
@@ -23,6 +24,18 @@ class AddScreen extends StatelessWidget {
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
         if (!context.mounted) return;
+
+        if (file.size > DocumentUploadService.maxPdfUploadSizeBytes) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'PDF is too large. Maximum upload size is ${DocumentUploadService.maxPdfUploadSizeLabel}.',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
 
         // Get actual page count
         final int actualPageCount = await PdfUtils.getPageCount(file.path!);
@@ -60,6 +73,7 @@ class AddScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         flexibleSpace: Container(
           decoration: BoxDecoration(
@@ -67,33 +81,71 @@ class AddScreen extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
-                  ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
-                  : [AppColors.navyDark, AppColors.navyLight],
+                  ? [const Color(0xFF161E35), const Color(0xFF0A0F1E)]
+                  : [AppColors.navyDark, AppColors.navyMid],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.pop(),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Add Document",
+                          style: AppTextStyles.playfairDisplay.copyWith(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          "Scan or import a file",
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withValues(alpha: 0.6),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Column(
-          children: [
-            Text(
-              "Add Document",
-              style: AppTextStyles.playfairDisplay.copyWith(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            Text(
-              "Scan or import a file",
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 9,
-                color: Colors.white.withValues(alpha: 0.5),
-              ),
-            ),
-          ],
-        ),
-        centerTitle: true,
       ),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
@@ -111,7 +163,8 @@ class AddScreen extends StatelessWidget {
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.5),
+                  color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                      .withValues(alpha: 0.5),
                   letterSpacing: 1.0,
                 ),
               ),
@@ -163,119 +216,114 @@ class AddScreen extends StatelessWidget {
   Widget _buildHeroBanner(double width) {
     return Container(
       margin: const EdgeInsets.all(20),
-      height: 150,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.navyDark, Color(0xFF1A3A6B), Color(0xFF0D2B5E)],
+          colors: [AppColors.navyDark, AppColors.navyMid],
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.25), width: 1),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.15),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.navyDark.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Stack(
         children: [
           Positioned(
-            right: -20,
-            top: -20,
+            right: -30,
+            top: -30,
             child: Container(
-              width: 100,
-              height: 100,
+              width: 120,
+              height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withValues(alpha: 0.03),
               ),
             ),
           ),
-          Positioned(
-            right: 40,
-            bottom: -30,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.gold.withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.gold.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.upload_file,
-                              size: 12,
-                              color: AppColors.gold,
-                            ),
-                            AppSpacing.horizontal(6),
-                            Text(
-                              "DOCUMENT UPLOAD",
-                              style: AppTextStyles.dmSans.copyWith(
-                                fontSize: 9,
-                                color: AppColors.gold,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ],
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.gold.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.gold.withValues(alpha: 0.3),
+                          width: 0.8,
                         ),
                       ),
-                      AppSpacing.vertical(10),
-                      Text(
-                        "Add New Document",
-                        style: AppTextStyles.playfairDisplay.copyWith(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      AppSpacing.vertical(6),
-                      Text(
-                        "Scan physical documents or\nimport PDF files from device",
+                      child: Text(
+                        "DOCUMENT UPLOAD",
                         style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.55),
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.gold,
+                          letterSpacing: 1.2,
                         ),
-                        maxLines: 2,
                       ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.add_photo_alternate_rounded,
-                      size: 32,
-                      color: Colors.white.withValues(alpha: 0.7),
                     ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Add New Document",
+                      style: AppTextStyles.playfairDisplay.copyWith(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Scan physical documents or\nimport PDF files from device",
+                      style: AppTextStyles.dmSans.copyWith(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withValues(alpha: 0.6),
+                        height: 1.4,
+                      ),
+                      maxLines: 2,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    width: 1,
                   ),
                 ),
-              ],
-            ),
+                child: Center(
+                  child: Icon(
+                    Icons.add_photo_alternate_rounded,
+                    size: 32,
+                    color: AppColors.gold.withValues(alpha: 0.8),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -296,98 +344,107 @@ class AddScreen extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider, width: 0.8),
+        color: isDark ? const Color(0xFF1E2638) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.divider.withValues(alpha: 0.5),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
+        borderRadius: BorderRadius.circular(24),
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               children: [
                 Row(
                   children: [
                     Container(
-                      width: 56,
-                      height: 56,
+                      width: 60,
+                      height: 60,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: gradient),
-                        borderRadius: BorderRadius.circular(16),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: gradient,
+                        ),
+                        borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
                             color: gradient[0].withValues(alpha: 0.3),
                             blurRadius: 12,
-                            offset: const Offset(0, 4),
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),
                       child: Center(
-                        child: Icon(icon, size: 28, color: Colors.white),
+                        child: Icon(icon, size: 30, color: Colors.white),
                       ),
                     ),
-                    AppSpacing.horizontal(14),
+                    const SizedBox(width: 18),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                title,
-                                style: AppTextStyles.dmSans.copyWith(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark
-                                      ? AppColors.darkText
-                                      : AppColors.charcoal,
+                          if (isRecommended) ...[
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.gdaGreen.withValues(
+                                  alpha: 0.12,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.gdaGreen.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  width: 0.8,
                                 ),
                               ),
-                              if (isRecommended)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isDark 
-                                        ? AppColors.gdaGreen.withValues(alpha: 0.25) 
-                                        : AppColors.gdaGreen.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: isDark 
-                                        ? Border.all(color: AppColors.gdaGreen.withValues(alpha: 0.5), width: 0.5) 
-                                        : null,
-                                  ),
-                                  child: Text(
-                                    "RECOMMENDED",
-                                    style: AppTextStyles.dmSans.copyWith(
-                                      fontSize: 8,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark ? const Color(0xFF4ADE80) : AppColors.gdaGreen,
-                                      letterSpacing: 0.8,
-                                    ),
-                                  ),
+                              child: Text(
+                                "RECOMMENDED",
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.gdaGreen,
+                                  letterSpacing: 0.5,
                                 ),
-                            ],
+                              ),
+                            ),
+                          ],
+                          Text(
+                            title,
+                            style: AppTextStyles.playfairDisplay.copyWith(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? Colors.white : AppColors.navyDark,
+                            ),
                           ),
-                          AppSpacing.vertical(4),
+                          const SizedBox(height: 6),
                           Text(
                             subtitle,
                             style: AppTextStyles.dmSans.copyWith(
-                              fontSize: 12,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.5)
+                                  ? Colors.white.withValues(alpha: 0.4)
                                   : AppColors.charcoal.withValues(alpha: 0.5),
                             ),
                           ),
@@ -396,7 +453,7 @@ class AddScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                AppSpacing.vertical(16),
+                const SizedBox(height: 24),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -405,26 +462,38 @@ class AddScreen extends StatelessWidget {
                         .toList(),
                   ),
                 ),
-                AppSpacing.vertical(16),
+                const SizedBox(height: 24),
                 Container(
-                  height: 48,
+                  height: 52,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: gradient),
-                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: gradient,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: gradient[0].withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(icon, size: 18, color: Colors.white),
-                        AppSpacing.horizontal(8),
+                        Icon(icon, size: 20, color: Colors.white),
+                        const SizedBox(width: 10),
                         Text(
-                          actionLabel,
+                          actionLabel.toUpperCase(),
                           style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
                             color: Colors.white,
+                            letterSpacing: 1.0,
                           ),
                         ),
                       ],
@@ -444,27 +513,33 @@ class AddScreen extends StatelessWidget {
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark 
-            ? AppColors.catBoard.withValues(alpha: 0.15) 
+        color: isDark
+            ? AppColors.catBoard.withValues(alpha: 0.15)
             : AppColors.catBoard.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark 
-              ? AppColors.catBoard.withValues(alpha: 0.3) 
+          color: isDark
+              ? AppColors.catBoard.withValues(alpha: 0.3)
               : AppColors.catBoard.withValues(alpha: 0.15),
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: isDark ? AppColors.catBoard.withValues(alpha: 0.9) : AppColors.catBoard.withValues(alpha: 0.7)),
+          Icon(
+            icon,
+            size: 12,
+            color: isDark
+                ? AppColors.catBoard.withValues(alpha: 0.9)
+                : AppColors.catBoard.withValues(alpha: 0.7),
+          ),
           AppSpacing.horizontal(4),
           Text(
             text,
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 10,
-              color: isDark 
-                  ? Colors.white.withValues(alpha: 0.8) 
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.8)
                   : AppColors.charcoal.withValues(alpha: 0.6),
             ),
           ),
@@ -481,104 +556,111 @@ class AddScreen extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider, width: 0.8),
+        color: isDark ? const Color(0xFF1E2638) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.divider.withValues(alpha: 0.5),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
+        borderRadius: BorderRadius.circular(24),
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               children: [
                 Row(
                   children: [
                     Container(
-                      width: 56,
-                      height: 56,
+                      width: 60,
+                      height: 60,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                           colors: [AppColors.gdaGreen, Color(0xFF1A8A4A)],
                         ),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.gdaGreen.withValues(alpha: 0.3),
                             blurRadius: 12,
-                            offset: const Offset(0, 4),
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),
                       child: const Center(
                         child: Icon(
                           Icons.upload_file_rounded,
-                          size: 28,
+                          size: 30,
                           color: Colors.white,
                         ),
                       ),
                     ),
-                    AppSpacing.horizontal(14),
+                    const SizedBox(width: 18),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Choose from Device",
-                                style: AppTextStyles.dmSans.copyWith(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark
-                                      ? AppColors.darkText
-                                      : AppColors.charcoal,
+                          if (isRecommended) ...[
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.gdaGreen.withValues(
+                                  alpha: 0.12,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.gdaGreen.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  width: 0.8,
                                 ),
                               ),
-                              if (isRecommended)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isDark 
-                                        ? AppColors.gdaGreen.withValues(alpha: 0.25) 
-                                        : AppColors.gdaGreen.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: isDark 
-                                        ? Border.all(color: AppColors.gdaGreen.withValues(alpha: 0.5), width: 0.5) 
-                                        : null,
-                                  ),
-                                  child: Text(
-                                    "RECOMMENDED",
-                                    style: AppTextStyles.dmSans.copyWith(
-                                      fontSize: 8,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark ? const Color(0xFF4ADE80) : AppColors.gdaGreen,
-                                      letterSpacing: 0.8,
-                                    ),
-                                  ),
+                              child: Text(
+                                "RECOMMENDED",
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.gdaGreen,
+                                  letterSpacing: 0.5,
                                 ),
-                            ],
+                              ),
+                            ),
+                          ],
+                          Text(
+                            "Choose from Device",
+                            style: AppTextStyles.playfairDisplay.copyWith(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? Colors.white : AppColors.navyDark,
+                            ),
                           ),
-                          AppSpacing.vertical(4),
+                          const SizedBox(height: 6),
                           Text(
                             "Import existing PDF files",
                             style: AppTextStyles.dmSans.copyWith(
-                              fontSize: 12,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.5)
+                                  ? Colors.white.withValues(alpha: 0.4)
                                   : AppColors.charcoal.withValues(alpha: 0.5),
                             ),
                           ),
@@ -587,17 +669,18 @@ class AddScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                AppSpacing.vertical(16),
+                const SizedBox(height: 24),
                 Row(
                   children: [
                     _buildInfoBadge(
                       icon: Icons.picture_as_pdf,
                       color: AppColors.gdaGreen,
                       title: "Only PDF Files",
-                      subtitle: "No size limit",
+                      subtitle:
+                          "Up to ${DocumentUploadService.maxPdfUploadSizeLabel}",
                       isDark: isDark,
                     ),
-                    AppSpacing.horizontal(12),
+                    const SizedBox(width: 12),
                     _buildInfoBadge(
                       icon: Icons.auto_awesome_rounded,
                       color: AppColors.gold,
@@ -607,13 +690,24 @@ class AddScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                AppSpacing.vertical(16),
+                const SizedBox(height: 24),
                 Container(
-                  height: 48,
+                  height: 52,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: AppColors.gdaGreen,
-                    borderRadius: BorderRadius.circular(12),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.gdaGreen, Color(0xFF1A8A4A)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.gdaGreen.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: Row(
@@ -621,16 +715,17 @@ class AddScreen extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.folder_open_rounded,
-                          size: 18,
+                          size: 20,
                           color: Colors.white,
                         ),
-                        AppSpacing.horizontal(8),
+                        const SizedBox(width: 10),
                         Text(
-                          "Browse Files",
+                          "BROWSE FILES",
                           style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
                             color: Colors.white,
+                            letterSpacing: 1.0,
                           ),
                         ),
                       ],

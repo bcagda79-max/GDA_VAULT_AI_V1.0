@@ -26,8 +26,15 @@ class CategorySelectorSheet extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        color: isDark ? const Color(0xFF121A2E) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -35,86 +42,62 @@ class CategorySelectorSheet extends ConsumerWidget {
           // Drag Handle
           Center(
             child: Container(
-              margin: const EdgeInsets.only(top: 14, bottom: 10),
-              width: 40,
+              margin: const EdgeInsets.only(top: 12, bottom: 4),
+              width: 36,
               height: 4,
               decoration: BoxDecoration(
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : AppColors.charcoal.withValues(alpha: 0.2),
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : AppColors.charcoal.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
-          // Header with professional styling
+          // Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Select Categories",
-                        style: AppTextStyles.playfairDisplay.copyWith(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? AppColors.darkText
-                              : AppColors.charcoal,
-                          letterSpacing: 0.3,
-                          height: 1.1,
+                        "SEARCH ARCHIVES",
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.gold,
+                          letterSpacing: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
-                        "Choose archives to search in",
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 12,
-                          color: AppColors.charcoal.withValues(alpha: 0.55),
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 0.2,
+                        "Select Categories",
+                        style: AppTextStyles.playfairDisplay.copyWith(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : AppColors.navyDark,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 16),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 11,
-                    ),
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.navyLight.withValues(alpha: 1.0),
-                          AppColors.navyDark.withValues(alpha: 1.0),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.navyLight.withValues(alpha: 0.25),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+                      color: isDark 
+                        ? Colors.white.withValues(alpha: 0.05) 
+                        : AppColors.navyDark.withValues(alpha: 0.05),
+                      shape: BoxShape.circle,
                     ),
-                    child: Text(
-                      "Done",
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: 0.4,
-                      ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 20,
+                      color: isDark ? Colors.white : AppColors.navyDark,
                     ),
                   ),
                 ),

@@ -131,9 +131,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           children: [
             widget.child,
             if (!hideUI &&
-                currentIndex != 1 && // Hide on Chat tab
-                currentIndex != 3) // Hide on Settings tab
-              const Positioned(bottom: 25, right: 10, child: AiChatFab()),
+                currentIndex !=
+                    1 && // Hide on Categories tab (to show FAB properly)
+                currentIndex != 3) // Hide on Chat tab
+              const Positioned(bottom: 20, right: 16, child: AiChatFab()),
           ],
         ),
         bottomNavigationBar: hideUI

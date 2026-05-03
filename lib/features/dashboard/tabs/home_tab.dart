@@ -128,7 +128,8 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.5),
+                color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                    .withValues(alpha: 0.5),
                 letterSpacing: 1.2,
               ),
             ),
@@ -177,128 +178,152 @@ class _HomeTabState extends ConsumerState<HomeTab> {
   Widget _buildGreetingCard(bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
-              : [AppColors.navyDark, AppColors.navyLight],
+              ? [const Color(0xFF161E35), const Color(0xFF0A0F1E)]
+              : [AppColors.navyDark, AppColors.navyMid],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(
           color: Colors.white.withValues(alpha: isDark ? 0.08 : 0.15),
-          width: 1,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withValues(alpha: isDark ? 0.6 : 0.35),
-            blurRadius: 24,
+            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.2),
+            blurRadius: 20,
             offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Stack(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.gold.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.gold.withValues(alpha: 0.4),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Text(
-                    'GDA VAULT',
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.gold,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  _getGreeting(),
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 1.1,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Galiyat Development Authority',
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white.withValues(alpha: 0.65),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
+          // Background decorative circle
+          Positioned(
+            right: -30,
+            top: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.03),
+              ),
+            ),
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.calendar_today_rounded,
-                      size: 12,
-                      color: AppColors.gold.withValues(alpha: 0.8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.gold.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.gold.withValues(alpha: 0.3),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Text(
+                        'SECURE VAULT',
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.gold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(height: 14),
                     Text(
-                      _getFormattedDate(),
+                      _getGreeting(),
+                      style: AppTextStyles.playfairDisplay.copyWith(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Galiyat Development Authority',
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withValues(alpha: 0.5),
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_rounded,
+                            size: 11,
+                            color: AppColors.gold,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _getFormattedDate().toUpperCase(),
+                            style: AppTextStyles.dmSans.copyWith(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white.withValues(alpha: 0.8),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 14),
-          Container(
-            width: 86,
-            height: 86,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Image.asset(
-              'assets/images/gda_logo.png',
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Center(
-                child: Text(
-                  'GDA',
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+              ),
+              const SizedBox(width: 16),
+              Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.05),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    width: 1,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 15,
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(12),
+                child: Image.asset(
+                  'assets/images/gda_logo.png',
+                  fit: BoxFit.contain,
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -394,11 +419,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                       width: 0.5,
                     ),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 22,
-                    color: Colors.white,
-                  ),
+                  child: Icon(icon, size: 22, color: Colors.white),
                 ),
                 const SizedBox(width: 16),
                 Column(
@@ -450,7 +471,8 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: (isDark ? AppColors.darkText : AppColors.charcoal).withValues(alpha: 0.5),
+                color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                    .withValues(alpha: 0.5),
                 letterSpacing: 1.2,
               ),
             ),
@@ -472,10 +494,14 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.gold.withValues(alpha: 0.1) : AppColors.navyDark.withValues(alpha: 0.07),
+                color: isDark
+                    ? AppColors.gold.withValues(alpha: 0.1)
+                    : AppColors.navyDark.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isDark ? AppColors.gold.withValues(alpha: 0.3) : AppColors.navyDark.withValues(alpha: 0.12),
+                  color: isDark
+                      ? AppColors.gold.withValues(alpha: 0.3)
+                      : AppColors.navyDark.withValues(alpha: 0.12),
                 ),
               ),
               child: Row(
@@ -532,7 +558,9 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             ),
           ],
           border: Border.all(
-            color: isDark ? AppColors.divider : AppColors.navyDark.withValues(alpha: 0.05),
+            color: isDark
+                ? AppColors.divider
+                : AppColors.navyDark.withValues(alpha: 0.05),
             width: 1,
           ),
         ),
@@ -645,7 +673,9 @@ class _RecentDocumentCard extends StatelessWidget {
             ),
           ],
           border: Border.all(
-            color: isDark ? AppColors.divider : AppColors.navyDark.withValues(alpha: 0.04),
+            color: isDark
+                ? AppColors.divider
+                : AppColors.navyDark.withValues(alpha: 0.04),
             width: 1,
           ),
         ),
@@ -662,7 +692,9 @@ class _RecentDocumentCard extends StatelessWidget {
                       : categoryColor.withValues(alpha: 0.05),
                   border: Border(
                     bottom: BorderSide(
-                      color: isDark ? AppColors.divider : AppColors.navyDark.withValues(alpha: 0.03),
+                      color: isDark
+                          ? AppColors.divider
+                          : AppColors.navyDark.withValues(alpha: 0.03),
                     ),
                   ),
                 ),
@@ -788,7 +820,9 @@ class _StatBox extends StatelessWidget {
         color: isDark ? AppColors.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? AppColors.divider : AppColors.navyDark.withValues(alpha: 0.05),
+          color: isDark
+              ? AppColors.divider
+              : AppColors.navyDark.withValues(alpha: 0.05),
           width: 1,
         ),
         boxShadow: [
@@ -823,7 +857,9 @@ class _StatBox extends StatelessWidget {
           Text(
             number,
             style:
-                (isDark ? AppTextStyles.statNumberDark : AppTextStyles.statNumber)
+                (isDark
+                        ? AppTextStyles.statNumberDark
+                        : AppTextStyles.statNumber)
                     .copyWith(fontSize: 22, height: 1.0, letterSpacing: -0.5),
           ),
           const SizedBox(height: 4),

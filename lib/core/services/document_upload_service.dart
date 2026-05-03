@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import 'package:gda_vault_ai/core/services/supabase_service.dart';
+import 'package:gda_vault_ai/core/utils/pdf_utils.dart';
 
 /// Upload result model.
 class UploadResult {
@@ -29,7 +30,16 @@ class DocumentUploadService {
   DocumentUploadService._();
   static final DocumentUploadService instance = DocumentUploadService._();
 
+  static const int maxPdfUploadSizeBytes = 200 * 1024 * 1024;
+  static const String maxPdfUploadSizeLabel = '200 MB';
+
   final _supa = SupabaseService.instance;
+
+  static String formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
 
   /// Upload a PDF file from device.
   Future<UploadResult> uploadPdfFile({
@@ -45,6 +55,15 @@ class DocumentUploadService {
     try {
       // Phase 1: Build path
       onProgress?.call('Preparing upload...', 0.1);
+      // If caller didn't provide page count, attempt to read it now so UI shows accurate pages.
+      int actualPageCount = pageCount ?? 0;
+      try {
+        if (actualPageCount == 0) {
+          actualPageCount = await PdfUtils.getPageCount(pdfFile.path);
+        }
+      } catch (_) {
+        // ignore - we'll fall back to whatever was provided or 1 later
+      }
       final storagePath = _supa.buildStoragePath(
         categoryStoragePath: categoryStoragePath,
         year: year.toString(),
@@ -54,9 +73,24 @@ class DocumentUploadService {
       // Phase 2: Upload to storage
       onProgress?.call('Uploading to GDA Vault...', 0.3);
       final fileSizeBytes = await pdfFile.length();
+      if (fileSizeBytes > maxPdfUploadSizeBytes) {
+        return UploadResult(
+          success: false,
+          errorMessage:
+              'PDF is ${formatBytes(fileSizeBytes)}. Maximum upload size is $maxPdfUploadSizeLabel.',
+        );
+      }
       final uploaded = await _supa.uploadPdf(
         file: pdfFile,
         storagePath: storagePath,
+        onProgress: (sent, total) {
+          // Map raw byte progress to the UI progress range (0.3 → 0.75)
+          final fraction = total > 0 ? (sent / total) : 0.0;
+          final uiProgress = 0.3 + (fraction * 0.45);
+          try {
+            onProgress?.call('Uploading to GDA Vault...', uiProgress);
+          } catch (_) {}
+        },
       );
 
       if (uploaded == null) {
@@ -76,7 +110,7 @@ class DocumentUploadService {
         fileName: fileName,
         storagePath: storagePath,
         fileSizeBytes: fileSizeBytes,
-        pageCount: pageCount,
+        pageCount: actualPageCount == 0 ? 1 : actualPageCount,
       );
 
       onProgress?.call('Complete!', 1.0);
@@ -118,6 +152,14 @@ class DocumentUploadService {
       }
       final pdfBytes = await pdf.save();
 
+      if (pdfBytes.length > maxPdfUploadSizeBytes) {
+        return UploadResult(
+          success: false,
+          errorMessage:
+              'Generated PDF is ${formatBytes(pdfBytes.length)}. Maximum upload size is $maxPdfUploadSizeLabel.',
+        );
+      }
+
       // Phase 2: Upload bytes to storage
       onProgress?.call('Uploading to GDA Vault...', 0.4);
       final storagePath = _supa.buildStoragePath(
@@ -129,6 +171,13 @@ class DocumentUploadService {
       final uploaded = await _supa.uploadPdfBytes(
         bytes: pdfBytes,
         storagePath: storagePath,
+        onProgress: (sent, total) {
+          final fraction = total > 0 ? (sent / total) : 0.0;
+          final uiProgress = 0.4 + (fraction * 0.45);
+          try {
+            onProgress?.call('Uploading to GDA Vault...', uiProgress);
+          } catch (_) {}
+        },
       );
 
       if (uploaded == null) {

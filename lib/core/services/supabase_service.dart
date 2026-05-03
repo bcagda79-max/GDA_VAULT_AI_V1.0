@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -117,21 +118,61 @@ class SupabaseService {
     String? subCategoryName,
   }) async {
     try {
+      final parsedYear = int.tryParse(year);
+      final cleanFileName = fileName.trim();
+      final cleanCategoryName = categoryName.trim();
+
+      // Use the correct relationship hint '!category' which is used elsewhere in the service
       var query = client
           .from('documents')
-          .select('*, categories!inner(*)')
-          .ilike('file_name', '%$fileName%')
-          .eq('year', int.tryParse(year) ?? 0)
-          .ilike('categories.name', '%$categoryName%');
+          .select('*, categories!category!inner(*)');
+
+      // 1. Filter by filename (using ilike for partial matching)
+      query = query.ilike('file_name', '%$cleanFileName%');
+
+      // 2. Filter by year only if it's a valid year (> 1900)
+      if (parsedYear != null && parsedYear > 1900) {
+        query = query.eq('year', parsedYear);
+      }
+
+      // 3. Filter by category name
+      query = query.ilike('categories.name', '%$cleanCategoryName%');
 
       final results = await query;
+
       if (results.isNotEmpty) {
         // If multiple, try to find the best match for sub-category if provided
-        if (subCategoryName != null) {
-          // This would require another join or manual filter if subcategories are also in categories table
+        if (subCategoryName != null && subCategoryName.isNotEmpty) {
+          // We can do a manual filter or add to query if needed,
+          // but usually the filename + year + category is unique enough.
         }
         return results.first;
       }
+
+      // Secondary fallback: if year was provided and failed, try WITHOUT the year filter
+      if (parsedYear != null && parsedYear > 1900 && results.isEmpty) {
+        var fallbackQuery = client
+            .from('documents')
+            .select('*, categories!category!inner(*)')
+            .ilike('file_name', '%$cleanFileName%')
+            .ilike('categories.name', '%$cleanCategoryName%');
+
+        final fallbackResults = await fallbackQuery;
+        if (fallbackResults.isNotEmpty) return fallbackResults.first;
+      }
+
+      // Third fallback: Last resort - search by filename alone (if filename is specific enough)
+      if (results.isEmpty && cleanFileName.length > 4) {
+        var lastResortQuery = client
+            .from('documents')
+            .select('*, categories!category!inner(*)')
+            .ilike('file_name', '%$cleanFileName%')
+            .limit(1);
+
+        final lastResortResults = await lastResortQuery;
+        if (lastResortResults.isNotEmpty) return lastResortResults.first;
+      }
+
       return null;
     } catch (e) {
       debugPrint('findDocumentByMetadata error: $e');
@@ -287,16 +328,60 @@ class SupabaseService {
     void Function(int sent, int total)? onProgress,
   }) async {
     try {
-      await client.storage
-          .from(_bucket)
-          .upload(
-            storagePath,
-            file,
-            fileOptions: const FileOptions(
-              contentType: 'application/pdf',
-              upsert: false,
+      final fileOptions = const FileOptions(
+        contentType: 'application/pdf',
+        upsert: false,
+      );
+
+      try {
+        final signed = await client.storage
+            .from(_bucket)
+            .createSignedUploadUrl(storagePath);
+        // Prefer doing an HTTP PUT to the provided signed URL so we can
+        // stream and report upload progress. The signed URL is provided
+        // in `signed.signedUrl`.
+        final signedUrl = signed.signedUrl;
+        if (signedUrl.isNotEmpty) {
+          final uri = Uri.parse(signedUrl);
+          final httpClient = HttpClient();
+          final req = await httpClient.putUrl(uri);
+          req.headers.set('content-type', 'application/pdf');
+
+          final total = await file.length();
+          int sent = 0;
+
+          final stream = file.openRead().transform(
+            StreamTransformer<List<int>, List<int>>.fromHandlers(
+              handleData: (data, sink) {
+                sent += data.length;
+                try {
+                  onProgress?.call(sent, total);
+                } catch (_) {}
+                sink.add(data);
+              },
             ),
           );
+
+          await req.addStream(stream);
+          final resp = await req.close();
+          if (resp.statusCode < 200 || resp.statusCode > 299) {
+            throw Exception('Signed URL upload failed: ${resp.statusCode}');
+          }
+        } else {
+          // Fallback to SDK helper if signedUrl not available
+          await client.storage
+              .from(_bucket)
+              .uploadToSignedUrl(signed.path, signed.token, file, fileOptions);
+        }
+      } catch (signedUploadError) {
+        debugPrint(
+          'Signed upload failed, falling back to direct upload: $signedUploadError',
+        );
+        // Use SDK direct upload as last-resort fallback.
+        await client.storage
+            .from(_bucket)
+            .upload(storagePath, file, fileOptions: fileOptions);
+      }
 
       debugPrint('Upload success: $storagePath');
       return storagePath;
@@ -313,18 +398,71 @@ class SupabaseService {
   Future<String?> uploadPdfBytes({
     required List<int> bytes,
     required String storagePath,
+    void Function(int sent, int total)? onProgress,
   }) async {
     try {
-      await client.storage
-          .from(_bucket)
-          .uploadBinary(
-            storagePath,
-            Uint8List.fromList(bytes),
-            fileOptions: const FileOptions(
-              contentType: 'application/pdf',
-              upsert: false,
-            ),
-          );
+      final data = Uint8List.fromList(bytes);
+      final fileOptions = const FileOptions(
+        contentType: 'application/pdf',
+        upsert: false,
+      );
+
+      try {
+        final signed = await client.storage
+            .from(_bucket)
+            .createSignedUploadUrl(storagePath);
+        final signedUrl = signed.signedUrl;
+        if (signedUrl.isNotEmpty) {
+          final uri = Uri.parse(signedUrl);
+          final httpClient = HttpClient();
+          final req = await httpClient.putUrl(uri);
+          req.headers.set('content-type', 'application/pdf');
+
+          final total = data.length;
+          int sent = 0;
+
+          // Chunk bytes to avoid a single large add() and to emit progress.
+          const chunkSize = 64 * 1024;
+          final controller = StreamController<List<int>>();
+          () async {
+            for (var offset = 0; offset < data.length; offset += chunkSize) {
+              final end = (offset + chunkSize < data.length)
+                  ? offset + chunkSize
+                  : data.length;
+              final chunk = data.sublist(offset, end);
+              sent += chunk.length;
+              try {
+                onProgress?.call(sent, total);
+              } catch (_) {}
+              controller.add(chunk);
+              await Future.delayed(Duration.zero);
+            }
+            await controller.close();
+          }();
+
+          await req.addStream(controller.stream);
+          final resp = await req.close();
+          if (resp.statusCode < 200 || resp.statusCode > 299) {
+            throw Exception('Signed bytes upload failed: ${resp.statusCode}');
+          }
+        } else {
+          await client.storage
+              .from(_bucket)
+              .uploadBinaryToSignedUrl(
+                signed.path,
+                signed.token,
+                data,
+                fileOptions,
+              );
+        }
+      } catch (signedUploadError) {
+        debugPrint(
+          'Signed bytes upload failed, falling back to direct upload: $signedUploadError',
+        );
+        await client.storage
+            .from(_bucket)
+            .uploadBinary(storagePath, data, fileOptions: fileOptions);
+      }
       return storagePath;
     } on StorageException catch (e) {
       debugPrint('Storage bytes upload error: ${e.message}');

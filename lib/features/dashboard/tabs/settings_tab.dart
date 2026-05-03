@@ -72,36 +72,49 @@ class SettingsTab extends ConsumerWidget {
   Widget _buildSectionHeader(BuildContext context, bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: const Color(
-          0xFF0A1D37,
-        ), // Specific professional dark navy background
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.white.withValues(alpha: 0.1),
-            width: 1,
-          ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF161E35), const Color(0xFF0A0F1E)]
+              : [AppColors.navyDark, AppColors.navyMid],
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: Center(
-        child: Text(
-          "Settings",
-          style: AppTextStyles.playfairDisplay.copyWith(
-            fontSize: 18, // Smaller font size
-            fontWeight: FontWeight.bold,
-            color: Colors.white, // Always white on navy background
-          ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Text(
+              "SETTINGS",
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: AppColors.gold,
+                letterSpacing: 2.0,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "System Preferences",
+              style: AppTextStyles.playfairDisplay.copyWith(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
       ),
-    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.2, end: 0);
+    ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.2, end: 0);
   }
 
   Widget _buildStorageCard(
