@@ -60,69 +60,82 @@ class ChatMessageBubble extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 6.0),
+          padding: const EdgeInsets.only(bottom: 8.0),
           child: Text(
             _formatTime(message.timestamp),
             style: AppTextStyles.dmSans.copyWith(
-              fontSize: 9,
-              color: AppColors.charcoal.withValues(alpha: 0.3),
+              fontSize: 10,
+              color: (isDark ? Colors.white : AppColors.charcoal).withValues(
+                alpha: 0.3,
+              ),
               fontWeight: FontWeight.w500,
             ),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Flexible(
           child: Container(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.75,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [AppColors.navyDark, AppColors.navyMid],
+                colors: [
+                  Color(0xFF2B5876),
+                  Color(0xFF4E4376),
+                ], // Premium deep blue gradient
               ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(22),
-                topRight: Radius.circular(22),
-                bottomLeft: Radius.circular(22),
-                bottomRight: Radius.circular(4),
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(6),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.navyDark.withValues(alpha: 0.15),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
+                  color: const Color(0xFF2B5876).withValues(alpha: 0.2),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
-            child: Text(
+            child: SelectableText(
               message.content,
               style: AppTextStyles.dmSans.copyWith(
-                fontSize: 14,
+                fontSize: 14.5,
                 color: Colors.white,
                 height: 1.5,
-                letterSpacing: 0.1,
+                letterSpacing: 0.2,
               ),
             ),
           ),
         ),
         const SizedBox(width: 10),
         Container(
-          width: 28,
-          height: 28,
+          width: 32,
+          height: 32,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isDark ? AppColors.navyMid : AppColors.navyDark,
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.12),
-              width: 1,
+            gradient: const LinearGradient(
+              colors: [AppColors.navyMid, AppColors.navyDark],
             ),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 5,
+              ),
+            ],
           ),
           child: const Icon(
             Icons.person_rounded,
-            size: 15,
+            size: 16,
             color: Colors.white,
           ),
         ),
@@ -136,34 +149,34 @@ class ChatMessageBubble extends StatelessWidget {
       children: [
         // AI Avatar
         Container(
-          width: 34,
-          height: 34,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isDark ? AppColors.navyMid : AppColors.navyDark,
+            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.12),
-              width: 1,
+              color: AppColors.gold.withValues(alpha: 0.3),
+              width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
+                color: AppColors.gold.withValues(alpha: 0.1),
+                blurRadius: 10,
+                spreadRadius: 1,
               ),
             ],
           ),
           child: ClipOval(
             child: Padding(
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(5),
               child: Image.asset(
                 'assets/images/gda_logo.png',
-                fit: BoxFit.cover,
+                fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => const Center(
                   child: Icon(
                     Icons.auto_awesome_rounded,
-                    size: 16,
-                    color: Colors.white,
+                    size: 18,
+                    color: AppColors.gold,
                   ),
                 ),
               ),
@@ -177,107 +190,100 @@ class ChatMessageBubble extends StatelessWidget {
             children: [
               // AI label + Time
               Padding(
-                padding: const EdgeInsets.only(left: 2, bottom: 6),
+                padding: const EdgeInsets.only(left: 4, bottom: 8),
                 child: Row(
                   children: [
-                    Text(
-                      "GDA VAULT AI",
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.gold,
-                        letterSpacing: 0.8,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.gold.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        "GDA VAULT AI",
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.gold,
+                          letterSpacing: 1.0,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Text(
                       _formatTime(message.timestamp),
                       style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 9,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.3)
-                            : AppColors.charcoal.withValues(alpha: 0.3),
+                        fontSize: 10,
+                        color: (isDark ? Colors.white : AppColors.charcoal)
+                            .withValues(alpha: 0.3),
                       ),
                     ),
                   ],
                 ),
               ),
-              // Message bubble
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurface : Colors.white,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(4),
-                    topRight: Radius.circular(22),
-                    bottomLeft: Radius.circular(22),
-                    bottomRight: Radius.circular(22),
-                  ),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : AppColors.divider.withValues(alpha: 0.5),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
+              // Message content (Clean direct text, no card)
+              Padding(
+                padding: const EdgeInsets.only(left: 4, right: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SelectableText(
                       message.content,
                       style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 14,
+                        fontSize: 15.5,
                         color: isDark ? AppColors.darkText : AppColors.charcoal,
-                        height: 1.6,
+                        height: 1.65,
                         letterSpacing: 0.1,
                       ),
                     ),
                     if (message.citations.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      // Divider
-                      Container(
-                        height: 1,
-                        width: double.infinity,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : AppColors.divider.withValues(alpha: 0.5),
-                      ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 32),
+                      // Styled Header for Citations
                       Row(
                         children: [
-                          const Icon(
-                            Icons.auto_stories_rounded,
-                            size: 14,
-                            color: AppColors.gold,
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppColors.gold.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.auto_stories_rounded,
+                              size: 14,
+                              color: AppColors.gold,
+                            ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 12),
                           Text(
                             "REFERENCED SOURCES",
                             style: AppTextStyles.dmSans.copyWith(
-                              fontSize: 9,
+                              fontSize: 11,
                               fontWeight: FontWeight.w900,
+                              color:
+                                  (isDark ? Colors.white : AppColors.charcoal)
+                                      .withValues(alpha: 0.5),
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Container(
+                              height: 1,
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.4)
-                                  : AppColors.charcoal.withValues(alpha: 0.4),
-                              letterSpacing: 1.0,
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : AppColors.divider.withValues(alpha: 0.5),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 20),
+                      // Citations List (Full width)
                       ...message.citations.map(
                         (citation) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
+                          padding: const EdgeInsets.only(bottom: 16.0),
                           child: SourceCitationCard(citation: citation),
                         ),
                       ),

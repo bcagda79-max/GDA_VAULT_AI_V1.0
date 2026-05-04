@@ -72,7 +72,7 @@ class SettingsTab extends ConsumerWidget {
   Widget _buildSectionHeader(BuildContext context, bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 20),
+      padding: const EdgeInsets.symmetric(vertical: 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -91,27 +91,25 @@ class SettingsTab extends ConsumerWidget {
       ),
       child: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
-            Text(
-              "SETTINGS",
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-                color: AppColors.gold,
-                letterSpacing: 2.0,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Text(
+                    "Setting",
+                    style: AppTextStyles.playfairDisplay.copyWith(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "System Preferences",
-              style: AppTextStyles.playfairDisplay.copyWith(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.2, end: 0);

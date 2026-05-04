@@ -1,14 +1,8 @@
-/// Supabase project constants and storage path helpers.
-///
-/// Notes:
-/// - Bucket name and category UUIDs must match the SQL seed data.
-/// - Storage paths must match the folder prefixes used in Supabase Storage.
 class SupabaseConstants {
   SupabaseConstants._();
 
   static const String bucketName = 'documents';
 
-  // ── Storage path prefixes (match SQL categories) ──
   static const String pathBoardAuthorityMinutes =
       'board-of-authority/board-authority-minutes';
 
@@ -20,7 +14,6 @@ class SupabaseConstants {
 
   static const String pathPrivateProperties = 'private-properties-files';
 
-  // ── Category UUIDs (must match SQL seed data) ──
   static const String idBoardOfAuthority =
       '11111111-1111-1111-1111-111111111111';
 
@@ -36,9 +29,6 @@ class SupabaseConstants {
   static const String idPrivateProperties =
       '66666666-6666-6666-6666-666666666666';
 
-  /// Build full storage path for a document.
-  ///
-  /// Pattern: `{categoryPath}/{year}/{timestamp}_{safeFileName}`
   static String buildPath({
     required String categoryPath,
     required int year,

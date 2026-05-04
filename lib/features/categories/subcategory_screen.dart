@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
-import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/services/supabase_service.dart';
 import 'package:gda_vault_ai/models/category_model.dart';
@@ -63,82 +62,74 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
       canPop: true,
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: Colors.transparent,
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [const Color(0xFF161E35), const Color(0xFF0A0F1E)]
-                    : [AppColors.navyDark, AppColors.navyMid],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(76.0),
+          child: AppBar(
+            automaticallyImplyLeading: false,
+            flexibleSpace: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [AppColors.darkSurface, AppColors.darkBg]
+                      : [AppColors.navyDark, AppColors.navyMid],
                 ),
-              ],
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back_rounded,
-                          color: Colors.white,
-                          size: 20,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      // Far left icon
+                      GestureDetector(
+                        onTap: () => context.pop(),
+                        child: const SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Icon(
+                            Icons.arrow_back_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.categoryName,
-                            style: AppTextStyles.playfairDisplay.copyWith(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            "Select sub-category",
-                            style: AppTextStyles.dmSans.copyWith(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withValues(alpha: 0.6),
-                              letterSpacing: 0.5,
+                      // Centered Title
+                      Expanded(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              widget.categoryName,
+                              style: AppTextStyles.playfairDisplay.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+                      // Right-side spacer
+                      const SizedBox(width: 40),
+                    ],
+                  ),
                 ),
               ),
             ),
+            elevation: 0,
           ),
-          elevation: 0,
         ),
         body: RefreshIndicator(
           color: AppColors.gold,
@@ -148,13 +139,7 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _ParentCategoryHeroBanner(
-                      categoryName: widget.categoryName,
-                      categoryColor: widget.categoryColor,
-                    )
-                    .animate()
-                    .fadeIn(duration: 300.ms)
-                    .scale(begin: const Offset(0.97, 0.97)),
+                const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.only(
                     left: 16.0,
@@ -162,13 +147,12 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
                     bottom: 8.0,
                   ),
                   child: Text(
-                    "Sub-categories",
+                    "Select sub-category".toUpperCase(),
                     style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: (isDark ? Colors.white : AppColors.charcoal)
-                          .withValues(alpha: 0.5),
-                      letterSpacing: 0.8,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.gold,
+                      letterSpacing: 2.0,
                     ),
                   ),
                 ),
@@ -253,103 +237,6 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ParentCategoryHeroBanner extends StatelessWidget {
-  final String categoryName;
-  final Color categoryColor;
-  const _ParentCategoryHeroBanner({
-    required this.categoryName,
-    required this.categoryColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(6, 20, 6, 12),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [categoryColor, categoryColor.withValues(alpha: 0.8)],
-        ),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: categoryColor.withValues(alpha: 0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Icon(
-              Icons.folder_shared_rounded,
-              size: 100,
-              color: Colors.white.withValues(alpha: 0.05),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.gold.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.gold.withValues(alpha: 0.3),
-                    width: 0.8,
-                  ),
-                ),
-                child: Text(
-                  "MAIN CATEGORY",
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 9,
-                    color: AppColors.gold,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                categoryName,
-                style: AppTextStyles.playfairDisplay.copyWith(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  height: 1.1,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "Explore specific archives within this family",
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withValues(alpha: 0.6),
-                  letterSpacing: 0.2,
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
@@ -462,7 +349,7 @@ class _SubCategoryCard extends StatelessWidget {
                               const SizedBox(width: 6),
                               Text(
                                 "$docCount Documents",
-                                style: AppTextStyles.dmSans.copyWith(
+                                style: AppTextStyles.numberStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
                                   color: isDark
@@ -481,7 +368,7 @@ class _SubCategoryCard extends StatelessWidget {
                               const SizedBox(width: 6),
                               Text(
                                 yearCount,
-                                style: AppTextStyles.dmSans.copyWith(
+                                style: AppTextStyles.numberStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
                                   color: isDark
@@ -538,7 +425,7 @@ class _SubCategoryCard extends StatelessWidget {
                   children: [
                     Text(
                       "EARLIEST: $firstYear",
-                      style: AppTextStyles.dmSans.copyWith(
+                      style: AppTextStyles.numberStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: isDark
@@ -554,7 +441,7 @@ class _SubCategoryCard extends StatelessWidget {
                     ),
                     Text(
                       "LATEST: $lastYear",
-                      style: AppTextStyles.dmSans.copyWith(
+                      style: AppTextStyles.numberStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: isDark
@@ -598,7 +485,7 @@ class _Tag extends StatelessWidget {
       ),
       child: Text(
         label.toUpperCase(),
-        style: AppTextStyles.dmSans.copyWith(
+        style: AppTextStyles.numberStyle(
           fontSize: 8.5,
           fontWeight: FontWeight.w900,
           color: isDark ? Colors.white : color,

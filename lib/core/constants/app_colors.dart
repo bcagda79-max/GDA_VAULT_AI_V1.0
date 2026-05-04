@@ -3,33 +3,50 @@ import 'package:flutter/material.dart';
 
 /// Defines the color palette for the GDA Vault AI application.
 class AppColors {
-  // Primary Palette (from GDA logo + DocVault spec)
-  static const Color navyDark = Color(0xFF0D1B3E); // primary brand
-  static const Color navyMid = Color(0xFF1A2F5E); // nav bar
-  static const Color navyLight = Color(0xFF1A3A6B); // cards light
-  static const Color gdaGreen = Color(0xFF1A6B3A); // GDA logo green
-  static const Color gdaGreenMid = Color(0xFF27AE60); // accent green
-  static const Color gold = Color(0xFFC9A84C); // active/highlight
-  static const Color gdaGold = gold; // Alias for gold used in several screens
-  static const Color goldLight = Color(0xFFE6C76A); // hover gold
+  // Brand Colors (Recommendations)
+  static const Color primaryBlue = Color(0xFF1D4ED8); // Primary Button
+  static const Color secondaryBlueDark = Color(
+    0xFF1E3A5F,
+  ); // Secondary Button (Dark)
+  static const Color secondarySlate = Color(
+    0xFF374151,
+  ); // Secondary Button (Light)
 
-  // Neutrals
-  static const Color paper = Color(0xFFF5F2EB); // light background
-  static const Color charcoal = Color(0xFF1C1C2E); // primary text
-  static const Color slate = Color(0xFFE8EAF2); // secondary surface
+  static const Color goldDark = Color(0xFFC9962A); // Header Badge (Dark)
+  static const Color goldLightBrand = Color(0xFFB8860B); // Header Badge (Light)
+
+  // Neutrals - Light Mode
+  static const Color lightBg = Color(0xFFEEF2F7);
   static const Color white = Color(0xFFFFFFFF);
+  static const Color lightText = Color(0xFF0F172A);
+
+  // Neutrals - Dark Mode
+  static const Color darkBg = Color(0xFF0B1120);
+  static const Color darkCard = Color(0xFF141E30);
+  static const Color darkTextPrimary = Color(0xFFE8EDF5);
+  static const Color darkIcon = Color(0xFF60A5FA);
+
+  // Legacy Aliases (to prevent breaking existing code)
+  static const Color navyDark = Color(0xFF0B1120); // Mapped to darkBg
+  static const Color navyMid = Color(0xFF141E30); // Mapped to darkCard
+  static const Color navyLight = Color(
+    0xFF1E3A5F,
+  ); // Mapped to secondaryBlueDark
+  static const Color gold = goldDark;
+  static const Color gdaGold = goldDark;
+  static const Color paper = lightBg;
+  static const Color charcoal = lightText;
+  static const Color darkText = darkTextPrimary;
+  static const Color darkSurface = darkCard;
   static const Color divider = Color(0xFFDDE1EC);
+  static const Color slate = secondarySlate;
+  static const Color gdaGreen = primaryBlue;
+  static const Color gdaGreenMid = primaryBlue;
 
-  // Dark Mode
-  static const Color darkBg = Color(0xFF0A0F1E);
-  static const Color darkSurface = Color(0xFF1A2240);
-  static const Color darkCard = Color(0xFF1E2A4A);
-  static const Color darkText = Color(0xFFE8EAF2);
-
-  // Category Colors (5 categories)
-  static const Color catBoard = Color(0xFF1A3A6B); // Board of Authority
-  static const Color catTrust = Color(0xFF1A6B3A); // Trust Minutes
-  static const Color catTown = Color(0xFF8B4513); // Town/Plots
-  static const Color catAdmin = Color(0xFF4A1A6B); // Administration
-  static const Color catPrivate = Color(0xFF6B1A1A); // Private Properties
+  // Category Colors (Simplified or mapped to brand)
+  static const Color catBoard = primaryBlue;
+  static const Color catTrust = Color(0xFF1A6B3A);
+  static const Color catTown = Color(0xFF8B4513);
+  static const Color catAdmin = secondaryBlueDark;
+  static const Color catPrivate = Color(0xFF6B1A1A);
 }

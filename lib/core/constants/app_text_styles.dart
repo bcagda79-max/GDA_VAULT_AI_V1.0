@@ -50,18 +50,32 @@ class AppTextStyles {
     color: AppColors.darkText,
   );
 
-  // Simple clean number style — DM Sans only, no Playfair
-  static TextStyle statNumber = GoogleFonts.dmSans(
+  // Simple clean number style — Roboto for clarity
+  static TextStyle statNumber = GoogleFonts.roboto(
     fontSize: 22,
     fontWeight: FontWeight.w700,
-    letterSpacing: -0.5,
+    letterSpacing: -0.2,
     color: AppColors.charcoal,
   );
 
-  static TextStyle statNumberDark = GoogleFonts.dmSans(
+  static TextStyle statNumberDark = GoogleFonts.roboto(
     fontSize: 22,
     fontWeight: FontWeight.w700,
-    letterSpacing: -0.5,
+    letterSpacing: -0.2,
     color: AppColors.darkText,
   );
+
+  static TextStyle numberStyle({
+    double? fontSize,
+    FontWeight? fontWeight,
+    Color? color,
+    double? letterSpacing,
+  }) {
+    return GoogleFonts.dmSans(
+      fontSize: fontSize,
+      fontWeight: fontWeight ?? FontWeight.w500,
+      color: color,
+      letterSpacing: letterSpacing,
+    );
+  }
 }

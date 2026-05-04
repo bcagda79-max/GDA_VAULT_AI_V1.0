@@ -14,83 +14,339 @@ class AiChatDrawer extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Drawer(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark
-                ? [const Color(0xFF0A0F1E), const Color(0xFF161E35)]
-                : [const Color(0xFFFDFCF9), const Color(0xFFF5F2EB)],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(context, ref),
-              const SizedBox(height: 8),
-              _buildDrawerPill(isDark),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 6, 18, 8),
-                child: Row(
-                  children: [
-                    Text(
-                      'Recent chats',
+      backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
+      width: MediaQuery.of(context).size.width * 0.85,
+      child: Column(
+        children: [
+          _buildTopBar(context, ref, isDark),
+          _buildMainActions(context, ref, isDark),
+          _buildConversationSection(context, chatState, ref, isDark),
+          _buildFooter(isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopBar(BuildContext context, WidgetRef ref, bool isDark) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + 10,
+        16,
+        8,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkCard : AppColors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black).withValues(
+                    alpha: 0.05,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.search_rounded,
+                    size: 18,
+                    color:
+                        (isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.lightText)
+                            .withValues(alpha: 0.4),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Search',
                       style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.4,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.55)
-                            : AppColors.charcoal.withValues(alpha: 0.5),
+                        fontSize: 14,
+                        color:
+                            (isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightText)
+                                .withValues(alpha: 0.4),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const Spacer(),
-                    Text(
-                      '${chatState.recentSessions.length}',
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.navyLight,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: () {
+              ref.read(chatProvider.notifier).startNewChat();
+              Navigator.pop(context);
+            },
+            child: Icon(
+              Icons.edit_note_rounded,
+              size: 26,
+              color: isDark ? AppColors.darkIcon : AppColors.primaryBlue,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainActions(BuildContext context, WidgetRef ref, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Column(
+        children: [
+          _buildActionItem(
+            icon: 'assets/images/gda_logo.png',
+            title: 'GDA Vault AI',
+            isDark: isDark,
+            isLogo: true,
+            onTap: () {},
+          ),
+          const SizedBox(height: 8),
+          _buildActionItem(
+            iconData: Icons.tune_rounded,
+            title: 'Filter',
+            isDark: isDark,
+            onTap: () {
+              Navigator.pop(context);
+              ref.read(chatProvider.notifier).openFilterSheet();
+            },
+          ),
+          const SizedBox(height: 12),
+          const Divider(
+            height: 1,
+            indent: 12,
+            endIndent: 12,
+            color: Colors.white10,
+          ),
+          const SizedBox(height: 12),
+          _buildActionItem(
+            iconData: Icons.add_circle_outline_rounded,
+            title: 'New Chat',
+            isDark: isDark,
+            onTap: () {
+              ref.read(chatProvider.notifier).startNewChat();
+              Navigator.pop(context);
+            },
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionItem({
+    String? icon,
+    IconData? iconData,
+    required String title,
+    required bool isDark,
+    bool isLogo = false,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+        child: Row(
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkCard : AppColors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black).withValues(
+                    alpha: 0.1,
+                  ),
+                  width: 0.5,
+                ),
+              ),
+              child: Center(
+                child: isLogo
+                    ? Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Image.asset(icon!, fit: BoxFit.contain),
+                      )
+                    : Icon(
+                        iconData,
+                        size: 16,
+                        color: isDark
+                            ? AppColors.darkIcon
+                            : AppColors.primaryBlue,
+                      ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.lightText,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConversationSection(
+    BuildContext context,
+    ChatState state,
+    WidgetRef ref,
+    bool isDark,
+  ) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Text(
+              'Chats',
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: (isDark ? Colors.white : Colors.black).withValues(
+                  alpha: 0.4,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: state.recentSessions.isEmpty
+                ? _buildEmptyHistory(isDark)
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: state.recentSessions.length,
+                    itemBuilder: (context, index) {
+                      final session = state.recentSessions[index];
+                      final isSelected = state.sessionId == session['id'];
+                      return _buildHistoryItem(
+                        context,
+                        session,
+                        isSelected,
+                        ref,
+                        isDark,
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyHistory(bool isDark) {
+    return Center(
+      child: Text(
+        'No recent chats',
+        style: AppTextStyles.dmSans.copyWith(
+          fontSize: 13,
+          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.3),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryItem(
+    BuildContext context,
+    Map<String, dynamic> session,
+    bool isSelected,
+    WidgetRef ref,
+    bool isDark,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: InkWell(
+        onTap: () {
+          ref.read(chatProvider.notifier).loadSession(session['id']);
+          Navigator.pop(context);
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (isDark
+                      ? AppColors.darkCard
+                      : AppColors.primaryBlue.withValues(alpha: 0.1))
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: isSelected
+                ? Border.all(
+                    color: (isDark ? Colors.white : AppColors.primaryBlue)
+                        .withValues(alpha: 0.1),
+                  )
+                : null,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  session['title'] ?? 'Untitled Chat',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 14.5,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightText,
+                  ),
+                ),
+              ),
+              if (isSelected)
+                PopupMenuButton<String>(
+                  icon: Icon(
+                    Icons.more_horiz_rounded,
+                    size: 18,
+                    color:
+                        (isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.lightText)
+                            .withValues(alpha: 0.4),
+                  ),
+                  padding: EdgeInsets.zero,
+                  onSelected: (val) {
+                    if (val == 'delete') {
+                      _showDeleteDialog(
+                        context,
+                        ref,
+                        session['id'],
+                        session['title']?.toString() ?? 'Untitled Chat',
+                      );
+                    }
+                  },
+                  itemBuilder: (ctx) => [
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Text(
+                        'Delete',
+                        style: TextStyle(color: Colors.red, fontSize: 13),
                       ),
                     ),
                   ],
                 ),
-              ),
-              Expanded(
-                child: _buildRecentList(context, chatState, ref, isDark),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkCard : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : AppColors.divider,
-                    ),
-                  ),
-                  child: Text(
-                    'Chats are saved locally on this device.',
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 11,
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.5)
-                          : AppColors.charcoal.withValues(alpha: 0.48),
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -98,317 +354,48 @@ class AiChatDrawer extends ConsumerWidget {
     );
   }
 
-  Widget _buildDrawerPill(bool isDark) {
+  Widget _buildFooter(bool isDark) {
     return Container(
-      width: 54,
-      height: 5,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.18)
-            : AppColors.charcoal.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.navyDark, AppColors.navyMid],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            ? AppColors.darkCard.withValues(alpha: 0.5)
+            : AppColors.lightBg,
+        border: Border(
+          top: BorderSide(
+            color: (isDark ? Colors.white : Colors.black).withValues(
+              alpha: 0.05,
+            ),
           ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.navyDark.withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      width: 1,
-                    ),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 22,
-                      color: AppColors.gold,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'GDA VAULT AI',
-                        style: AppTextStyles.playfairDisplay.copyWith(
-                          fontSize: 19,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.gold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Intelligent Archive Assistant',
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white.withValues(alpha: 0.6),
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  ref.read(chatProvider.notifier).startNewChat();
-                  Navigator.pop(context);
-                },
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.15),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.add_rounded,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'New Conversation',
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
-    );
-  }
-
-  Widget _buildRecentList(
-    BuildContext context,
-    ChatState state,
-    WidgetRef ref,
-    bool isDark,
-  ) {
-    final sessions = state.recentSessions;
-
-    if (sessions.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Container(
-            padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkCard : Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : AppColors.divider,
-              ),
+              color: isDark ? AppColors.primaryBlue : AppColors.secondarySlate,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.history_rounded,
-                  size: 26,
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.35)
-                      : AppColors.charcoal.withValues(alpha: 0.35),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'No recent chats',
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.5)
-                        : AppColors.charcoal.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
+            child: const Center(
+              child: Icon(Icons.person_rounded, size: 18, color: Colors.white),
             ),
           ),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 2, 12, 14),
-      itemCount: sessions.length,
-      itemBuilder: (context, index) {
-        final session = sessions[index];
-        final isSelected = state.sessionId == session['id'];
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: InkWell(
-            onTap: () {
-              ref.read(chatProvider.notifier).loadSession(session['id']);
-              Navigator.pop(context);
-            },
-            borderRadius: BorderRadius.circular(18),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? (isDark
-                          ? AppColors.darkCard
-                          : AppColors.navyLight.withValues(alpha: 0.06))
-                    : (isDark ? AppColors.darkSurface : Colors.white),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isSelected
-                      ? AppColors.navyLight.withValues(alpha: 0.28)
-                      : (isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : AppColors.divider),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: AppColors.navyLight.withValues(
-                        alpha: isSelected ? 0.18 : 0.08,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      Icons.chat_bubble_outline_rounded,
-                      size: 16,
-                      color: isSelected
-                          ? AppColors.navyLight
-                          : AppColors.navyLight.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      session['title'] ?? 'Untitled Chat',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: isSelected
-                            ? (isDark ? Colors.white : AppColors.navyDark)
-                            : (isDark
-                                  ? Colors.white.withValues(alpha: 0.9)
-                                  : AppColors.charcoal),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  PopupMenuButton<String>(
-                    icon: Icon(
-                      Icons.more_vert_rounded,
-                      size: 18,
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.65)
-                          : AppColors.charcoal.withValues(alpha: 0.55),
-                    ),
-                    padding: EdgeInsets.zero,
-                    onSelected: (val) {
-                      if (val == 'open') {
-                        ref
-                            .read(chatProvider.notifier)
-                            .loadSession(session['id']);
-                        Navigator.pop(context);
-                      } else if (val == 'delete') {
-                        _showDeleteDialog(
-                          context,
-                          ref,
-                          session['id'],
-                          session['title']?.toString() ?? 'Untitled Chat',
-                        );
-                      }
-                    },
-                    itemBuilder: (ctx) => [
-                      const PopupMenuItem(
-                        value: 'open',
-                        child: Text('Open', style: TextStyle(fontSize: 13)),
-                      ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Text(
-                          'Delete',
-                          style: TextStyle(color: Colors.red, fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'GDA User',
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.lightText,
               ),
             ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 

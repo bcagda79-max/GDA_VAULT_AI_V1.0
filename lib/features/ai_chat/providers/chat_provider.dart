@@ -310,6 +310,15 @@ class ChatNotifier extends Notifier<ChatState> {
     );
   }
 
+  // Signal to open filter sheet
+  void openFilterSheet() {
+    state = state.copyWith(showFilterSheet: true);
+    // Immediately reset so it doesn't trigger again on next state update
+    Future.microtask(() {
+      state = state.copyWith(showFilterSheet: false);
+    });
+  }
+
   // Update input text
   void updateInput(String text) {
     state = state.copyWith(inputText: text);
@@ -403,6 +412,10 @@ class ChatNotifier extends Notifier<ChatState> {
   Future<void> sendMessage(String userText) async {
     if (!state.canSendMessage) return;
 
+    // Use defaults if user hasn't selected years
+    final effectiveYearFrom = state.yearFrom ?? '1996';
+    final effectiveYearTo = state.yearTo ?? '2026';
+
     final userMsg = ChatMessage(
       id: _uuid.v4(),
       content: userText.trim(),
@@ -412,18 +425,22 @@ class ChatNotifier extends Notifier<ChatState> {
 
     // Save/Update session first if it's the first message
     if (state.messages.isEmpty) {
-      final title = userText.length > 30
-          ? "${userText.substring(0, 27)}..."
-          : userText;
+      final title =
+          userText.length > 30 ? "${userText.substring(0, 27)}..." : userText;
+
       await ChatHistoryService.instance.saveSession(
         id: state.sessionId,
         title: title,
         lastMessage: userText,
         categoryIds: state.selectedCategories.map((c) => c.id).toList(),
-        yearFrom: state.yearFrom,
-        yearTo: state.yearTo,
+        yearFrom: effectiveYearFrom,
+        yearTo: effectiveYearTo,
       );
-      state = state.copyWith(sessionTitle: title);
+      state = state.copyWith(
+        sessionTitle: title,
+        yearFrom: effectiveYearFrom,
+        yearTo: effectiveYearTo,
+      );
     }
 
     // Save user message
@@ -456,8 +473,8 @@ class ChatNotifier extends Notifier<ChatState> {
         sessionId: state.sessionId,
         categoryId: mainId,
         subCategoryId: subId,
-        yearFrom: state.yearFrom,
-        yearTo: state.yearTo,
+        yearFrom: effectiveYearFrom,
+        yearTo: effectiveYearTo,
       );
 
       final answer = response['answer']?.toString() ?? 'No response from AI.';

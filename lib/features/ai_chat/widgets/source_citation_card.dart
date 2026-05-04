@@ -18,12 +18,15 @@ class SourceCitationCard extends ConsumerWidget {
     final color = citation.categoryColor ?? AppColors.navyDark;
 
     return Container(
-      margin: const EdgeInsets.only(top: 10),
+      width: double.infinity, // Force full width
+      margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E2638) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.divider.withValues(alpha: 0.5),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.divider.withValues(alpha: 0.5),
           width: 1,
         ),
         boxShadow: [
@@ -41,102 +44,117 @@ class SourceCitationCard extends ConsumerWidget {
           child: InkWell(
             onTap: () => _handleOpenSource(context),
             child: Padding(
-              padding: const EdgeInsets.all(14.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
               child: Row(
                 children: [
                   // Icon Section
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          color,
-                          color.withValues(alpha: 0.7),
-                        ],
+                        colors: [color, color.withValues(alpha: 0.8)],
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: color.withValues(alpha: 0.2),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
+                          color: color.withValues(alpha: 0.25),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: const Icon(
                       Icons.auto_stories_rounded,
                       color: Colors.white,
-                      size: 18,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 16),
                   // Details Section
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          citation.fileName ?? citation.categoryName,
+                          citation.effectiveFileName,
                           style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 13,
+                            fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: isDark ? Colors.white : AppColors.navyDark,
+                            height: 1.3,
                             letterSpacing: 0.1,
                           ),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 3),
-                        Row(
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(4),
+                                color: color.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: color.withValues(alpha: 0.2),
+                                  width: 0.5,
+                                ),
                               ),
                               child: Text(
                                 citation.categoryName.toUpperCase(),
                                 style: AppTextStyles.dmSans.copyWith(
-                                  fontSize: 8,
+                                  fontSize: 9,
                                   fontWeight: FontWeight.w900,
                                   color: color,
-                                  letterSpacing: 0.5,
+                                  letterSpacing: 0.8,
                                 ),
                               ),
                             ),
-                            if (citation.pageNumber > 0) ...[
-                              const SizedBox(width: 8),
-                              Text(
-                                "PAGE ${citation.pageNumber}",
-                                style: AppTextStyles.dmSans.copyWith(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.gold,
-                                  letterSpacing: 0.5,
-                                ),
+                            _buildInfoBadge(
+                              icon: Icons.calendar_today_rounded,
+                              label: citation.yearLabel,
+                              isDark: isDark,
+                            ),
+                            if (citation.pageNumber > 0)
+                              _buildInfoBadge(
+                                icon: Icons.find_in_page_rounded,
+                                label: "PAGE ${citation.pageNumber}",
+                                isDark: isDark,
+                                isGold: true,
                               ),
-                            ],
                           ],
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   // Action Icon
                   Container(
-                    width: 24,
-                    height: 24,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.charcoal.withValues(alpha: 0.05),
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : AppColors.charcoal.withValues(alpha: 0.05),
                       shape: BoxShape.circle,
+                      border: Border.all(
+                        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                      ),
                     ),
                     child: Icon(
                       Icons.chevron_right_rounded,
-                      size: 16,
-                      color: isDark ? Colors.white.withValues(alpha: 0.3) : AppColors.charcoal.withValues(alpha: 0.3),
+                      size: 20,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.4)
+                          : AppColors.charcoal.withValues(alpha: 0.4),
                     ),
                   ),
                 ],
@@ -148,9 +166,38 @@ class SourceCitationCard extends ConsumerWidget {
     );
   }
 
+  Widget _buildInfoBadge({
+    required IconData icon,
+    required String label,
+    required bool isDark,
+    bool isGold = false,
+  }) {
+    final color = isGold ? AppColors.gold : (isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.charcoal.withValues(alpha: 0.5));
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color.withValues(alpha: 0.7)),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: color,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleOpenSource(BuildContext context) async {
     final storagePath = citation.storagePath ?? citation.displayPath;
-    
+
     // Show loading
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -159,7 +206,10 @@ class SourceCitationCard extends ConsumerWidget {
             const SizedBox(
               width: 16,
               height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(width: 12),
             Text("Opening reference: Page ${citation.pageNumber}..."),
@@ -171,48 +221,57 @@ class SourceCitationCard extends ConsumerWidget {
 
     try {
       // 1. Try to find document by Hierarchical Metadata (Category + Year + Filename)
-      // This is more reliable than path which might differ between n8n and DB
       Map<String, dynamic>? docMap;
-      
-      if (citation.fileName != null) {
-        docMap = await SupabaseService.instance.findDocumentByMetadata(
-          categoryName: citation.categoryName,
-          fileName: citation.fileName!,
-          year: citation.yearLabel,
-        );
-      }
+
+      // Use the robust name we've extracted
+      final nameToSearch = citation.effectiveFileName;
+
+      docMap = await SupabaseService.instance.findDocumentByMetadata(
+        categoryName: citation.categoryName,
+        fileName: nameToSearch,
+        year: citation.yearLabel,
+      );
 
       // 2. Fallback to direct path search if metadata search failed
       if (docMap == null && storagePath != null) {
         docMap = await SupabaseService.instance.getDocumentByPath(storagePath);
       }
-      
+
+      // 3. Last ditch: search by just the category and year if we have them
+      // (This might return a list, but findDocumentByMetadata does its own falls)
+
       if (docMap != null && context.mounted) {
         final doc = DocumentModel.fromMap(docMap);
-        
+
         // 2. Navigate to PdfViewerScreen with initialPage
         context.push(
           '/pdf-viewer',
           extra: {
             'document': doc,
-            'categoryColor': doc.categoryColor ?? citation.categoryColor ?? AppColors.navyDark,
+            'categoryColor':
+                doc.categoryColor ??
+                citation.categoryColor ??
+                AppColors.navyDark,
             'categoryName': doc.categoryName ?? citation.categoryName,
             'initialPage': citation.pageNumber,
           },
         );
-      } else if (context.mounted) {
+      }
+ else if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Reference file not found in database. Please check categories."),
+            content: Text(
+              "Reference file not found in database. Please check categories.",
+            ),
             backgroundColor: Colors.redAccent,
           ),
         );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error opening document: $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error opening document: $e")));
       }
     }
   }

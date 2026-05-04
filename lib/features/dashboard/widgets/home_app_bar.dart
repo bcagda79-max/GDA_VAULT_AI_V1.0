@@ -13,7 +13,7 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const HomeAppBar({super.key, required this.currentIndex});
 
   @override
-  Size get preferredSize => const Size.fromHeight(70.0);
+  Size get preferredSize => const Size.fromHeight(76.0);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -112,55 +112,7 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         .slideX(begin: -0.1, end: 0),
                   ],
                 ),
-                // RIGHT GROUP: Theme Toggle
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    ref.read(themeProvider.notifier).toggleTheme();
-                  },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withValues(alpha: 0.15),
-                          Colors.white.withValues(alpha: 0.05),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        width: 1,
-                      ),
-                    ),
-                    child: Center(
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 400),
-                        transitionBuilder:
-                            (Widget child, Animation<double> anim) {
-                              return RotationTransition(
-                                turns: anim,
-                                child: ScaleTransition(
-                                  scale: anim,
-                                  child: child,
-                                ),
-                              );
-                            },
-                        child: Icon(
-                          isDark
-                              ? Icons.light_mode_rounded
-                              : Icons.dark_mode_rounded,
-                          key: ValueKey(isDark),
-                          size: 20,
-                          color: AppColors.gold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ).animate().fadeIn(duration: 600.ms, delay: 300.ms).scale(),
+                // Theme toggle removed as requested
               ],
             ),
           ),

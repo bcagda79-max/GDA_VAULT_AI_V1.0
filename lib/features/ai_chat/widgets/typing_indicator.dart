@@ -37,23 +37,19 @@ class _TypingIndicatorState extends State<TypingIndicator>
       children: [
         // AI Avatar
         Container(
-          width: 32,
-          height: 32,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.navyDark, AppColors.navyMid],
-            ),
+            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
             border: Border.all(
-              color: AppColors.gold.withValues(alpha: 0.4),
-              width: 1.2,
+              color: AppColors.gold.withValues(alpha: 0.3),
+              width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
                 color: AppColors.gold.withValues(alpha: 0.1),
-                blurRadius: 4,
+                blurRadius: 10,
                 spreadRadius: 1,
               ),
             ],
@@ -61,33 +57,33 @@ class _TypingIndicatorState extends State<TypingIndicator>
           child: const Center(
             child: Icon(
               Icons.auto_awesome_rounded,
-              size: 16,
+              size: 18,
               color: AppColors.gold,
             ),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : Colors.white,
+            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(4),
-              topRight: Radius.circular(20),
-              bottomLeft: Radius.circular(20),
-              bottomRight: Radius.circular(20),
+              topLeft: Radius.circular(6),
+              topRight: Radius.circular(24),
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
             ),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : AppColors.divider.withValues(alpha: 0.5),
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : AppColors.divider.withValues(alpha: 0.4),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
@@ -101,30 +97,25 @@ class _TypingIndicatorState extends State<TypingIndicator>
                   double animValue = (_controller.value - offset);
                   if (animValue < 0) animValue += 1.0;
 
-                  final bounce = sin(animValue * pi) * 4.0;
+                  final bounce = sin(animValue * pi) * 6.0;
 
                   return Transform.translate(
                     offset: Offset(0, -bounce),
                     child: Container(
-                      width: 6,
-                      height: 6,
-                      margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                      width: 7,
+                      height: 7,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            AppColors.gold.withValues(
-                              alpha:
-                                  0.3 + (1.0 - animValue).clamp(0.0, 1.0) * 0.7,
-                            ),
-                            AppColors.gold.withValues(
-                              alpha:
-                                  0.1 + (1.0 - animValue).clamp(0.0, 1.0) * 0.4,
-                            ),
-                          ],
+                        color: AppColors.gold.withValues(
+                          alpha: 0.3 + (1.0 - animValue).clamp(0.0, 1.0) * 0.7,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.gold.withValues(alpha: 0.2),
+                            blurRadius: 4,
+                          ),
+                        ],
                       ),
                     ),
                   );

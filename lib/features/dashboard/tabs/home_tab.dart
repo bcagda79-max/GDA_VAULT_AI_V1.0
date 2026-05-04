@@ -139,7 +139,9 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               title: 'Categories',
               subtitle: 'Board, Trust, Town & more',
               icon: Icons.folder_copy_rounded,
-              bgColors: [AppColors.navyDark, AppColors.navyLight],
+              bgColors: isDark
+                  ? [AppColors.secondaryBlueDark, AppColors.darkCard]
+                  : [AppColors.primaryBlue, const Color(0xFF3B82F6)],
               onTap: () => context.push('/categories'),
             ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
             const SizedBox(height: 10),
@@ -148,7 +150,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               title: 'Add New File',
               subtitle: 'Scan or import a document',
               icon: Icons.add_circle_outline_rounded,
-              bgColors: [AppColors.gdaGreen, AppColors.gdaGreenMid],
+              bgColors: [AppColors.primaryBlue, const Color(0xFF2563EB)],
               onTap: () => context.go('/dashboard/add'),
             ).animate().fadeIn(delay: 250.ms, duration: 400.ms),
             const SizedBox(height: 10),
@@ -157,7 +159,9 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               title: 'Offline Files',
               subtitle: 'Open cached documents without internet',
               icon: Icons.cloud_done_rounded,
-              bgColors: [AppColors.catAdmin, const Color(0xFF6A2699)],
+              bgColors: isDark
+                  ? [AppColors.secondaryBlueDark, const Color(0xFF111827)]
+                  : [AppColors.secondarySlate, const Color(0xFF1F2937)],
               onTap: () => context.push('/dashboard/offline-documents'),
             ).animate().fadeIn(delay: 275.ms, duration: 400.ms),
             const SizedBox(height: 24),
@@ -184,17 +188,17 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [const Color(0xFF161E35), const Color(0xFF0A0F1E)]
-              : [AppColors.navyDark, AppColors.navyMid],
+              ? [AppColors.darkCard, AppColors.darkBg]
+              : [AppColors.primaryBlue, AppColors.secondaryBlueDark],
         ),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: Colors.white.withValues(alpha: isDark ? 0.08 : 0.15),
+          color: Colors.white.withValues(alpha: isDark ? 0.05 : 0.1),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.2),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.15),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -202,19 +206,6 @@ class _HomeTabState extends ConsumerState<HomeTab> {
       ),
       child: Stack(
         children: [
-          // Background decorative circle
-          Positioned(
-            right: -30,
-            top: -30,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.03),
-              ),
-            ),
-          ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -228,10 +219,18 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.gold.withValues(alpha: 0.12),
+                        color:
+                            (isDark
+                                    ? AppColors.goldDark
+                                    : AppColors.goldLightBrand)
+                                .withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: AppColors.gold.withValues(alpha: 0.3),
+                          color:
+                              (isDark
+                                      ? AppColors.goldDark
+                                      : AppColors.goldLightBrand)
+                                  .withValues(alpha: 0.3),
                           width: 0.8,
                         ),
                       ),
@@ -240,7 +239,9 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 8.5,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.gold,
+                          color: isDark
+                              ? AppColors.goldDark
+                              : AppColors.goldLightBrand,
                           letterSpacing: 1.2,
                         ),
                       ),
@@ -261,7 +262,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                       style: AppTextStyles.dmSans.copyWith(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: Colors.white.withValues(alpha: 0.7),
                         letterSpacing: 0.2,
                       ),
                     ),
@@ -272,16 +273,18 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.06),
+                        color: Colors.white.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.calendar_today_rounded,
                             size: 11,
-                            color: AppColors.gold,
+                            color: isDark
+                                ? AppColors.goldDark
+                                : AppColors.goldLightBrand,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -289,7 +292,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                             style: AppTextStyles.dmSans.copyWith(
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
-                              color: Colors.white.withValues(alpha: 0.8),
+                              color: Colors.white.withValues(alpha: 0.9),
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -301,23 +304,12 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               ),
               const SizedBox(width: 16),
               Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.05),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 15,
-                    ),
-                  ],
+                width: 110,
+                height: 110,
+                decoration: const BoxDecoration(
+                  color: Colors.transparent,
                 ),
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(4),
                 child: Image.asset(
                   'assets/images/gda_logo.png',
                   fit: BoxFit.contain,

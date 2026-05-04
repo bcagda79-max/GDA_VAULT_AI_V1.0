@@ -52,7 +52,6 @@ class AppRouter {
             builder: (context, state) {
               final extra = state.extra as Map<String, dynamic>?;
               return ChatScreen(
-                isPushed: false,
                 initialDocumentId: extra?['documentId'] as String?,
                 initialCategoryId: extra?['categoryId'] as String?,
                 initialSubCategoryId: extra?['subCategoryId'] as String?,
@@ -228,7 +227,6 @@ class AppRouter {
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           return ChatScreen(
-            isPushed: true,
             initialDocumentId: extra?['documentId'] as String?,
             initialCategoryId: extra?['categoryId'] as String?,
             initialSubCategoryId: extra?['subCategoryId'] as String?,

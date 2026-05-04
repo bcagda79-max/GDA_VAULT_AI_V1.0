@@ -50,13 +50,8 @@ class DocumentUploadService {
     required int year,
     required String fileName,
     int? pageCount,
-    void Function(
-      String phase,
-      double progress, {
-      int? bytesSent,
-      int? totalBytes,
-    })?
-    onProgress,
+    void Function(String phase, double progress, {int? bytesSent, int? totalBytes})?
+        onProgress,
   }) async {
     try {
       // Phase 1: Build path
@@ -146,13 +141,8 @@ class DocumentUploadService {
     required String categoryStoragePath,
     required int year,
     required String fileName,
-    void Function(
-      String phase,
-      double progress, {
-      int? bytesSent,
-      int? totalBytes,
-    })?
-    onProgress,
+    void Function(String phase, double progress, {int? bytesSent, int? totalBytes})?
+        onProgress,
   }) async {
     try {
       // Phase 1: Convert images to PDF

@@ -153,103 +153,95 @@ class _YearListScreenState extends State<YearListScreen> {
     }
   }
 
+  String _getCleanTitle() {
+    final title = widget.subCategoryName ?? widget.categoryName;
+    if (title.contains('Board of Authority')) {
+      return title.replaceFirst('Board of Authority', '').trim();
+    }
+    return title;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final totalDocs = _documents.length;
-    final totalYears = _yearFolders.length;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
       canPop: true,
       child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: Colors.transparent,
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: Theme.of(context).brightness == Brightness.dark
-                    ? [const Color(0xFF161E35), const Color(0xFF0A0F1E)]
-                    : [AppColors.navyDark, AppColors.navyMid],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(76.0),
+          child: AppBar(
+            automaticallyImplyLeading: false,
+            flexibleSpace: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [AppColors.darkSurface, AppColors.darkBg]
+                      : [AppColors.navyDark, AppColors.navyMid],
                 ),
-              ],
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back_rounded,
-                          color: Colors.white,
-                          size: 20,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      // Far left icon
+                      GestureDetector(
+                        onTap: () => context.pop(),
+                        child: const SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Icon(
+                            Icons.arrow_back_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.subCategoryName ?? widget.categoryName,
-                            style: AppTextStyles.playfairDisplay.copyWith(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            'Select a year to browse',
-                            style: AppTextStyles.dmSans.copyWith(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withValues(alpha: 0.6),
-                              letterSpacing: 0.5,
+                      // Centered Title
+                      Expanded(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              _getCleanTitle(),
+                              style: AppTextStyles.playfairDisplay.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+                      // Right-side spacer
+                      const SizedBox(width: 40),
+                    ],
+                  ),
                 ),
               ),
             ),
+            elevation: 0,
           ),
-          elevation: 0,
         ),
         body: Stack(
           children: [
             Column(
               children: [
-                _CategoryInfoHeader(
-                  categoryName: widget.categoryName,
-                  categoryColor: widget.categoryColor,
-                  yearFrom: widget.yearFrom,
-                  yearTo: widget.yearTo,
-                  totalDocs: totalDocs,
-                  totalYears: totalYears,
-                ),
+                const SizedBox(height: 10),
                 _SortAndFilterBar(
                   yearListLength: _availableYears.length,
                   isDescending: _isDescending,
@@ -361,147 +353,6 @@ class _YearListScreenState extends State<YearListScreen> {
               ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _CategoryInfoHeader extends StatelessWidget {
-  final String categoryName;
-  final Color categoryColor;
-  final int yearFrom;
-  final int? yearTo;
-  final int totalDocs;
-  final int totalYears;
-
-  const _CategoryInfoHeader({
-    required this.categoryName,
-    required this.categoryColor,
-    required this.yearFrom,
-    this.yearTo,
-    required this.totalDocs,
-    required this.totalYears,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(10, 20, 10, 12),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [categoryColor, categoryColor.withValues(alpha: 0.8)],
-        ),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: categoryColor.withValues(alpha: 0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Icon(
-              Icons.inventory_2_rounded,
-              size: 100,
-              color: Colors.white.withValues(alpha: 0.05),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.gold.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.gold.withValues(alpha: 0.3),
-                    width: 0.8,
-                  ),
-                ),
-                child: Text(
-                  "CHRONOLOGICAL ARCHIVE",
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 9,
-                    color: AppColors.gold,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                categoryName,
-                style: AppTextStyles.playfairDisplay.copyWith(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  height: 1.1,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '$yearFrom – ${yearTo ?? 'Ongoing'}',
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white.withValues(alpha: 0.7),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  _buildChip('$totalDocs Documents', Icons.description_rounded),
-                  const SizedBox(width: 10),
-                  _buildChip('$totalYears Active Years', Icons.history_rounded),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChip(String label, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.15),
-          width: 0.8,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 12, color: Colors.white),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -642,7 +493,7 @@ class _YearFolderStrip extends StatelessWidget {
                   const SizedBox(height: 10),
                   Text(
                     '$year',
-                    style: AppTextStyles.dmSans.copyWith(
+                    style: AppTextStyles.numberStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
                       color: isSelected
@@ -782,10 +633,11 @@ class _LeftYearBand extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               yearStart.toString(),
-              style: AppTextStyles.dmSans.copyWith(
+              style: AppTextStyles.numberStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w800,
                 color: isDark ? Colors.white : categoryColor,
+                letterSpacing: -0.5,
               ),
             ),
           ],
@@ -832,7 +684,7 @@ class _Content extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   '${document.pageCount ?? 0} Pages',
-                  style: AppTextStyles.dmSans.copyWith(
+                  style: AppTextStyles.numberStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: isDark
@@ -849,7 +701,7 @@ class _Content extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   DateFormat('dd MMM yyyy').format(document.uploadedAt),
-                  style: AppTextStyles.dmSans.copyWith(
+                  style: AppTextStyles.numberStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: isDark

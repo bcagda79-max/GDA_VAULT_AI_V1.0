@@ -21,10 +21,10 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _getCurrentIndex(BuildContext context) {
-    final location = GoRouterState.of(context).matchedLocation;
+    final location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/categories')) return 1;
     if (location.startsWith('/dashboard/add')) return 2;
-    if (location.startsWith('/dashboard/chat') || location.startsWith('/chat'))
+    if (location.startsWith('/dashboard/chat') || location.contains('/chat'))
       return 3;
     if (location.startsWith('/dashboard/settings')) return 4;
     return 0;
@@ -98,21 +98,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  bool _shouldHideUI(BuildContext context) {
+  bool _shouldHideBottomNav(BuildContext context) {
     final location = GoRouterState.of(context).uri.path.toLowerCase();
-    // Strictly hide on scanner, review, category selection, and PDF viewer flow
+    // Strictly hide on scanner, review, category selection, PDF viewer flow, and AI Chat
     return location.contains('/scanner') ||
         location.contains('/review') ||
         location.contains('/select-category') ||
         location.contains('/pdf-preview') ||
-        location.contains('/pdf');
+        location.contains('/pdf') ||
+        location.contains('/chat');
+  }
+
+  bool _shouldHideAppBar(BuildContext context) {
+    final location = GoRouterState.of(context).uri.path.toLowerCase();
+    // Hide dashboard app bar on sub-screens or when bottom nav is hidden
+    return _shouldHideBottomNav(context) ||
+        location.startsWith('/categories') ||
+        location.contains('/settings') ||
+        location.startsWith('/dashboard/add');
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentIndex = _getCurrentIndex(context);
-    final hideUI = _shouldHideUI(context);
+    final hideBottomNav = _shouldHideBottomNav(context);
+    final hideAppBar = _shouldHideAppBar(context);
 
     return PopScope(
       canPop: false,
@@ -126,18 +137,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       },
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-        appBar: hideUI ? null : HomeAppBar(currentIndex: currentIndex),
+        appBar: hideAppBar ? null : HomeAppBar(currentIndex: currentIndex),
         body: Stack(
           children: [
             widget.child,
-            if (!hideUI &&
+            if (!hideBottomNav &&
                 currentIndex !=
                     1 && // Hide on Categories tab (to show FAB properly)
                 currentIndex != 3) // Hide on Chat tab
               const Positioned(bottom: 20, right: 16, child: AiChatFab()),
           ],
         ),
-        bottomNavigationBar: hideUI
+        bottomNavigationBar: hideBottomNav
             ? null
             : GdaBottomNav(currentIndex: currentIndex, onTap: _onTabTapped),
       ),

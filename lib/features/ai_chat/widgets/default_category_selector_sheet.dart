@@ -121,56 +121,50 @@ class _DefaultCategorySelectorSheetState
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Default Chat Categories",
-                          style: AppTextStyles.playfairDisplay.copyWith(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: isDark
-                                ? AppColors.darkText
-                                : AppColors.charcoal,
-                            height: 1.1,
-                          ),
+            // Standardized AppBar-style Header
+            Container(
+              height: 76,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [const Color(0xFF161E35), const Color(0xFF0A0F1E)]
+                      : [AppColors.navyDark, AppColors.navyMid],
+                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: Colors.white,
+                          size: 24,
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          "Choose 1 or 2 categories for new chats",
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 12,
-                            color: AppColors.charcoal.withValues(alpha: 0.55),
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.navyLight.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      "${_selectedIds.length}/2",
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.navyLight,
                       ),
-                    ),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            "Default chat Categories",
+                            style: AppTextStyles.playfairDisplay.copyWith(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 24), // Spacer for balance
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
             Container(
@@ -209,7 +203,7 @@ class _DefaultCategorySelectorSheetState
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
-                        Icons.auto_awesome_rounded,
+                        Icons.category_rounded, // Changed from auto_awesome
                         size: 15,
                         color: AppColors.navyLight,
                       ),

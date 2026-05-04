@@ -6,25 +6,25 @@ import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 /// The dark theme for the application.
 final ThemeData darkTheme = ThemeData(
   brightness: Brightness.dark,
-  primaryColor: AppColors.navyMid,
+  primaryColor: AppColors.primaryBlue,
   scaffoldBackgroundColor: AppColors.darkBg,
   appBarTheme: AppBarTheme(
-    backgroundColor: AppColors.darkSurface,
-    foregroundColor: AppColors.darkText,
+    backgroundColor: AppColors.darkCard,
+    foregroundColor: AppColors.darkTextPrimary,
     elevation: 0,
     titleTextStyle: AppTextStyles.titleLarge.copyWith(
-      color: AppColors.darkText,
+      color: AppColors.darkTextPrimary,
     ),
   ),
   colorScheme: const ColorScheme.dark(
-    primary: AppColors.navyMid,
-    secondary: AppColors.gold,
-    surface: AppColors.darkSurface,
+    primary: AppColors.primaryBlue,
+    secondary: AppColors.goldDark,
+    surface: AppColors.darkCard,
     error: Colors.redAccent,
-    onPrimary: AppColors.darkText,
-    onSecondary: AppColors.darkText,
-    onSurface: AppColors.darkText,
-    onError: AppColors.darkText,
+    onPrimary: Colors.white,
+    onSecondary: Colors.white,
+    onSurface: AppColors.darkTextPrimary,
+    onError: Colors.white,
   ),
   cardTheme: CardThemeData(
     color: AppColors.darkCard,
@@ -33,21 +33,22 @@ final ThemeData darkTheme = ThemeData(
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: AppColors.navyMid,
-      foregroundColor: AppColors.darkText,
+      backgroundColor: AppColors.primaryBlue,
+      foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-      textStyle: AppTextStyles.titleMedium.copyWith(color: AppColors.darkText),
+      textStyle: AppTextStyles.titleMedium.copyWith(color: Colors.white),
     ),
   ),
   textTheme: TextTheme(
     displayLarge: AppTextStyles.displayLargeDark,
     headlineMedium: AppTextStyles.headlineMedium.copyWith(
-      color: AppColors.darkText,
+      color: AppColors.darkTextPrimary,
     ),
-    titleLarge: AppTextStyles.titleLarge.copyWith(color: AppColors.darkText),
-    titleMedium: AppTextStyles.titleMedium.copyWith(color: AppColors.darkText),
-    bodyLarge: AppTextStyles.bodyLarge.copyWith(color: AppColors.darkText),
-    bodySmall: AppTextStyles.bodySmall.copyWith(color: AppColors.darkText),
-    labelSmall: AppTextStyles.labelSmall.copyWith(color: AppColors.darkText),
+    titleLarge: AppTextStyles.titleLarge.copyWith(color: AppColors.darkTextPrimary),
+    titleMedium: AppTextStyles.titleMedium.copyWith(color: AppColors.darkTextPrimary),
+    bodyLarge: AppTextStyles.bodyLarge.copyWith(color: AppColors.darkTextPrimary),
+    bodySmall: AppTextStyles.bodySmall.copyWith(color: AppColors.darkTextPrimary),
+    labelSmall: AppTextStyles.labelSmall.copyWith(color: AppColors.darkTextPrimary),
   ),
+  iconTheme: const IconThemeData(color: AppColors.darkIcon),
 );

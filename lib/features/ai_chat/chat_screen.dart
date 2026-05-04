@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'providers/chat_provider.dart';
 import 'package:gda_vault_ai/features/ai_chat/models/chat_state.dart';
@@ -10,7 +11,6 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
-  final bool isPushed;
   final String? initialDocumentId;
   final String? initialCategoryId;
   final String? initialSubCategoryId;
@@ -18,7 +18,6 @@ class ChatScreen extends ConsumerStatefulWidget {
 
   const ChatScreen({
     super.key,
-    this.isPushed = false,
     this.initialDocumentId,
     this.initialCategoryId,
     this.initialSubCategoryId,
@@ -125,49 +124,55 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final selectedCount = chatState.selectedCategories.length;
 
     // Auto-scroll when new messages arrive
     ref.listen(chatProvider, (previous, next) {
       if (previous?.messages.length != next.messages.length) {
         Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
       }
+      // Listen for filter sheet signal
+      if (next.showFilterSheet && !(previous?.showFilterSheet ?? false)) {
+        _openCategorySheet();
+      }
     });
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-      appBar: widget.isPushed ? _buildAppBar(selectedCount, isDark) : null,
+      appBar: _buildAppBar(isDark),
       drawer: const AiChatDrawer(),
       body: Stack(
         children: [
           _buildBackdrop(isDark),
           SafeArea(
-            top: !widget.isPushed,
             child: Column(
               children: [
-                if (!widget.isPushed) _buildTabHeader(selectedCount, isDark),
                 Expanded(
-                  child:
-                      !chatState.categoriesSelected &&
+                  child: !chatState.categoriesSelected &&
                           chatState.messages.isEmpty
                       ? _buildCategoryRequiredBanner(isDark)
-                      : (chatState.categoriesSelected &&
-                            chatState.yearFrom == null &&
-                            chatState.yearTo == null &&
-                            chatState.messages.isEmpty)
-                      ? _buildYearRequiredBanner(isDark)
-                      : chatState.messages.isEmpty &&
-                            chatState.categoriesSelected
-                      ? _buildEmptyState(isDark)
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          itemCount: chatState.messages.length,
-                          itemBuilder: (ctx, i) =>
-                              ChatMessageBubble(message: chatState.messages[i]),
+                      : Column(
+                          children: [
+                            if (chatState.categoriesSelected &&
+                                chatState.yearFrom == null &&
+                                chatState.yearTo == null)
+                              _buildYearHintCard(isDark),
+                            Expanded(
+                              child: chatState.messages.isEmpty
+                                  ? _buildEmptyState(isDark)
+                                  : ListView.builder(
+                                      controller: _scrollController,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                      itemCount: chatState.messages.length,
+                                      itemBuilder: (ctx, i) =>
+                                          ChatMessageBubble(
+                                            message: chatState.messages[i],
+                                          ),
+                                    ),
+                            ),
+                          ],
                         ),
                 ),
                 _buildInputArea(chatState, isDark),
@@ -179,126 +184,92 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  Widget _buildYearRequiredBanner(bool isDark) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.darkCard.withValues(alpha: 0.8)
-              : Colors.white.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : AppColors.divider,
-            width: 0.9,
+  PreferredSizeWidget _buildAppBar(bool isDark) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(76.0),
+      child: AppBar(
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [const Color(0xFF0D1221), const Color(0xFF070C1A)]
+                  : [AppColors.navyDark, AppColors.navyMid],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.navyDark.withValues(alpha: isDark ? 0.12 : 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.navyDark.withValues(alpha: 0.28)
-                    : AppColors.navyDark.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.navyLight.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.calendar_today_rounded,
-                  size: 34,
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.88)
-                      : AppColors.navyDark.withValues(alpha: 0.7),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "Select Year",
-              textAlign: TextAlign.center,
-              style: AppTextStyles.playfairDisplay.copyWith(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.darkText : AppColors.charcoal,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Please select at least one year to start the chat.\nThis helps produce more accurate answers.",
-              textAlign: TextAlign.center,
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 13,
-                height: 1.5,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.68)
-                    : AppColors.charcoal.withValues(alpha: 0.62),
-              ),
-            ),
-            const SizedBox(height: 18),
-            GestureDetector(
-              onTap: _openCategorySheet,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.navyDark, AppColors.navyLight],
-                  ),
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.navyDark.withValues(alpha: 0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
+          child: SafeArea(
+            bottom: false,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(
-                      Icons.calendar_month_rounded,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        "Select Year",
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                    Builder(
+                      builder: (context) => IconButton(
+                        icon: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.menu_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
+                        onPressed: () => Scaffold.of(context).openDrawer(),
                       ),
                     ),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "GDA AI CHAT",
+                            style: AppTextStyles.playfairDisplay.copyWith(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.home_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      onPressed: () => context.go('/dashboard'),
+                    ),
                   ],
                 ),
               ),
             ),
-          ],
+          ),
         ),
+        elevation: 0,
+        automaticallyImplyLeading: false,
       ),
     );
   }
@@ -311,402 +282,259 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: isDark
-                ? [const Color(0xFF070C1A), AppColors.darkBg]
-                : [const Color(0xFFF9F5EC), AppColors.paper],
+                ? [const Color(0xFF0A0F1E), const Color(0xFF070C1A)]
+                : [const Color(0xFFFDFBF7), const Color(0xFFF5F2EB)],
           ),
         ),
-        child: Stack(children: [
+        child: Stack(
+          children: [
+            // Subtle tech pattern overlay
+            Positioned.fill(
+              child: Opacity(
+                opacity: isDark ? 0.03 : 0.02,
+                child: CustomPaint(painter: _GridPainter(isDark: isDark)),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(int selectedCount, bool isDark) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [
-                    AppColors.navyDark,
-                    AppColors.navyDark.withValues(alpha: 0.8),
-                  ]
-                : [AppColors.navyDark, AppColors.navyLight],
-          ),
-        ),
-      ),
-      elevation: 0,
-      toolbarHeight: 62,
-      leading: IconButton(
-        icon: const Icon(
-          Icons.arrow_back_ios_new_rounded,
-          size: 18,
-          color: Colors.white,
-        ),
-        onPressed: () => context.pop(),
-      ),
-      centerTitle: true,
-      title: Column(
-        children: [
-          Text(
-            "GDA Vault AI",
-            style: AppTextStyles.playfairDisplay.copyWith(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          Text(
-            "Document Intelligence",
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 9,
-              color: Colors.white.withValues(alpha: 0.5),
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        GestureDetector(
-          onTap: _openCategorySheet,
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: selectedCount > 0
-                  ? AppColors.navyLight.withValues(alpha: 0.18)
-                  : Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(20),
-              border: selectedCount > 0
-                  ? Border.all(
-                      color: AppColors.navyLight.withValues(alpha: 0.4),
-                    )
-                  : null,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.filter_alt_rounded,
-                  size: 14,
-                  color: selectedCount > 0
-                      ? Colors.white
-                      : Colors.white.withValues(alpha: 0.6),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  selectedCount > 0 ? "$selectedCount" : "Filter",
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 10,
-                    fontWeight: selectedCount > 0
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                    color: selectedCount > 0
-                        ? Colors.white
-                        : Colors.white.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-      ],
-    );
-  }
-
-  Widget _buildTabHeader(int selectedCount, bool isDark) {
+  Widget _buildYearHintCard(bool isDark) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.navyDark, AppColors.navyLight],
-        ),
-        borderRadius: BorderRadius.circular(18),
+        color: isDark ? AppColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.12),
-          width: 0.8,
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.divider,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navyDark.withValues(alpha: 0.25),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
-          Builder(
-            builder: (context) => GestureDetector(
-              onTap: () => Scaffold.of(context).openDrawer(),
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.11),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.menu_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.gold.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
+            child: const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.gold),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "AI Chat",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.playfairDisplay.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  "Ask anything about GDA documents",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 10,
-                    color: Colors.white.withValues(alpha: 0.72),
-                  ),
-                ),
-              ],
+            child: Text(
+              "Select year for better response",
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white.withValues(alpha: 0.7) : AppColors.charcoal.withValues(alpha: 0.7),
+              ),
             ),
           ),
-          GestureDetector(
-            onTap: _openCategorySheet,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              decoration: BoxDecoration(
-                color: selectedCount > 0
-                    ? AppColors.navyLight.withValues(alpha: 0.18)
-                    : Colors.white.withValues(alpha: 0.11),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: selectedCount > 0
-                      ? AppColors.navyLight.withValues(alpha: 0.45)
-                      : Colors.white.withValues(alpha: 0.2),
-                  width: 0.8,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.filter_alt_rounded,
-                    size: 13,
-                    color: selectedCount > 0
-                        ? Colors.white
-                        : Colors.white.withValues(alpha: 0.82),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    selectedCount > 0 ? "$selectedCount selected" : "Filters",
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: selectedCount > 0
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.88),
-                    ),
-                  ),
-                ],
+          TextButton(
+            onPressed: _openCategorySheet,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              "Select",
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: AppColors.gold,
               ),
             ),
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, end: 0);
   }
 
   Widget _buildCategoryRequiredBanner(bool isDark) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.darkCard.withValues(alpha: 0.8)
-              : Colors.white.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : AppColors.divider,
-            width: 0.9,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.navyDark.withValues(alpha: isDark ? 0.12 : 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 82,
-              height: 82,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.navyDark.withValues(alpha: 0.28)
-                    : AppColors.navyDark.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.navyLight.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.auto_awesome_rounded,
-                  size: 36,
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.88)
-                      : AppColors.navyDark.withValues(alpha: 0.7),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "Select categories to start chat",
-              textAlign: TextAlign.center,
-              style: AppTextStyles.playfairDisplay.copyWith(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.darkText : AppColors.charcoal,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Only two categories can be selected at a time. Select year as well for better reasoning and more precise answers.",
-              textAlign: TextAlign.center,
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 13,
-                height: 1.5,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.68)
-                    : AppColors.charcoal.withValues(alpha: 0.62),
-              ),
-            ),
-            const SizedBox(height: 18),
-            GestureDetector(
-              onTap: _openCategorySheet,
-              child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      child:
+          Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.navyDark, AppColors.navyLight],
+                  color: isDark ? AppColors.darkSurface : Colors.white,
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : AppColors.divider,
+                    width: 1,
                   ),
-                  borderRadius: BorderRadius.circular(999),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.navyDark.withValues(alpha: 0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.3 : 0.08,
+                      ),
+                      blurRadius: 30,
+                      offset: const Offset(0, 15),
                     ),
                   ],
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Column(
                   children: [
-                    const Icon(
-                      Icons.filter_alt_rounded,
-                      size: 16,
-                      color: Colors.white,
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppColors.gold.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.gold.withValues(alpha: 0.2),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Center(
+                        child:
+                            Icon(
+                                  Icons.auto_awesome_rounded,
+                                  size: 36,
+                                  color: AppColors.gold,
+                                )
+                                .animate(
+                                  onPlay: (controller) => controller.repeat(),
+                                )
+                                .rotate(
+                                  duration: 3.seconds,
+                                  curve: Curves.linear,
+                                ),
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        "Click here to select categories",
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                    const SizedBox(height: 24),
+                    Text(
+                      "Select categories to start chat",
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.playfairDisplay.copyWith(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? AppColors.darkText : AppColors.charcoal,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Only two categories can be selected at a time. Select year as well for better reasoning and more precise answers.",
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.dmSans.copyWith(
+                        fontSize: 14,
+                        height: 1.6,
+                        color: (isDark ? Colors.white : AppColors.charcoal)
+                            .withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    GestureDetector(
+                      onTap: _openCategorySheet,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.navyDark, AppColors.navyMid],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.navyDark.withValues(alpha: 0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.filter_alt_rounded,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              "Choose Categories",
+                              style: AppTextStyles.dmSans.copyWith(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ],
                 ),
+              )
+              .animate()
+              .fadeIn(duration: 600.ms)
+              .scale(
+                begin: const Offset(0.95, 0.95),
+                curve: Curves.easeOutCubic,
               ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
   Widget _buildEmptyState(bool isDark) {
     return Center(
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 32),
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppColors.navyLight.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.navyLight.withValues(alpha: 0.25),
-                  width: 1.5,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
                 ),
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.auto_awesome_rounded,
-                  size: 26,
-                  color: AppColors.navyLight,
+                child: const Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  size: 30,
+                  color: AppColors.gold,
                 ),
+              )
+              .animate(onPlay: (controller) => controller.repeat(reverse: true))
+              .moveY(
+                begin: -5,
+                end: 5,
+                duration: 2.seconds,
+                curve: Curves.easeInOut,
+              ),
+          const SizedBox(height: 20),
+          Text(
+            "Ready to Search",
+            style: AppTextStyles.playfairDisplay.copyWith(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: isDark ? AppColors.darkText : AppColors.charcoal,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Ask anything about the selected\ndocument categories",
+            textAlign: TextAlign.center,
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 14,
+              color: (isDark ? Colors.white : AppColors.charcoal).withValues(
+                alpha: 0.4,
               ),
             ),
-            const SizedBox(height: 14),
-            Text(
-              "Ready to Search",
-              style: AppTextStyles.playfairDisplay.copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.darkText : AppColors.charcoal,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              "Ask anything about the selected\ndocument categories",
-              textAlign: TextAlign.center,
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 12,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.6)
-                    : AppColors.charcoal.withValues(alpha: 0.45),
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -715,111 +543,89 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final canSend = state.canSendMessage;
 
     return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        border: Border(top: BorderSide(color: AppColors.divider, width: 0.8)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navyDark.withValues(alpha: 0.02),
-            blurRadius: 6,
-            offset: const Offset(0, -1),
-          ),
-        ],
-      ),
       padding: EdgeInsets.fromLTRB(
+        20,
         12,
-        10,
-        12,
-        MediaQuery.of(context).padding.bottom + 10,
+        20,
+        MediaQuery.of(context).padding.bottom + 16,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          GestureDetector(
-            onTap: _openCategorySheet,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: state.categoriesSelected
-                    ? AppColors.navyLight.withValues(alpha: 0.18)
-                    : (isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : AppColors.charcoal.withValues(alpha: 0.05)),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: state.categoriesSelected
-                      ? AppColors.navyLight.withValues(alpha: 0.45)
-                      : (isDark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : AppColors.divider),
-                  width: 1,
-                ),
-                boxShadow: state.categoriesSelected
-                    ? [
-                        BoxShadow(
-                          color: AppColors.navyLight.withValues(alpha: 0.12),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ]
-                    : null,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkBg : AppColors.paper,
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+            color: _inputFocused
+                ? AppColors.gold.withValues(alpha: 0.5)
+                : (isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.divider.withValues(alpha: 0.8)),
+            width: 1,
+          ),
+          boxShadow: [
+            if (_inputFocused)
+              BoxShadow(
+                color: AppColors.gold.withValues(alpha: 0.05),
+                blurRadius: 10,
+                spreadRadius: 1,
               ),
-              child: Center(
+          ],
+        ),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: _openCategorySheet,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 5,
+                    ),
+                  ],
+                ),
                 child: Icon(
-                  state.categoriesSelected
-                      ? Icons.filter_alt_rounded
-                      : Icons.filter_alt_outlined,
+                  Icons.language_rounded,
                   size: 20,
-                  color: state.categoriesSelected
-                      ? AppColors.navyDark
-                      : (isDark
-                            ? Colors.white.withValues(alpha: 0.4)
-                            : AppColors.charcoal.withValues(alpha: 0.4)),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.6)
+                      : AppColors.navyDark,
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkBg : AppColors.paper,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: _inputFocused
-                      ? AppColors.navyLight.withValues(alpha: 0.45)
-                      : AppColors.divider,
-                  width: _inputFocused ? 1.5 : 0.8,
-                ),
-              ),
+            const SizedBox(width: 8),
+            Expanded(
               child: TextField(
                 controller: _inputController,
                 focusNode: _focusNode,
-                maxLines: 4,
+                maxLines: 5,
                 minLines: 1,
                 textInputAction: TextInputAction.send,
                 keyboardType: TextInputType.multiline,
                 style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 14,
-                  color: isDark ? AppColors.darkText : AppColors.charcoal,
+                  fontSize: 15,
+                  color: isDark ? Colors.white : AppColors.charcoal,
                 ),
                 decoration: InputDecoration(
                   hintText: state.categoriesSelected
-                      ? "Ask about GDA documents..."
-                      : "Select categories first...",
+                      ? "Message"
+                      : "Select categories...",
                   hintStyle: AppTextStyles.dmSans.copyWith(
-                    fontSize: 13,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.3)
-                        : AppColors.charcoal.withValues(alpha: 0.35),
+                    fontSize: 15,
+                    color: (isDark ? Colors.white : AppColors.charcoal)
+                        .withValues(alpha: 0.3),
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                    horizontal: 8,
+                    vertical: 10,
                   ),
                 ),
                 onChanged: (val) =>
@@ -828,36 +634,65 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 enabled: state.categoriesSelected,
               ),
             ),
-          ),
-          if (canSend)
-            GestureDetector(
-              onTap: () => _sendMessage(),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.navyLight,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.navyLight.withValues(alpha: 0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: canSend ? 40 : 0,
+              height: canSend ? 40 : 0,
+              child: AnimatedOpacity(
+                opacity: canSend ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: GestureDetector(
+                  onTap: canSend ? () => _sendMessage() : null,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white : AppColors.navyDark,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isDark ? Colors.white : AppColors.navyDark)
+                              .withValues(alpha: 0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.send_rounded,
-                    size: 18,
-                    color: Colors.white,
+                    child: Center(
+                      child: Icon(
+                        Icons.arrow_upward_rounded,
+                        size: 22,
+                        color: isDark ? Colors.black : Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
+
+class _GridPainter extends CustomPainter {
+  final bool isDark;
+  _GridPainter({required this.isDark});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = isDark ? Colors.white : Colors.black
+      ..strokeWidth = 0.5;
+
+    const spacing = 40.0;
+    for (double i = 0; i < size.width; i += spacing) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+    for (double i = 0; i < size.height; i += spacing) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

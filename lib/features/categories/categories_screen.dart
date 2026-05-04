@@ -114,170 +114,65 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final totalDocs = _topCategories.fold<int>(
-      0,
-      (sum, item) => sum + item.docCount,
-    );
 
     return PopScope(
       canPop: true,
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-        body: Stack(
-          children: [
-            Positioned(
-              top: -80,
-              left: -60,
-              child: IgnorePointer(
-                child: Container(
-                  width: 220,
-                  height: 220,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        AppColors.gold.withValues(alpha: isDark ? 0.12 : 0.06),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(76.0),
+          child: AppBar(
+            automaticallyImplyLeading: false,
+            flexibleSpace: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [AppColors.darkSurface, AppColors.darkBg]
+                      : [AppColors.navyDark, AppColors.navyMid],
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-            ),
-            Positioned(
-              top: 300,
-              right: -80,
-              child: IgnorePointer(
-                child: Container(
-                  width: 260,
-                  height: 260,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        AppColors.navyLight.withValues(
-                          alpha: isDark ? 0.1 : 0.04,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      // Centered Title
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            'Categories',
+                            style: AppTextStyles.playfairDisplay.copyWith(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                         ),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: isDark
-                          ? [const Color(0xFF161E35), const Color(0xFF0A0F1E)]
-                          : [AppColors.navyDark, AppColors.navyMid],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 18,
-                        offset: const Offset(0, 5),
                       ),
                     ],
                   ),
-                  child: SafeArea(
-                    bottom: false,
-                    child: Column(
-                      children: [
-                        Text(
-                          'ARCHIVE VAULT',
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.gold,
-                            letterSpacing: 2.0,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Categories',
-                          style: AppTextStyles.playfairDisplay.copyWith(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.auto_stories_rounded,
-                                      size: 16,
-                                      color: AppColors.gold,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      '${_topCategories.length} Main Families',
-                                      style: AppTextStyles.dmSans.copyWith(
-                                        fontSize: 12,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.8,
-                                        ),
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.gold.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(
-                                    color: AppColors.gold.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                    width: 0.8,
-                                  ),
-                                ),
-                                child: Text(
-                                  '$totalDocs Files',
-                                  style: AppTextStyles.dmSans.copyWith(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.gold,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
+              ),
+            ),
+            elevation: 0,
+          ),
+        ),
+        body: Stack(
+          children: [
+            // ... decorative circles ...
+            Column(
+              children: [
                 Expanded(
                   child: _isLoading
                       ? _CategoriesLoadingList(isDark: isDark)
@@ -290,12 +185,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                           color: AppColors.gold,
                           onRefresh: _loadCategories,
                           child: ListView(
-                            padding: const EdgeInsets.fromLTRB(8, 14, 8, 18),
+                            padding: const EdgeInsets.fromLTRB(8, 8, 8, 18),
                             children: [
                               _buildSectionHeader(
                                 context,
                                 isDark,
-                                title: 'Folders',
+                                title: 'Archive Families',
                                 subtitle: '',
                               ),
                               const SizedBox(height: 12),
@@ -498,7 +393,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                   ),
                                   child: Text(
                                     '$subCount SUB',
-                                    style: AppTextStyles.dmSans.copyWith(
+                                    style: AppTextStyles.numberStyle(
                                       fontSize: 8.5,
                                       fontWeight: FontWeight.w900,
                                       color: AppColors.gold,
@@ -519,7 +414,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               const SizedBox(width: 6),
                               Text(
                                 category.yearRange,
-                                style: AppTextStyles.dmSans.copyWith(
+                                style: AppTextStyles.numberStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white.withValues(alpha: 0.8),
@@ -544,7 +439,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               const SizedBox(width: 4),
                               Text(
                                 '${category.docCount} Files',
-                                style: AppTextStyles.dmSans.copyWith(
+                                style: AppTextStyles.numberStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white.withValues(alpha: 0.8),

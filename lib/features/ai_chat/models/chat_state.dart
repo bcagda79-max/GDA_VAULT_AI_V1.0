@@ -21,6 +21,17 @@ class SourceCitation {
   });
 
   factory SourceCitation.fromJson(Map<String, dynamic> json) {
+    // Robust parsing for various keys often returned by n8n/AI
+    final rawFileName = json['file_name']?.toString() ??
+        json['filename']?.toString() ??
+        json['source_name']?.toString() ??
+        json['original_filename']?.toString();
+
+    final rawPath = json['storage_path']?.toString() ??
+        json['path']?.toString() ??
+        json['display_path']?.toString() ??
+        json['source']?.toString();
+
     return SourceCitation(
       categoryName:
           json['category_name']?.toString() ??
@@ -28,10 +39,31 @@ class SourceCitation {
           'General',
       yearLabel: json['year']?.toString() ?? '',
       pageNumber: (json['page_number'] as num?)?.toInt() ?? 0,
-      displayPath: json['display_path']?.toString(),
-      fileName: json['file_name']?.toString(),
-      storagePath: json['storage_path']?.toString(),
+      displayPath: rawPath,
+      fileName: rawFileName,
+      storagePath: rawPath,
     );
+  }
+
+  /// Helper to get a readable display name for the file
+  String get effectiveFileName {
+    if (fileName != null && fileName!.isNotEmpty) return fileName!;
+    
+    // Fallback: extract from path if available
+    if (storagePath != null && storagePath!.isNotEmpty) {
+      final parts = storagePath!.split('/');
+      if (parts.isNotEmpty) {
+        final last = parts.last;
+        // If it's a long timestamped name like 123456_file.pdf, try to clean it
+        if (last.contains('_')) {
+          final afterUnderscore = last.substring(last.indexOf('_') + 1);
+          if (afterUnderscore.isNotEmpty) return afterUnderscore;
+        }
+        return last;
+      }
+    }
+    
+    return categoryName;
   }
 }
 
@@ -106,6 +138,7 @@ class ChatState {
   final String? yearFrom;
   final String? yearTo;
   final String inputText;
+  final bool showFilterSheet;
 
   const ChatState({
     required this.sessionId,
@@ -120,14 +153,11 @@ class ChatState {
     this.yearFrom,
     this.yearTo,
     this.inputText = '',
+    this.showFilterSheet = false,
   });
 
   bool get canSendMessage =>
-      categoriesSelected &&
-      inputText.trim().isNotEmpty &&
-      !isLoading &&
-      // Require at least one year (from or to) to be selected before sending
-      (yearFrom != null || yearTo != null);
+      categoriesSelected && inputText.trim().isNotEmpty && !isLoading;
 
   List<ChatCategory> get selectedCategories =>
       categories.where((c) => c.isSelected).toList();
@@ -147,6 +177,7 @@ class ChatState {
     String? yearTo,
     bool clearYearTo = false,
     String? inputText,
+    bool? showFilterSheet,
   }) {
     return ChatState(
       sessionId: sessionId ?? this.sessionId,
@@ -161,6 +192,7 @@ class ChatState {
       yearFrom: clearYearFrom ? null : (yearFrom ?? this.yearFrom),
       yearTo: clearYearTo ? null : (yearTo ?? this.yearTo),
       inputText: inputText ?? this.inputText,
+      showFilterSheet: showFilterSheet ?? this.showFilterSheet,
     );
   }
 }

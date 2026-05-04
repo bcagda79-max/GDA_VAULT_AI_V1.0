@@ -72,81 +72,7 @@ class AddScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? [const Color(0xFF161E35), const Color(0xFF0A0F1E)]
-                  : [AppColors.navyDark, AppColors.navyMid],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Add Document",
-                          style: AppTextStyles.playfairDisplay.copyWith(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          "Scan or import a file",
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withValues(alpha: 0.6),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        elevation: 0,
-      ),
+      appBar: _buildAppBar(isDark),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -209,6 +135,59 @@ class AddScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(bool isDark) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(76.0),
+      child: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [const Color(0xFF161E35), const Color(0xFF0A0F1E)]
+                  : [AppColors.navyDark, AppColors.navyMid],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  // Centered Title
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        "Add Document",
+                        style: AppTextStyles.playfairDisplay.copyWith(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        elevation: 0,
       ),
     );
   }
