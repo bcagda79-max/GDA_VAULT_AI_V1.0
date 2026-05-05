@@ -58,42 +58,44 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
     try {
       final rows = await _supa.getAllCategories();
-      final all = rows.map(CategoryModel.fromMap).toList()
+      final rawAll = rows.map(CategoryModel.fromMap).toList()
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-
-      final subCountMap = <String, int>{};
-      final docCountMap = <String, int>{};
-
-      // First pass: identify children and their counts
-      for (final cat in all) {
-        if (cat.parentId != null) {
-          subCountMap[cat.parentId!] = (subCountMap[cat.parentId!] ?? 0) + 1;
+        
+      // Override 0 counts by querying documents table counts dynamically
+      final countsFutures = rawAll.map((cat) async {
+        try {
+          final countRes = await _supa.client
+              .from('documents')
+              .select('id')
+              .or('category.eq.${cat.id},sub_category.eq.${cat.id}');
+          return cat.copyWith(docCount: (countRes as List).length);
+        } catch (e) {
+          return cat;
         }
-        // Store individual counts
-        docCountMap[cat.id] = cat.docCount;
+      });
+      
+      final all = await Future.wait(countsFutures);
+
+      final counts = <String, int>{};
+      for (final category in all) {
+        final parentId = category.parentId;
+        if (parentId == null) continue;
+        counts[parentId] = (counts[parentId] ?? 0) + 1;
       }
 
       if (!mounted) return;
       setState(() {
         _subCountByParent
           ..clear()
-          ..addAll(subCountMap);
-
-        _topCategories = all.where((category) => category.parentId == null).map(
-          (category) {
-            // Aggregate counts: parent count + all its children's counts
-            int aggregatedDocCount = category.docCount;
-            final children = all.where((c) => c.parentId == category.id);
-            for (final child in children) {
-              aggregatedDocCount += child.docCount;
-            }
-
-            return category.copyWith(
-              hasSubCategories: subCountMap.containsKey(category.id),
-              docCount: aggregatedDocCount,
-            );
-          },
-        ).toList();
+          ..addAll(counts);
+        _topCategories = all
+            .where((category) => category.parentId == null)
+            .map(
+              (category) => category.copyWith(
+                hasSubCategories: counts.containsKey(category.id),
+              ),
+            )
+            .toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -114,6 +116,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final totalDocs = _topCategories.fold<int>(
+      0,
+      (sum, item) => sum + item.docCount,
+    );
 
     return PopScope(
       canPop: true,
@@ -146,20 +152,36 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      // Centered Title
+                      // Space for alignment if needed, or back button
+                      const SizedBox(width: 40),
                       Expanded(
                         child: Center(
-                          child: Text(
-                            'Categories',
-                            style: AppTextStyles.playfairDisplay.copyWith(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
-                            ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Categories',
+                                style: AppTextStyles.playfairDisplay.copyWith(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              Text(
+                                'All Library Files',
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                      const SizedBox(width: 40),
                     ],
                   ),
                 ),
@@ -168,117 +190,91 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             elevation: 0,
           ),
         ),
-        body: Stack(
+        body: Column(
           children: [
-            // ... decorative circles ...
-            Column(
-              children: [
-                Expanded(
-                  child: _isLoading
-                      ? _CategoriesLoadingList(isDark: isDark)
-                      : _topCategories.isEmpty
-                      ? _CategoriesEmptyState(
-                          isDark: isDark,
-                          onRetry: _loadCategories,
-                        )
-                      : RefreshIndicator(
-                          color: AppColors.gold,
-                          onRefresh: _loadCategories,
-                          child: ListView(
-                            padding: const EdgeInsets.fromLTRB(8, 8, 8, 18),
-                            children: [
-                              _buildSectionHeader(
-                                context,
-                                isDark,
-                                title: 'Archive Families',
-                                subtitle: '',
-                              ),
-                              const SizedBox(height: 12),
-                              ...List.generate(_topCategories.length, (index) {
-                                final category = _topCategories[index];
-                                return _buildCategoryItem(
-                                  context,
-                                  category,
-                                  index,
-                                  isDark,
-                                  subCount: _subCountByParent[category.id] ?? 0,
-                                );
-                              }),
-                            ],
-                          ),
-                        ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkCard : Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: AppColors.divider, width: 0.8),
                 ),
-              ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.folder_copy_rounded,
+                        size: 14,
+                        color: AppColors.catBoard,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'All Files · ${_topCategories.length} Categories',
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 12,
+                          color:
+                              (isDark ? AppColors.darkText : AppColors.charcoal)
+                                  .withValues(alpha: 0.55),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.catBoard.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '$totalDocs Documents',
+                      style: AppTextStyles.dmSans.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.catBoard,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _isLoading
+                  ? _CategoriesLoadingList(isDark: isDark)
+                  : _topCategories.isEmpty
+                  ? _CategoriesEmptyState(
+                      isDark: isDark,
+                      onRetry: _loadCategories,
+                    )
+                  : RefreshIndicator(
+                      color: AppColors.gold,
+                      onRefresh: _loadCategories,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
+                        itemCount: _topCategories.length,
+                        itemBuilder: (context, index) {
+                          final category = _topCategories[index];
+                          return _buildCategoryItem(
+                            context,
+                            category,
+                            index,
+                            isDark,
+                            subCount: _subCountByParent[category.id] ?? 0,
+                          );
+                        },
+                      ),
+                    ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(
-    BuildContext context,
-    bool isDark, {
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(4, 10, 4, 14),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title.toUpperCase(),
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.gold,
-                    letterSpacing: 2.0,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : AppColors.navyDark.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : AppColors.navyDark.withValues(alpha: 0.1),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.auto_awesome_rounded,
-                  size: 14,
-                  color: AppColors.gold,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '${_topCategories.length} Families',
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.7)
-                        : AppColors.navyDark,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -291,194 +287,173 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     required int subCount,
   }) {
     return Container(
-          margin: const EdgeInsets.only(bottom: 16),
+          margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: isDark
-                  ? [
-                      const Color(0xFF1E2638),
-                      category.color.withValues(alpha: 0.2),
-                    ]
-                  : [category.color, category.color.withValues(alpha: 0.85)],
+              colors: [
+                isDark ? AppColors.darkCard : AppColors.navyDark,
+                category.color.withValues(alpha: 0.78),
+              ],
             ),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark
-                  ? category.color.withValues(alpha: 0.25)
-                  : Colors.white.withValues(alpha: 0.2),
+              color: AppColors.gdaGold.withValues(alpha: 0.28),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.15),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
+                color: Colors.black.withValues(alpha: 0.14),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(16),
             child: InkWell(
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(16),
+              splashColor: Colors.white.withValues(alpha: 0.08),
               onTap: () => _navigateToCategory(context, category),
-              child: Padding(
-                padding: const EdgeInsets.all(18),
+              child: IntrinsicHeight(
                 child: Row(
                   children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.15),
-                            Colors.white.withValues(alpha: 0.05),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          width: 1,
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 16,
                       ),
-                      child: Icon(
-                        category.iconData,
-                        size: 26,
-                        color: Colors.white,
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.gdaGold.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          category.iconData,
+                          size: 22,
+                          color: AppColors.gdaGold,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 16),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  category.name,
-                                  style: AppTextStyles.playfairDisplay.copyWith(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                    letterSpacing: 0.2,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 14, bottom: 14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    category.name,
+                                    style: AppTextStyles.dmSans.copyWith(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              if (category.hasSubCategories)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 14),
+                                  child: Row(
+                                    children: [
+                                      if (category.hasSubCategories)
+                                        Container(
+                                          margin: const EdgeInsets.only(
+                                            right: 8,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 3,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.14,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '$subCount sub',
+                                            style: AppTextStyles.dmSans
+                                                .copyWith(
+                                                  fontSize: 8,
+                                                  color: Colors.white,
+                                                ),
+                                          ),
+                                        ),
+                                      Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 13,
+                                        color: Colors.white.withValues(
+                                          alpha: 0.75,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                Text(
+                                  category.yearRange,
+                                  style: AppTextStyles.dmSans.copyWith(
+                                    fontSize: 11,
+                                    color: Colors.white.withValues(alpha: 0.78),
+                                  ),
+                                ),
                                 Container(
-                                  margin: const EdgeInsets.only(left: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
+                                  width: 3,
+                                  height: 3,
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 6,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.gold.withValues(
-                                      alpha: 0.15,
-                                    ),
-                                    borderRadius: BorderRadius.circular(999),
-                                    border: Border.all(
-                                      color: AppColors.gold.withValues(
-                                        alpha: 0.3,
-                                      ),
-                                      width: 0.8,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    '$subCount SUB',
-                                    style: AppTextStyles.numberStyle(
-                                      fontSize: 8.5,
-                                      fontWeight: FontWeight.w900,
-                                      color: AppColors.gold,
-                                      letterSpacing: 0.5,
-                                    ),
+                                    color: Colors.white.withValues(alpha: 0.4),
+                                    shape: BoxShape.circle,
                                   ),
                                 ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today_rounded,
-                                size: 11,
-                                color: Colors.white.withValues(alpha: 0.6),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                category.yearRange,
-                                style: AppTextStyles.numberStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white.withValues(alpha: 0.8),
+                                Text(
+                                  '${category.docCount} files',
+                                  style: AppTextStyles.dmSans.copyWith(
+                                    fontSize: 11,
+                                    color: Colors.white.withValues(alpha: 0.78),
+                                  ),
                                 ),
-                              ),
-                              Container(
-                                width: 3,
-                                height: 3,
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              Icon(
-                                Icons.description_rounded,
-                                size: 11,
-                                color: Colors.white.withValues(alpha: 0.6),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${category.docCount} Files',
-                                style: AppTextStyles.numberStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(999),
-                            child: LinearProgressIndicator(
-                              value: (category.docCount / 500.0).clamp(
-                                0.05,
-                                1.0,
-                              ),
-                              backgroundColor: Colors.white.withValues(
-                                alpha: 0.1,
-                              ),
-                              valueColor: const AlwaysStoppedAnimation(
-                                AppColors.gold,
-                              ),
-                              minHeight: 4,
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.chevron_right_rounded,
-                        size: 20,
-                        color: Colors.white.withValues(alpha: 0.8),
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 14),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(2),
+                                child: LinearProgressIndicator(
+                                  value: (category.docCount / 500.0).clamp(
+                                    0.0,
+                                    1.0,
+                                  ),
+                                  backgroundColor: Colors.white.withValues(
+                                    alpha: 0.16,
+                                  ),
+                                  valueColor: AlwaysStoppedAnimation(
+                                    AppColors.gdaGold.withValues(alpha: 0.9),
+                                  ),
+                                  minHeight: 2.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -522,18 +497,18 @@ class _CategoriesLoadingList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
       baseColor: isDark
-          ? AppColors.darkCard.withValues(alpha: 0.92)
-          : AppColors.divider.withValues(alpha: 0.55),
+          ? AppColors.darkCard.withValues(alpha: 0.9)
+          : AppColors.divider.withValues(alpha: 0.6),
       highlightColor: isDark ? AppColors.darkSurface : Colors.white,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         itemCount: 6,
         itemBuilder: (context, index) => Container(
           margin: const EdgeInsets.only(bottom: 10),
-          height: 108,
+          height: 92,
           decoration: BoxDecoration(
             color: isDark ? AppColors.darkCard : Colors.white,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.divider, width: 0.8),
           ),
         ),
@@ -556,19 +531,11 @@ class _CategoriesEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: AppColors.navyDark.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(
-                Icons.wifi_off_rounded,
-                size: 34,
-                color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                    .withValues(alpha: 0.28),
-              ),
+            Icon(
+              Icons.wifi_off_rounded,
+              size: 64,
+              color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                  .withValues(alpha: 0.25),
             ),
             const SizedBox(height: 14),
             Text(
@@ -576,7 +543,7 @@ class _CategoriesEmptyState extends StatelessWidget {
               style: AppTextStyles.playfairDisplay.copyWith(
                 fontSize: 18,
                 color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                    .withValues(alpha: 0.78),
+                    .withValues(alpha: 0.75),
               ),
             ),
             const SizedBox(height: 6),
@@ -586,24 +553,18 @@ class _CategoriesEmptyState extends StatelessWidget {
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 12,
                 color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                    .withValues(alpha: 0.48),
+                    .withValues(alpha: 0.45),
               ),
             ),
             const SizedBox(height: 14),
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.navyDark.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: TextButton(
-                onPressed: onRetry,
-                child: Text(
-                  'Retry',
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 13,
-                    color: AppColors.gold,
-                    fontWeight: FontWeight.bold,
-                  ),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(
+                'Retry',
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 13,
+                  color: AppColors.gold,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),

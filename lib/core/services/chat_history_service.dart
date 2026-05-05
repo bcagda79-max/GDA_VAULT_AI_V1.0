@@ -174,6 +174,8 @@ class ChatHistoryService {
               'year': c.yearLabel,
               'page_number': c.pageNumber,
               'display_path': c.displayPath,
+              'file_name': c.fileName,
+              'storage_path': c.storagePath,
             },
           )
           .toList(),

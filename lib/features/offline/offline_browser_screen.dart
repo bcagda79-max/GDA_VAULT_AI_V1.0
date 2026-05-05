@@ -42,8 +42,11 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
   // For years view
   final Map<int, List<OfflineDocumentRecord>> _yearGroups = {};
   
-  // For files view
+  // For files view (legacy fallback)
   List<OfflineDocumentRecord> _filteredFiles = [];
+  
+  int? _selectedYear;
+  bool _isDescending = true;
 
   @override
   void initState() {
@@ -77,35 +80,60 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
     if (widget.viewType == OfflineBrowserViewType.subcategories) {
       _subCategoryGroups.clear();
       
-      // Initialize standard subcategories for Board of Authority to ensure they always show up
-      if (widget.categoryId == SupabaseConstants.idBoardOfAuthority) {
-        _subCategoryGroups["Board Authority Minutes (1996-2026)"] = [];
-        _subCategoryGroups["Trust Minutes Archive (1961-1996)"] = [];
-      }
-      
       for (final r in _allRecords) {
-        final key = r.categoryName;
-        if (key.isNotEmpty && key != widget.categoryName) {
-           _subCategoryGroups.putIfAbsent(key, () => []).add(r);
-        } else {
-           // Fallback grouping
-           _subCategoryGroups.putIfAbsent("General", () => []).add(r);
+        String subName = r.categoryName;
+        
+        // Robust mapping: Use subCategoryId if available, otherwise fallback to localPath
+        if (r.subCategoryId == SupabaseConstants.idBoardAuthorityMinutes || r.localPath.contains('board-authority-minutes')) {
+          subName = 'Minutes 1996-2026';
+        } else if (r.subCategoryId == SupabaseConstants.idTrustMinutes || r.localPath.contains('trust-minutes')) {
+          subName = 'Trust Minutes Archive (1961-1996)';
+        }
+
+        // Only group if the resolved subName is different from the main category
+        if (subName.isNotEmpty && subName != widget.categoryName) {
+           _subCategoryGroups.putIfAbsent(subName, () => []).add(r);
         }
       }
+      
+      // If after grouping we have no subcategories but we are in subcategories view, 
+      // it might mean all files are top-level. This shouldn't happen with the new navigation logic,
+      // but as a fallback, we group them under the main category name if needed or just show empty.
     } else if (widget.viewType == OfflineBrowserViewType.years) {
       _yearGroups.clear();
       var records = _allRecords;
       if (widget.subCategoryName != null) {
-        records = records.where((r) => r.categoryName == widget.subCategoryName).toList();
+        records = records.where((r) {
+          String subName = r.categoryName;
+          if (r.subCategoryId == SupabaseConstants.idBoardAuthorityMinutes || r.localPath.contains('board-authority-minutes')) {
+            subName = 'Minutes 1996-2026';
+          } else if (r.subCategoryId == SupabaseConstants.idTrustMinutes || r.localPath.contains('trust-minutes')) {
+            subName = 'Trust Minutes Archive (1961-1996)';
+          }
+          return subName == widget.subCategoryName;
+        }).toList();
+      } else {
+        // If subCategoryName is null, it means we jumped straight to years from a category.
+        // We should show all records for this category.
       }
       for (final r in records) {
         _yearGroups.putIfAbsent(r.yearStart, () => []).add(r);
+      }
+      if (_yearGroups.isNotEmpty && _selectedYear == null) {
+        final sortedYears = _yearGroups.keys.toList()..sort((a, b) => b.compareTo(a));
+        _selectedYear = sortedYears.first;
       }
     } else {
       _filteredFiles = _allRecords.where((r) {
         bool match = true;
         if (widget.subCategoryName != null) {
-          match = match && (r.categoryName == widget.subCategoryName);
+          String subName = r.categoryName;
+          if (r.subCategoryId == SupabaseConstants.idBoardAuthorityMinutes || r.localPath.contains('board-authority-minutes')) {
+            subName = 'Minutes 1996-2026';
+          } else if (r.subCategoryId == SupabaseConstants.idTrustMinutes || r.localPath.contains('trust-minutes')) {
+            subName = 'Trust Minutes Archive (1961-1996)';
+          }
+          match = match && (subName == widget.subCategoryName);
         }
         if (widget.year != null) {
           match = match && (r.yearStart == widget.year);
@@ -122,12 +150,87 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(76.0),
+        child: AppBar(
+          automaticallyImplyLeading: false,
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [AppColors.darkSurface, AppColors.darkBg]
+                    : [AppColors.navyDark, AppColors.navyMid],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => context.pop(),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              title,
+                              style: AppTextStyles.playfairDisplay.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'OFFLINE ARCHIVE',
+                              style: AppTextStyles.dmSans.copyWith(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.gdaGold.withValues(alpha: 0.8),
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 34), // Balance the back button
+                  ],
+                ),
+              ),
+            ),
+          ),
+          elevation: 0,
+        ),
+      ),
       body: Stack(
         children: [
           _buildBackgroundGlows(isDark),
           Column(
             children: [
-              _buildHeader(context, isDark, title),
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
@@ -171,68 +274,6 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDark, String title) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
-              : [AppColors.navyDark, AppColors.navyLight],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navyDark.withValues(alpha: isDark ? 0.5 : 0.24),
-            blurRadius: 18,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned(
-                left: 0,
-                child: GestureDetector(
-                  onTap: () => context.pop(),
-                  child: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              Text(
-                title,
-                style: AppTextStyles.playfairDisplay.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'OFFLINE ARCHIVE',
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 9,
-              color: AppColors.gdaGold.withValues(alpha: 0.8),
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, end: 0);
-  }
 
   Widget _buildContent(bool isDark) {
     if (widget.viewType == OfflineBrowserViewType.subcategories) {
@@ -242,11 +283,8 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
         (name) => _subCategoryGroups[name]?.length ?? 0,
         (name) => _navigateToYears(name),
       );
-    } else if (widget.viewType == OfflineBrowserViewType.years) {
-      final sortedYears = _yearGroups.keys.toList()..sort((a, b) => b.compareTo(a));
-      return _buildYearGrid(isDark, sortedYears);
     } else {
-      return _buildFileList(isDark);
+      return _buildCombinedYearFilesView(isDark);
     }
   }
 
@@ -332,154 +370,358 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
     ).animate(delay: (index * 50).ms).fadeIn().slideX(begin: 0.05);
   }
 
-  Widget _buildYearGrid(bool isDark, List<int> years) {
-    if (years.isEmpty) return _buildEmptyState(isDark);
+  Widget _buildCombinedYearFilesView(bool isDark) {
+    final sortedYears = _yearGroups.keys.toList()
+      ..sort((a, b) => _isDescending ? b.compareTo(a) : a.compareTo(b));
+      
+    if (sortedYears.isEmpty) return _buildEmptyState(isDark);
+    
+    final currentFiles = _yearGroups[_selectedYear] ?? [];
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.4,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: years.length,
-      itemBuilder: (context, index) {
-        final year = years[index];
-        final count = _yearGroups[year]?.length ?? 0;
-        return _buildYearCard(isDark, year, count, index);
-      },
-    );
-  }
-
-  Widget _buildYearCard(bool isDark, int year, int count, int index) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: widget.categoryColor.withValues(alpha: isDark ? 0.3 : 0.1),
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _navigateToFiles(year),
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "$year",
-                  style: AppTextStyles.playfairDisplay.copyWith(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : AppColors.navyDark,
-                  ),
+    return Column(
+      children: [
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "YEARLY FOLDERS",
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.gold,
+                  letterSpacing: 1.5,
                 ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              ),
+              GestureDetector(
+                onTap: () {
+                  setState(() => _isDescending = !_isDescending);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.gold.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : AppColors.navyDark.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    "$count files",
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.gold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ).animate(delay: (index * 50).ms).fadeIn().scale(begin: const Offset(0.95, 0.95));
-  }
-
-  Widget _buildFileList(bool isDark) {
-    if (_filteredFiles.isEmpty) return _buildEmptyState(isDark);
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _filteredFiles.length,
-      itemBuilder: (context, index) {
-        final record = _filteredFiles[index];
-        return _buildFileItem(isDark, record, index);
-      },
-    );
-  }
-
-  Widget _buildFileItem(bool isDark, OfflineDocumentRecord record, int index) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider.withValues(alpha: 0.1)),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _openPdf(record),
-          onLongPress: () => _showDeleteDialog(record),
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Text(
-                        record.fileName,
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : AppColors.navyDark,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Icon(
+                        _isDescending ? Icons.arrow_downward : Icons.arrow_upward,
+                        size: 12,
+                        color: isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.navyDark.withValues(alpha: 0.5),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(width: 4),
                       Text(
-                        "Downloaded: ${record.downloadedAt.day}/${record.downloadedAt.month}/${record.downloadedAt.year}",
+                        '${sortedYears.length} Years',
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 10,
-                          color: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.4),
+                          fontWeight: FontWeight.w800,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.5)
+                              : AppColors.navyDark.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
-                  onPressed: () => _showDeleteDialog(record),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          height: 120,
+          padding: const EdgeInsets.only(left: 10, right: 10, bottom: 12),
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: sortedYears.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final year = sortedYears[index];
+              final isSelected = _selectedYear == year;
+              return GestureDetector(
+                onTap: () => setState(() => _selectedYear = year),
+                child: Container(
+                  width: 90,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isSelected
+                          ? [AppColors.navyDark, AppColors.navyMid]
+                          : [
+                              isDark ? const Color(0xFF1E2638) : Colors.white,
+                              isDark ? const Color(0xFF161E35) : Colors.white,
+                            ],
+                    ),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.gold.withValues(alpha: 0.4)
+                          : (isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : AppColors.divider.withValues(alpha: 0.5)),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isSelected ? 0.25 : 0.05,
+                        ),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : AppColors.gold.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.folder_rounded,
+                          color: isSelected ? Colors.white : AppColors.gold,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '$year',
+                        style: AppTextStyles.numberStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: isSelected
+                              ? Colors.white
+                              : (isDark
+                                    ? Colors.white.withValues(alpha: 0.8)
+                                    : AppColors.navyDark),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: AppColors.gold, size: 20),
+              );
+            },
+          ),
+        ),
+        Expanded(
+          child: currentFiles.isEmpty 
+              ? _buildEmptyState(isDark)
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  itemCount: currentFiles.length,
+                  itemBuilder: (context, index) {
+                    final record = currentFiles[index];
+                    return _buildFileItem(isDark, record, index);
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFileItem(bool isDark, OfflineDocumentRecord document, int index) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E2638) : Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.divider.withValues(alpha: 0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: () => _openPdf(document),
+          onLongPress: () => _showDeleteDialog(document),
+          child: IntrinsicHeight(
+            child: Row(
+              children: [
+                Container(
+                  width: 80,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        widget.categoryColor.withValues(alpha: 0.15),
+                        widget.categoryColor.withValues(alpha: 0.05),
+                      ],
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(22),
+                      bottomLeft: Radius.circular(22),
+                    ),
+                    border: Border(
+                      right: BorderSide(
+                        color: widget.categoryColor.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "YEAR",
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w900,
+                            color: widget.categoryColor.withValues(alpha: 0.5),
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          document.yearStart.toString(),
+                          style: AppTextStyles.numberStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : widget.categoryColor,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          document.fileName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : AppColors.navyDark,
+                            height: 1.3,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.description_rounded,
+                              size: 12,
+                              color: AppColors.gold.withValues(alpha: 0.6),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${document.pageCount ?? 0} Pages',
+                              style: AppTextStyles.numberStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.4)
+                                    : AppColors.charcoal.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Icon(
+                              Icons.offline_pin_rounded,
+                              size: 12,
+                              color: AppColors.gold.withValues(alpha: 0.6),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Offline',
+                              style: AppTextStyles.numberStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.4)
+                                    : AppColors.charcoal.withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          height: 4,
+                          width: 100,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : widget.categoryColor.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                          child: FractionallySizedBox(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: 1.0,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    widget.categoryColor,
+                                    widget.categoryColor.withValues(alpha: 0.7),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: PopupMenuButton<String>(
+                    icon: Icon(Icons.more_vert_rounded, color: widget.categoryColor),
+                    onSelected: (value) {
+                      if (value == 'delete') _showDeleteDialog(document);
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                            SizedBox(width: 8),
+                            Text("Remove File", style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
         ),
       ),
-    ).animate(delay: (index * 50).ms).fadeIn().slideY(begin: 0.1);
+    ).animate(delay: (index * 50).ms).fadeIn().slideX(begin: 0.04);
   }
 
   Future<void> _showDeleteDialog(OfflineDocumentRecord record) async {

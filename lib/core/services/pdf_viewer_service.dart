@@ -20,6 +20,7 @@ class OfflineDocumentRecord {
   final int? yearEnd;
   final int? pageCount;
   final int? fileSizeBytes;
+  final String? subCategoryId;
   final DateTime downloadedAt;
 
   const OfflineDocumentRecord({
@@ -34,6 +35,7 @@ class OfflineDocumentRecord {
     this.categorySlug,
     this.pageCount,
     this.fileSizeBytes,
+    this.subCategoryId,
     required this.downloadedAt,
   });
 
@@ -50,6 +52,7 @@ class OfflineDocumentRecord {
       'yearEnd': yearEnd,
       'pageCount': pageCount,
       'fileSizeBytes': fileSizeBytes,
+      'subCategoryId': subCategoryId,
       'downloadedAt': downloadedAt.toIso8601String(),
     };
   }
@@ -73,6 +76,7 @@ class OfflineDocumentRecord {
       fileSizeBytes: map['fileSizeBytes'] == null
           ? null
           : int.tryParse(map['fileSizeBytes'].toString()),
+      subCategoryId: map['subCategoryId']?.toString(),
       downloadedAt:
           DateTime.tryParse(map['downloadedAt']?.toString() ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
@@ -91,6 +95,7 @@ class OfflineDocumentRecord {
       uploadedAt: downloadedAt,
       categoryName: categoryName,
       categorySlug: categorySlug,
+      subCategoryId: subCategoryId,
     );
   }
 }
@@ -234,6 +239,7 @@ class PdfViewerService {
         return _offlineRecords!;
       }
       final text = await file.readAsString();
+      debugPrint('PdfViewerService: Loaded raw index: $text');
       final decoded = jsonDecode(text);
       if (decoded is! List) {
         _offlineRecords = <OfflineDocumentRecord>[];
@@ -275,6 +281,7 @@ class PdfViewerService {
             categoryId: nextCategoryId,
             categoryName: nextName,
             categorySlug: nextSlug,
+            subCategoryId: record.subCategoryId,
             yearLabel: record.yearLabel,
             yearStart: record.yearStart,
             yearEnd: record.yearEnd,
@@ -525,6 +532,7 @@ class PdfViewerService {
         localPath: localFile.path,
         fileName: document.fileName,
         categoryId: known?.id ?? document.categoryId,
+        subCategoryId: document.subCategoryId,
         categoryName: resolvedCategoryName,
         categorySlug: known?.slug ?? document.categorySlug,
         yearLabel: document.yearLabel,
@@ -559,6 +567,7 @@ class PdfViewerService {
     if (verified.length != records.length) {
       await _saveRecords(verified);
     }
+    debugPrint('PdfViewerService: Found ${records.length} total records, ${verified.length} verified');
     return verified;
   }
 

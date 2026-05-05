@@ -39,8 +39,22 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
     setState(() => _isLoading = true);
     try {
       final rows = await _supa.getSubCategories(widget.categoryId);
-      final subCats = rows.map(CategoryModel.fromMap).toList()
+      final rawSubCats = rows.map(CategoryModel.fromMap).toList()
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+
+      final countsFutures = rawSubCats.map((cat) async {
+        try {
+          final countRes = await _supa.client
+              .from('documents')
+              .select('id')
+              .eq('sub_category', cat.id);
+          return cat.copyWith(docCount: (countRes as List).length);
+        } catch (e) {
+          return cat;
+        }
+      });
+      
+      final subCats = await Future.wait(countsFutures);
 
       if (!mounted) return;
       setState(() {

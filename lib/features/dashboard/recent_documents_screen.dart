@@ -50,28 +50,80 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-      appBar: AppBar(
-        backgroundColor: AppColors.navyDark,
-        leading: const BackButton(color: Colors.white),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Recent Documents',
-              style: AppTextStyles.playfairDisplay.copyWith(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(76.0),
+        child: AppBar(
+          automaticallyImplyLeading: false,
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [AppColors.darkSurface, AppColors.darkBg]
+                    : [AppColors.navyDark, AppColors.navyMid],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => context.pop(),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Recent Documents',
+                              style: AppTextStyles.playfairDisplay.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'RECENTLY OPENED',
+                              style: AppTextStyles.dmSans.copyWith(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.gdaGold.withValues(alpha: 0.8),
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 34),
+                  ],
+                ),
               ),
             ),
-            Text(
-              'Recently opened documents',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 9,
-                color: Colors.white.withValues(alpha: 0.55),
-              ),
-            ),
-          ],
+          ),
+          elevation: 0,
         ),
       ),
       body: _isLoading

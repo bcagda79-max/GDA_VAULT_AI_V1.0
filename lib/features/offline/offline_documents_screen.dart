@@ -23,10 +23,12 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
       color: AppColors.catBoard,
       icon: Icons.gavel_rounded,
       routeType: _OfflineFolderRouteType.boardSubcategories,
+      categoryId: SupabaseConstants.idBoardOfAuthority,
       aliases: [
         'board-authority-minutes',
         'board authority minutes',
         'board-of-authority',
+        SupabaseConstants.idBoardOfAuthority,
       ],
     ),
     _OfflineFolderMeta(
@@ -83,11 +85,22 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
         SupabaseConstants.idPrivateProperties,
       ],
     ),
+    _OfflineFolderMeta(
+      key: 'unclassified',
+      title: 'Other Documents',
+      fallbackRange: 'Misc',
+      color: Colors.grey,
+      icon: Icons.folder_open_rounded,
+      routeType: _OfflineFolderRouteType.yearBrowser,
+      aliases: ['unclassified', 'other'],
+    ),
   ];
 
+  final _pdfService = PdfViewerService.instance;
   bool _isLoading = true;
   List<OfflineDocumentRecord> _records = const [];
   Map<String, int> _counts = const {};
+  Map<String, bool> _hasSubCategories = {};
 
   @override
   void initState() {
@@ -119,6 +132,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
       final normalized = _normalize(candidate);
       for (final folder in _folders) {
         if (folder.key == normalized) return folder.key;
+        if (folder.categoryId == candidate) return folder.key;
         if (folder.aliases.any((alias) => _normalize(alias) == normalized)) {
           return folder.key;
         }
@@ -133,23 +147,59 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
 
   Future<void> _loadRecords() async {
     setState(() => _isLoading = true);
-    final records = await PdfViewerService.instance.getOfflineDocuments();
-    if (!mounted) return;
-
-    final counts = <String, int>{for (final folder in _folders) folder.key: 0};
-
-    for (final record in records) {
-      final key = _mainFolderKeyFor(record);
-      if (counts.containsKey(key)) {
-        counts[key] = counts[key]! + 1;
+    final all = await _pdfService.getOfflineDocuments();
+    debugPrint('OfflineDocumentsScreen: Loaded ${all.length} records');
+    
+    final counts = <String, int>{};
+    final catSubPresence = <String, Set<String>>{};
+    
+    for (final r in all) {
+      final key = _mainFolderKeyFor(r);
+      counts[key] = (counts[key] ?? 0) + 1;
+      
+      // Track subcategories for each main folder
+      if (r.subCategoryId != null && r.subCategoryId!.isNotEmpty) {
+        catSubPresence.putIfAbsent(key, () => {}).add(r.subCategoryId!);
+      } else {
+        final folder = _folders.firstWhere((f) => f.key == key, orElse: () => _folders.first);
+        if (r.categoryName.isNotEmpty && r.categoryName != folder.title) {
+          catSubPresence.putIfAbsent(key, () => {}).add(r.categoryName);
+        }
       }
     }
 
-    setState(() {
-      _records = records;
-      _counts = counts;
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _records = all;
+        _counts = counts;
+        _hasSubCategories = catSubPresence.map((key, subs) => MapEntry(key, subs.isNotEmpty));
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _navigateToFolder(BuildContext context, _OfflineFolderMeta folder) {
+    final hasSubs = _hasSubCategories[folder.key] ?? false;
+    
+    if (hasSubs) {
+      context.push(
+        '/dashboard/offline-documents/sub/${folder.categoryId}',
+        extra: {
+          'categoryName': folder.title,
+          'categoryColor': folder.color,
+          'viewType': OfflineBrowserViewType.subcategories,
+        },
+      );
+    } else {
+      context.push(
+        '/dashboard/offline-documents/sub/${folder.categoryId}',
+        extra: {
+          'categoryName': folder.title,
+          'categoryColor': folder.color,
+          'viewType': OfflineBrowserViewType.years,
+        },
+      );
+    }
   }
 
   String _rangeLabelFor(_OfflineFolderMeta folder) {
@@ -177,31 +227,6 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
     return '$minYear – $maxYear';
   }
 
-  void _openFolder(_OfflineFolderMeta folder) {
-    switch (folder.routeType) {
-      case _OfflineFolderRouteType.boardSubcategories:
-        context.push(
-          '/dashboard/offline-documents/sub/${SupabaseConstants.idBoardOfAuthority}',
-          extra: {
-            'categoryName': 'Board of Authority',
-            'categoryColor': folder.color,
-            'viewType': OfflineBrowserViewType.subcategories,
-          },
-        );
-        return;
-      case _OfflineFolderRouteType.yearBrowser:
-        context.push(
-          '/dashboard/offline-documents/files/${folder.categoryId}',
-          extra: {
-            'categoryName': folder.categoryName,
-            'categoryColor': folder.color,
-            'viewType': OfflineBrowserViewType.years,
-          },
-        );
-        return;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -210,6 +235,70 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(76.0),
+        child: AppBar(
+          automaticallyImplyLeading: false,
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [AppColors.darkSurface, AppColors.darkBg]
+                    : [AppColors.navyDark, AppColors.navyMid],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 40),
+                    Expanded(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Offline Files',
+                              style: AppTextStyles.playfairDisplay.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            Text(
+                              'Locally cached documents',
+                              style: AppTextStyles.dmSans.copyWith(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white.withValues(alpha: 0.5),
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 40),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          elevation: 0,
+        ),
+      ),
       body: Stack(
         children: [
           // Background Glows (matching Categories screen)
@@ -254,8 +343,6 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
 
           Column(
             children: [
-              // Gradient Header
-              _buildModernHeader(context, isDark, activeFolders.length, totalDocs),
               
               Expanded(
                 child: _isLoading
@@ -291,94 +378,6 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
     );
   }
 
-  Widget _buildModernHeader(BuildContext context, bool isDark, int catCount, int totalDocs) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [AppColors.navyDark, AppColors.navyDark.withValues(alpha: 0.8)]
-              : [AppColors.navyDark, AppColors.navyLight],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navyDark.withValues(alpha: isDark ? 0.5 : 0.24),
-            blurRadius: 18,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Offline Files',
-            style: AppTextStyles.playfairDisplay.copyWith(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Locally cached documents',
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 9,
-              color: Colors.white.withValues(alpha: 0.58),
-              letterSpacing: 1.0,
-            ),
-          ),
-          const SizedBox(height: 14),
-          // All Files Summary Card
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      const Icon(Icons.folder_copy_rounded, size: 15, color: AppColors.gdaGold),
-                      const SizedBox(width: 8),
-                      Text(
-                        'All Files · $catCount Categories',
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.82),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.gdaGold.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    '$totalDocs Documents',
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.gdaGold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, end: 0);
-  }
 
   Widget _buildSectionHeader(BuildContext context, bool isDark, int count) {
     return Container(
@@ -470,7 +469,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
           splashColor: Colors.white.withValues(alpha: 0.08),
-          onTap: () => _openFolder(folder),
+          onTap: () => _navigateToFolder(context, folder),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(

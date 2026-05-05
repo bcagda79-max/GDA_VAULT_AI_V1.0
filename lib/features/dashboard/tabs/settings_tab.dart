@@ -266,18 +266,6 @@ class SettingsTab extends ConsumerWidget {
           ),
           _SettingsListItem(
             isDark: isDark,
-            icon: Icons.folder_open_rounded,
-            iconBgColor: AppColors.catBoard.withValues(alpha: 0.1),
-            iconColor: AppColors.catBoard,
-            title: "Manage Categories",
-            trailing: const Icon(
-              Icons.chevron_right,
-              color: Colors.grey,
-              size: 18,
-            ),
-          ),
-          _SettingsListItem(
-            isDark: isDark,
             icon: Icons.auto_awesome_rounded,
             iconBgColor: AppColors.navyLight.withValues(alpha: 0.1),
             iconColor: AppColors.navyLight,
@@ -307,18 +295,6 @@ class SettingsTab extends ConsumerWidget {
                 builder: (ctx) => const DefaultCategorySelectorSheet(),
               );
             },
-          ),
-          _SettingsListItem(
-            isDark: isDark,
-            icon: Icons.sync_problem_rounded,
-            iconBgColor: AppColors.gdaGreen.withValues(alpha: 0.1),
-            iconColor: AppColors.gdaGreen,
-            title: "Sync Settings",
-            trailing: const Icon(
-              Icons.chevron_right,
-              color: Colors.grey,
-              size: 18,
-            ),
           ),
           _SettingsListItem(
             isDark: isDark,
@@ -355,6 +331,7 @@ class SettingsTab extends ConsumerWidget {
               color: Colors.grey,
               size: 18,
             ),
+            onTap: () => _showAboutDialog(context, isDark),
           ),
           _SettingsListItem(
             isDark: isDark,
@@ -367,16 +344,8 @@ class SettingsTab extends ConsumerWidget {
               color: Colors.grey,
               size: 18,
             ),
-            onTap: () => _showDeleteAllChatsDialog(context, ref),
-          ),
-          _SettingsListItem(
-            isDark: isDark,
-            icon: Icons.logout_rounded,
-            iconBgColor: AppColors.catPrivate.withValues(alpha: 0.1),
-            iconColor: AppColors.catPrivate,
-            title: "Sign Out",
             hasDivider: false,
-            onTap: () => _showSignOutDialog(context),
+            onTap: () => _showDeleteAllChatsDialog(context, ref),
           ),
         ],
       ),
@@ -387,7 +356,7 @@ class SettingsTab extends ConsumerWidget {
     return Column(
       children: [
         Text(
-          "GDA Vault AI v1.0.0",
+          "GDA Vault AI",
           style: AppTextStyles.dmSans.copyWith(
             fontSize: 12,
             fontWeight: FontWeight.bold,
@@ -410,43 +379,68 @@ class SettingsTab extends ConsumerWidget {
     );
   }
 
-  void _showSignOutDialog(BuildContext context) {
+  void _showAboutDialog(BuildContext context, bool isDark) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Theme.of(context).cardColor,
+          backgroundColor: isDark ? AppColors.darkCard : Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: AppColors.gold.withValues(alpha: 0.3)),
           ),
-          title: Text(
-            "Sign Out?",
-            style: AppTextStyles.playfairDisplay.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            "Are you sure you want to sign out from the GDA Vault AI system?",
-            style: AppTextStyles.dmSans.copyWith(fontSize: 14),
-          ),
-          actions: [
-            TextButton(
-              child: Text("Cancel", style: TextStyle(color: Colors.grey[600])),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text(
-                "Sign Out",
-                style: TextStyle(
-                  color: AppColors.catPrivate,
+          contentPadding: const EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/images/gda_logo.png',
+                width: 80,
+                height: 80,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "GDA Vault AI",
+                style: AppTextStyles.playfairDisplay.copyWith(
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : AppColors.navyDark,
                 ),
               ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+              const SizedBox(height: 24),
+              Text(
+                "GDA Vault AI is an intelligent, secure document management system designed exclusively for the Galiyat Development Authority. It provides seamless categorization, local caching, and AI-powered insights for instant access to critical departmental archives.",
+                textAlign: TextAlign.center,
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 13,
+                  height: 1.5,
+                  color: (isDark ? Colors.white : AppColors.charcoal).withValues(alpha: 0.8),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.navyDark,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: Text(
+                    "Close",
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );

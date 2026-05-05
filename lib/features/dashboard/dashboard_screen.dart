@@ -115,7 +115,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return _shouldHideBottomNav(context) ||
         location.startsWith('/categories') ||
         location.contains('/settings') ||
-        location.startsWith('/dashboard/add');
+        location.startsWith('/dashboard/add') ||
+        location.contains('/offline-documents') ||
+        location.contains('/recent-documents');
   }
 
   @override
