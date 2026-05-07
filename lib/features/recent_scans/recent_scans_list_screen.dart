@@ -391,12 +391,16 @@ class _ScanListItem extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              Text(
-                                formatDate(stat.modified),
-                                style: AppTextStyles.dmSans.copyWith(
-                                  fontSize: 10,
-                                  color: AppColors.charcoal.withValues(
-                                    alpha: 0.45,
+                              Expanded(
+                                child: Text(
+                                  formatDate(stat.modified),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.dmSans.copyWith(
+                                    fontSize: 10,
+                                    color: AppColors.charcoal.withValues(
+                                      alpha: 0.45,
+                                    ),
                                   ),
                                 ),
                               ),

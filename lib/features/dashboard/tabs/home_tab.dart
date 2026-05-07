@@ -398,48 +398,57 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      width: 0.5,
+            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.25),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Icon(icon, size: 22, color: Colors.white),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withValues(alpha: 0.65),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Icon(icon, size: 22, color: Colors.white),
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.65),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             Icon(
               Icons.arrow_forward_ios_rounded,
               size: 14,
@@ -746,36 +755,57 @@ class _RecentDocumentCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.description_rounded,
-                        size: 11,
-                        color:
-                            (isDark ? AppColors.darkText : AppColors.charcoal)
-                                .withValues(alpha: 0.5),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.description_rounded,
+                            size: 11,
+                            color:
+                                (isDark ? AppColors.darkText : AppColors.charcoal)
+                                    .withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${document.pageCount ?? 0} pgs',
+                            style: AppTextStyles.dmSans.copyWith(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color:
+                                  (isDark ? AppColors.darkText : AppColors.charcoal)
+                                      .withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${document.pageCount ?? 0} pgs',
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color:
-                              (isDark ? AppColors.darkText : AppColors.charcoal)
-                                  .withValues(alpha: 0.5),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        DateFormat('MMM d').format(document.uploadedAt),
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color:
-                              (isDark ? AppColors.darkText : AppColors.charcoal)
-                                  .withValues(alpha: 0.4),
-                        ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.access_time_rounded,
+                            size: 11,
+                            color:
+                                (isDark ? AppColors.darkText : AppColors.charcoal)
+                                    .withValues(alpha: 0.4),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              DateFormat('dd MMM, hh:mm a').format(document.uploadedAt),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.dmSans.copyWith(
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w500,
+                                color:
+                                    (isDark ? AppColors.darkText : AppColors.charcoal)
+                                        .withValues(alpha: 0.4),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

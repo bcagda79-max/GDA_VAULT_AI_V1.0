@@ -319,10 +319,11 @@ class _SubCategoryCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
                             children: [
                               _Tag(label: shortTag, color: categoryColor),
-                              const SizedBox(width: 8),
                               _Tag(
                                 label: yearRange,
                                 color: AppColors.gold,

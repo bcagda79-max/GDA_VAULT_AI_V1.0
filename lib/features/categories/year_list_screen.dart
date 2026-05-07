@@ -674,40 +674,53 @@ class _Content extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.description_rounded,
-                  size: 12,
-                  color: AppColors.gold.withValues(alpha: 0.6),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.description_rounded,
+                      size: 12,
+                      color: AppColors.gold.withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${document.pageCount ?? 0} Pages',
+                      style: AppTextStyles.numberStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.4)
+                            : AppColors.charcoal.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  '${document.pageCount ?? 0} Pages',
-                  style: AppTextStyles.numberStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.4)
-                        : AppColors.charcoal.withValues(alpha: 0.5),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Icon(
-                  Icons.upload_rounded,
-                  size: 12,
-                  color: AppColors.gold.withValues(alpha: 0.6),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  DateFormat('dd MMM yyyy').format(document.uploadedAt),
-                  style: AppTextStyles.numberStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.4)
-                        : AppColors.charcoal.withValues(alpha: 0.5),
-                  ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.upload_rounded,
+                      size: 12,
+                      color: AppColors.gold.withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        DateFormat('dd MMM yyyy, hh:mm a').format(document.uploadedAt),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.numberStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.4)
+                              : AppColors.charcoal.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
