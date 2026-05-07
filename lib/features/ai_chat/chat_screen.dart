@@ -54,25 +54,33 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _initializeFromContext() {
     // Smart Initialization from PDF Viewer or Home FAB
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(chatProvider.notifier).startNewChat();
+      final hasInitialParams = widget.initialCategoryId != null ||
+          widget.initialSubCategoryId != null ||
+          widget.initialYear != null ||
+          widget.initialDocumentId != null;
 
-      if (widget.initialCategoryId != null ||
-          widget.initialSubCategoryId != null) {
-        // Automatically select the specific category/sub-category
-        ref
-            .read(chatProvider.notifier)
-            .selectSpecificCategory(
-              widget.initialCategoryId,
-              widget.initialSubCategoryId,
-            );
+      if (hasInitialParams) {
+        // Start a new chat context only if explicitly triggered with parameters
+        ref.read(chatProvider.notifier).startNewChat();
+
+        if (widget.initialCategoryId != null ||
+            widget.initialSubCategoryId != null) {
+          // Automatically select the specific category/sub-category
+          ref.read(chatProvider.notifier).selectSpecificCategory(
+                widget.initialCategoryId,
+                widget.initialSubCategoryId,
+              );
+        }
 
         // If year is provided, pre-fill it for the user
         if (widget.initialYear != null) {
-          ref
-              .read(chatProvider.notifier)
-              .updateYearRange(widget.initialYear, widget.initialYear);
+          ref.read(chatProvider.notifier).updateYearRange(
+                widget.initialYear,
+                widget.initialYear,
+              );
         }
       }
+      // If no params, simply retain the current chat session and its selections!
     });
   }
 
