@@ -15,7 +15,6 @@ class AppColors {
   static const Color goldDark = Color(0xFFC9962A); // Header Badge (Dark)
   static const Color goldLightBrand = Color(0xFFB8860B); // Header Badge (Light)
 
-  // Neutrals - Light Mode
   static const Color lightBg = Color(0xFFEEF2F7);
   static const Color white = Color(0xFFFFFFFF);
   static const Color lightText = Color(0xFF0F172A);

@@ -1,4 +1,3 @@
-// lib/core/router/app_router.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/features/splash/splash_screen.dart';
@@ -21,7 +20,6 @@ import 'package:gda_vault_ai/features/offline/offline_documents_screen.dart';
 import 'package:gda_vault_ai/features/offline/offline_browser_screen.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
 
-/// Manages the routing logic for the application.
 class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: '/splash',
@@ -32,7 +30,6 @@ class AppRouter {
         builder: (context, state) => const SplashScreen(),
       ),
 
-      // Dashboard as ShellRoute for persistent bottom nav
       ShellRoute(
         builder: (context, state, child) => DashboardScreen(child: child),
         routes: [
@@ -107,7 +104,6 @@ class AppRouter {
             ],
           ),
 
-          // Categories flow — INSIDE shell for persistent nav
           GoRoute(
             path: '/categories',
             name: 'categories',
@@ -163,7 +159,6 @@ class AppRouter {
         ],
       ),
 
-      // Add document flow (Full Screen - OUTSIDE shell)
       GoRoute(
         path: '/dashboard/add/scanner',
         name: 'scanner',
@@ -213,14 +208,12 @@ class AppRouter {
         },
       ),
 
-      // Recent Scans full list (See All - OUTSIDE shell)
       GoRoute(
         path: '/recent-scans',
         name: 'recent-scans',
         builder: (context, state) => const RecentScansListScreen(),
       ),
 
-      // Chat screen as full screen if accessed directly from home FAB or PDF viewer
       GoRoute(
         path: '/chat',
         name: 'chat-fullscreen',
@@ -234,7 +227,7 @@ class AppRouter {
           );
         },
       ),
-      // PDF Viewer (Global Entry)
+
       GoRoute(
         path: '/pdf-viewer',
         name: 'pdf-viewer',

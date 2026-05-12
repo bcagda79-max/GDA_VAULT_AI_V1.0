@@ -1,7 +1,5 @@
-// lib/core/constants/app_spacing.dart
 import 'package:flutter/material.dart';
 
-/// Defines consistent spacing values for the application.
 class AppSpacing {
   static const double xxs = 2.0;
   static const double xs = 4.0;

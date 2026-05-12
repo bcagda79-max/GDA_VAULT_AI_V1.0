@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../models/chat_state.dart';
 import 'typing_indicator.dart';
 import 'source_citation_card.dart';
@@ -230,13 +231,51 @@ class ChatMessageBubble extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SelectableText(
-                      message.content,
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 15.5,
-                        color: isDark ? AppColors.darkText : AppColors.charcoal,
-                        height: 1.65,
-                        letterSpacing: 0.1,
+                    MarkdownBody(
+                      data: message.content,
+                      selectable: true,
+                      shrinkWrap: true,
+                      styleSheet: MarkdownStyleSheet(
+                        p: AppTextStyles.dmSans.copyWith(
+                          fontSize: 15.2,
+                          color: isDark
+                              ? AppColors.darkText
+                              : AppColors.charcoal,
+                          height: 1.58,
+                          letterSpacing: 0.08,
+                        ),
+                        strong: AppTextStyles.dmSans.copyWith(
+                          fontSize: 15.2,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? AppColors.darkText
+                              : AppColors.charcoal,
+                          height: 1.58,
+                          letterSpacing: 0.08,
+                        ),
+                        tableHead: AppTextStyles.dmSans.copyWith(
+                          fontSize: 12.2,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.navyDark,
+                          height: 1.3,
+                        ),
+                        tableBody: AppTextStyles.dmSans.copyWith(
+                          fontSize: 12.2,
+                          color: isDark
+                              ? AppColors.darkText
+                              : AppColors.charcoal,
+                          height: 1.38,
+                        ),
+                        tableBorder: TableBorder.all(
+                          color: AppColors.gold.withValues(alpha: 0.32),
+                          width: 0.5,
+                        ),
+                        tableColumnWidth: const IntrinsicColumnWidth(),
+                        tableScrollbarThumbVisibility: true,
+                        tableCellsPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 7,
+                        ),
                       ),
                     ),
                     if (message.citations.isNotEmpty) ...[
