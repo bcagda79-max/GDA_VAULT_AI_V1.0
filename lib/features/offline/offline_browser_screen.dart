@@ -35,16 +35,13 @@ class OfflineBrowserScreen extends StatefulWidget {
 class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
   bool _isLoading = true;
   List<OfflineDocumentRecord> _allRecords = [];
-  
+
   // For subcategories view
   final Map<String, List<OfflineDocumentRecord>> _subCategoryGroups = {};
-  
+
   // For years view
   final Map<int, List<OfflineDocumentRecord>> _yearGroups = {};
-  
-  // For files view (legacy fallback)
-  List<OfflineDocumentRecord> _filteredFiles = [];
-  
+
   int? _selectedYear;
   bool _isDescending = true;
 
@@ -56,19 +53,19 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    
+
     final records = await PdfViewerService.instance.getOfflineDocuments();
-    
+
     // Filter by main category, including subcategories for Board of Authority
     final catRecords = records.where((r) {
       if (widget.categoryId == SupabaseConstants.idBoardOfAuthority) {
-        return r.categoryId == SupabaseConstants.idBoardOfAuthority || 
-               r.categoryId == SupabaseConstants.idBoardAuthorityMinutes || 
-               r.categoryId == SupabaseConstants.idTrustMinutes;
+        return r.categoryId == SupabaseConstants.idBoardOfAuthority ||
+            r.categoryId == SupabaseConstants.idBoardAuthorityMinutes ||
+            r.categoryId == SupabaseConstants.idTrustMinutes;
       }
       return r.categoryId == widget.categoryId;
     }).toList();
-    
+
     setState(() {
       _allRecords = catRecords;
       _isLoading = false;
@@ -79,24 +76,26 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
   void _applyViewFilter() {
     if (widget.viewType == OfflineBrowserViewType.subcategories) {
       _subCategoryGroups.clear();
-      
+
       for (final r in _allRecords) {
         String subName = r.categoryName;
-        
+
         // Robust mapping: Use subCategoryId if available, otherwise fallback to localPath
-        if (r.subCategoryId == SupabaseConstants.idBoardAuthorityMinutes || r.localPath.contains('board-authority-minutes')) {
+        if (r.subCategoryId == SupabaseConstants.idBoardAuthorityMinutes ||
+            r.localPath.contains('board-authority-minutes')) {
           subName = 'Minutes 1996-2026';
-        } else if (r.subCategoryId == SupabaseConstants.idTrustMinutes || r.localPath.contains('trust-minutes')) {
+        } else if (r.subCategoryId == SupabaseConstants.idTrustMinutes ||
+            r.localPath.contains('trust-minutes')) {
           subName = 'Trust Minutes Archive (1961-1996)';
         }
 
         // Only group if the resolved subName is different from the main category
         if (subName.isNotEmpty && subName != widget.categoryName) {
-           _subCategoryGroups.putIfAbsent(subName, () => []).add(r);
+          _subCategoryGroups.putIfAbsent(subName, () => []).add(r);
         }
       }
-      
-      // If after grouping we have no subcategories but we are in subcategories view, 
+
+      // If after grouping we have no subcategories but we are in subcategories view,
       // it might mean all files are top-level. This shouldn't happen with the new navigation logic,
       // but as a fallback, we group them under the main category name if needed or just show empty.
     } else if (widget.viewType == OfflineBrowserViewType.years) {
@@ -105,9 +104,11 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
       if (widget.subCategoryName != null) {
         records = records.where((r) {
           String subName = r.categoryName;
-          if (r.subCategoryId == SupabaseConstants.idBoardAuthorityMinutes || r.localPath.contains('board-authority-minutes')) {
+          if (r.subCategoryId == SupabaseConstants.idBoardAuthorityMinutes ||
+              r.localPath.contains('board-authority-minutes')) {
             subName = 'Minutes 1996-2026';
-          } else if (r.subCategoryId == SupabaseConstants.idTrustMinutes || r.localPath.contains('trust-minutes')) {
+          } else if (r.subCategoryId == SupabaseConstants.idTrustMinutes ||
+              r.localPath.contains('trust-minutes')) {
             subName = 'Trust Minutes Archive (1961-1996)';
           }
           return subName == widget.subCategoryName;
@@ -120,17 +121,20 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
         _yearGroups.putIfAbsent(r.yearStart, () => []).add(r);
       }
       if (_yearGroups.isNotEmpty && _selectedYear == null) {
-        final sortedYears = _yearGroups.keys.toList()..sort((a, b) => b.compareTo(a));
+        final sortedYears = _yearGroups.keys.toList()
+          ..sort((a, b) => b.compareTo(a));
         _selectedYear = sortedYears.first;
       }
     } else {
-      _filteredFiles = _allRecords.where((r) {
+      final filteredFiles = _allRecords.where((r) {
         bool match = true;
         if (widget.subCategoryName != null) {
           String subName = r.categoryName;
-          if (r.subCategoryId == SupabaseConstants.idBoardAuthorityMinutes || r.localPath.contains('board-authority-minutes')) {
+          if (r.subCategoryId == SupabaseConstants.idBoardAuthorityMinutes ||
+              r.localPath.contains('board-authority-minutes')) {
             subName = 'Minutes 1996-2026';
-          } else if (r.subCategoryId == SupabaseConstants.idTrustMinutes || r.localPath.contains('trust-minutes')) {
+          } else if (r.subCategoryId == SupabaseConstants.idTrustMinutes ||
+              r.localPath.contains('trust-minutes')) {
             subName = 'Trust Minutes Archive (1961-1996)';
           }
           match = match && (subName == widget.subCategoryName);
@@ -140,6 +144,10 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
         }
         return match;
       }).toList();
+
+      if (filteredFiles.isNotEmpty && _selectedYear == null) {
+        _selectedYear = filteredFiles.first.yearStart;
+      }
     }
   }
 
@@ -233,7 +241,9 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
             children: [
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
+                    ? const Center(
+                        child: CircularProgressIndicator(color: AppColors.gold),
+                      )
                     : _buildContent(isDark),
               ),
             ],
@@ -244,9 +254,12 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
   }
 
   String _getDisplayTitle() {
-    if (widget.viewType == OfflineBrowserViewType.subcategories) return widget.categoryName;
-    if (widget.viewType == OfflineBrowserViewType.years) return widget.subCategoryName ?? widget.categoryName;
-    if (widget.viewType == OfflineBrowserViewType.files) return "${widget.year ?? ''} Documents";
+    if (widget.viewType == OfflineBrowserViewType.subcategories)
+      return widget.categoryName;
+    if (widget.viewType == OfflineBrowserViewType.years)
+      return widget.subCategoryName ?? widget.categoryName;
+    if (widget.viewType == OfflineBrowserViewType.files)
+      return "${widget.year ?? ''} Documents";
     return "Offline Browser";
   }
 
@@ -274,7 +287,6 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
     );
   }
 
-
   Widget _buildContent(bool isDark) {
     if (widget.viewType == OfflineBrowserViewType.subcategories) {
       return _buildFolderList(
@@ -288,9 +300,14 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
     }
   }
 
-  Widget _buildFolderList(bool isDark, List<String> names, int Function(String) getCount, void Function(String) onTap) {
+  Widget _buildFolderList(
+    bool isDark,
+    List<String> names,
+    int Function(String) getCount,
+    void Function(String) onTap,
+  ) {
     if (names.isEmpty) return _buildEmptyState(isDark);
-    
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: names.length,
@@ -302,7 +319,13 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
     );
   }
 
-  Widget _buildFolderItem(bool isDark, String name, int count, int index, VoidCallback onTap) {
+  Widget _buildFolderItem(
+    bool isDark,
+    String name,
+    int count,
+    int index,
+    VoidCallback onTap,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -335,7 +358,11 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                     color: widget.categoryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.folder_rounded, color: widget.categoryColor, size: 24),
+                  child: Icon(
+                    Icons.folder_rounded,
+                    color: widget.categoryColor,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -355,13 +382,18 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                         "$count offline documents",
                         style: AppTextStyles.dmSans.copyWith(
                           fontSize: 12,
-                          color: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.5),
+                          color: (isDark ? Colors.white : AppColors.navyDark)
+                              .withValues(alpha: 0.5),
                         ),
                       ),
                     ],
                   ),
                 ),
-                Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.gold.withValues(alpha: 0.5)),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: AppColors.gold.withValues(alpha: 0.5),
+                ),
               ],
             ),
           ),
@@ -373,9 +405,9 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
   Widget _buildCombinedYearFilesView(bool isDark) {
     final sortedYears = _yearGroups.keys.toList()
       ..sort((a, b) => _isDescending ? b.compareTo(a) : a.compareTo(b));
-      
+
     if (sortedYears.isEmpty) return _buildEmptyState(isDark);
-    
+
     final currentFiles = _yearGroups[_selectedYear] ?? [];
 
     return Column(
@@ -400,7 +432,10 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                   setState(() => _isDescending = !_isDescending);
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.05)
@@ -410,9 +445,13 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                   child: Row(
                     children: [
                       Icon(
-                        _isDescending ? Icons.arrow_downward : Icons.arrow_upward,
+                        _isDescending
+                            ? Icons.arrow_downward
+                            : Icons.arrow_upward,
                         size: 12,
-                        color: isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.navyDark.withValues(alpha: 0.5),
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.5)
+                            : AppColors.navyDark.withValues(alpha: 0.5),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -517,10 +556,13 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
           ),
         ),
         Expanded(
-          child: currentFiles.isEmpty 
+          child: currentFiles.isEmpty
               ? _buildEmptyState(isDark)
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                   itemCount: currentFiles.length,
                   itemBuilder: (context, index) {
                     final record = currentFiles[index];
@@ -532,7 +574,11 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
     );
   }
 
-  Widget _buildFileItem(bool isDark, OfflineDocumentRecord document, int index) {
+  Widget _buildFileItem(
+    bool isDark,
+    OfflineDocumentRecord document,
+    int index,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
@@ -646,7 +692,9 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                                     fontWeight: FontWeight.w700,
                                     color: isDark
                                         ? Colors.white.withValues(alpha: 0.4)
-                                        : AppColors.charcoal.withValues(alpha: 0.5),
+                                        : AppColors.charcoal.withValues(
+                                            alpha: 0.5,
+                                          ),
                                   ),
                                 ),
                               ],
@@ -667,7 +715,9 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                                     fontWeight: FontWeight.w700,
                                     color: isDark
                                         ? Colors.white.withValues(alpha: 0.4)
-                                        : AppColors.charcoal.withValues(alpha: 0.5),
+                                        : AppColors.charcoal.withValues(
+                                            alpha: 0.5,
+                                          ),
                                   ),
                                 ),
                               ],
@@ -707,7 +757,10 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                 Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert_rounded, color: widget.categoryColor),
+                    icon: Icon(
+                      Icons.more_vert_rounded,
+                      color: widget.categoryColor,
+                    ),
                     onSelected: (value) {
                       if (value == 'delete') _showDeleteDialog(document);
                     },
@@ -716,9 +769,16 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                            Icon(
+                              Icons.delete_outline,
+                              color: Colors.red,
+                              size: 20,
+                            ),
                             SizedBox(width: 8),
-                            Text("Remove File", style: TextStyle(color: Colors.red)),
+                            Text(
+                              "Remove File",
+                              style: TextStyle(color: Colors.red),
+                            ),
                           ],
                         ),
                       ),
@@ -738,9 +798,14 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Remove File"),
-        content: Text("Are you sure you want to remove '${record.fileName}' from offline storage?"),
+        content: Text(
+          "Are you sure you want to remove '${record.fileName}' from offline storage?",
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Cancel"),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
@@ -760,13 +825,19 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.folder_open_rounded, size: 64, color: AppColors.divider.withValues(alpha: 0.3)),
+          Icon(
+            Icons.folder_open_rounded,
+            size: 64,
+            color: AppColors.divider.withValues(alpha: 0.3),
+          ),
           const SizedBox(height: 16),
           Text(
             "No offline files found here",
             style: AppTextStyles.dmSans.copyWith(
               fontSize: 16,
-              color: (isDark ? Colors.white : AppColors.navyDark).withValues(alpha: 0.5),
+              color: (isDark ? Colors.white : AppColors.navyDark).withValues(
+                alpha: 0.5,
+              ),
             ),
           ),
         ],
@@ -782,19 +853,6 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
         'categoryColor': widget.categoryColor,
         'subCategoryName': subCatName,
         'viewType': OfflineBrowserViewType.years,
-      },
-    );
-  }
-
-  void _navigateToFiles(int year) {
-    context.push(
-      '/dashboard/offline-documents/files/${widget.categoryId}',
-      extra: {
-        'categoryName': widget.categoryName,
-        'categoryColor': widget.categoryColor,
-        'subCategoryName': widget.subCategoryName,
-        'year': year,
-        'viewType': OfflineBrowserViewType.files,
       },
     );
   }

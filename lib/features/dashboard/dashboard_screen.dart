@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:gda_vault_ai/core/utils/responsive_helper.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/ai_chat_fab.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/floating_bubbles_overlay.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/gda_bottom_nav.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/home_app_bar.dart';
+import 'package:gda_vault_ai/features/dashboard/widgets/desktop_nav_item.dart';
 
 /// The main screen shell with a persistent bottom navigation bar.
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -125,7 +127,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentIndex = _getCurrentIndex(context);
     final hideBottomNav = _shouldHideBottomNav(context);
+    final isLargeScreen = ResponsiveHelper.isDesktop(context);
     final hideAppBar = _shouldHideAppBar(context);
+    // Responsive FAB positioning: adjust for larger screens
+    final fabBottom = isLargeScreen ? 24.0 : 20.0;
+    final fabRight = isLargeScreen ? 32.0 : 16.0;
 
     return PopScope(
       canPop: false,
@@ -139,20 +145,155 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       },
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-        appBar: hideAppBar ? null : HomeAppBar(currentIndex: currentIndex),
-        body: Stack(
-          children: [
-            widget.child,
-            if (!hideBottomNav &&
-                currentIndex !=
-                    1 && // Hide on Categories tab (to show FAB properly)
-                currentIndex != 3) // Hide on Chat tab
-              const Positioned(bottom: 20, right: 16, child: AiChatFab()),
-          ],
-        ),
-        bottomNavigationBar: hideBottomNav
+        appBar: hideAppBar
+            ? null
+            : HomeAppBar(
+                currentIndex: currentIndex,
+                leftInset: isLargeScreen
+                    ? ResponsiveHelper.sidebarWidth(context)
+                    : 0,
+              ),
+        // For large screens, show a permanent left navigation panel instead of bottom nav
+        body: isLargeScreen
+            ? Row(
+                children: [
+                  // Desktop navigation drawer (permanent)
+                  // nav width now 280
+                  _buildDesktopNav(currentIndex, isDark),
+                  // Main content
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        widget.child,
+                        if (!hideBottomNav &&
+                            currentIndex != 1 &&
+                            currentIndex != 3)
+                          Positioned(
+                            bottom: fabBottom,
+                            right: fabRight,
+                            child: const AiChatFab(),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+            : Stack(
+                children: [
+                  widget.child,
+                  if (!hideBottomNav &&
+                      currentIndex !=
+                          1 && // Hide on Categories tab (to show FAB properly)
+                      currentIndex != 3) // Hide on Chat tab
+                    Positioned(
+                      bottom: fabBottom,
+                      right: fabRight,
+                      child: const AiChatFab(),
+                    ),
+                ],
+              ),
+        bottomNavigationBar: isLargeScreen || hideBottomNav
             ? null
             : GdaBottomNav(currentIndex: currentIndex, onTap: _onTabTapped),
+      ),
+    );
+  }
+
+  Widget _buildDesktopNav(int currentIndex, bool isDark) {
+    return Container(
+      width: 260,
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+            blurRadius: 24,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // App header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primaryBlue,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Image.asset('assets/images/gda_logo.png'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('GDA VAULT AI', style: AppTextStyles.titleMedium),
+                      Text(
+                        'Galiyat Development Authority',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.charcoal.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          // Navigation items
+          DesktopNavItem(
+            label: 'Home',
+            icon: Icons.home_rounded,
+            selected: currentIndex == 0,
+            onTap: () => _onTabTapped(0),
+          ),
+          DesktopNavItem(
+            label: 'Categories',
+            icon: Icons.folder_open_rounded,
+            selected: currentIndex == 1,
+            onTap: () => _onTabTapped(1),
+          ),
+          DesktopNavItem(
+            label: 'Add',
+            icon: Icons.add_circle_outline_rounded,
+            selected: currentIndex == 2,
+            onTap: () => _onTabTapped(2),
+          ),
+          DesktopNavItem(
+            label: 'AI Chat',
+            icon: Icons.auto_awesome_rounded,
+            selected: currentIndex == 3,
+            onTap: () => _onTabTapped(3),
+          ),
+          DesktopNavItem(
+            label: 'Settings',
+            icon: Icons.settings_rounded,
+            selected: currentIndex == 4,
+            onTap: () => _onTabTapped(4),
+          ),
+          const Spacer(),
+          // Sign out / footer action placeholder
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: TextButton.icon(
+              onPressed: () => _showExitDialog(context),
+              icon: const Icon(Icons.exit_to_app_rounded),
+              label: const Text('Exit'),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -53,7 +53,7 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
           return cat;
         }
       });
-      
+
       final subCats = await Future.wait(countsFutures);
 
       if (!mounted) return;

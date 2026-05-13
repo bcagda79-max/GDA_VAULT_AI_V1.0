@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 class AiChatService {
   // CONFIG - Live n8n Webhook URL
   static const String _n8nChatUrl =
-      'https://gda-abbottabad.app.n8n.cloud/webhook/docvault-final-chat';
+      'https://bcagda.app.n8n.cloud/webhook/docvault-final-chat';
 
   static Future<Map<String, dynamic>> sendMessage({
     required String message,

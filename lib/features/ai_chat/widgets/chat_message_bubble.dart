@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../models/chat_state.dart';
 import 'typing_indicator.dart';
@@ -256,7 +257,7 @@ class ChatMessageBubble extends StatelessWidget {
                         tableHead: AppTextStyles.dmSans.copyWith(
                           fontSize: 12.2,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.navyDark,
+                          color: isDark ? Colors.white : AppColors.navyDark,
                           height: 1.3,
                         ),
                         tableBody: AppTextStyles.dmSans.copyWith(
@@ -275,6 +276,46 @@ class ChatMessageBubble extends StatelessWidget {
                         tableCellsPadding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 7,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: InkWell(
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: message.content));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Response copied to clipboard'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(6),
+                        child: Padding(
+                          padding: const EdgeInsets.all(6.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.copy_rounded,
+                                size: 14,
+                                color: (isDark ? Colors.white : AppColors.charcoal)
+                                    .withValues(alpha: 0.5),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                "Copy",
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: (isDark ? Colors.white : AppColors.charcoal)
+                                      .withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

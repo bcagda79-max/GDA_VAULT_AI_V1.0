@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/features/splash/splash_screen.dart';
 import 'package:gda_vault_ai/features/dashboard/dashboard_screen.dart';
+import 'package:gda_vault_ai/core/utils/responsive_helper.dart';
+import 'package:gda_vault_ai/features/dashboard/desktop_shell.dart';
 import 'package:gda_vault_ai/features/categories/categories_screen.dart';
 import 'package:gda_vault_ai/features/categories/subcategory_screen.dart';
 import 'package:gda_vault_ai/features/categories/year_list_screen.dart';
@@ -31,7 +33,15 @@ class AppRouter {
       ),
 
       ShellRoute(
-        builder: (context, state, child) => DashboardScreen(child: child),
+        builder: (context, state, child) {
+          if (ResponsiveHelper.isDesktop(context)) {
+            return DesktopShell(
+              currentRoute: state.matchedLocation,
+              child: child,
+            );
+          }
+          return DashboardScreen(child: child);
+        },
         routes: [
           GoRoute(
             path: '/dashboard',

@@ -1,4 +1,3 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -27,40 +26,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     _loadCategories();
   }
 
-  Future<bool> _hasInternet() async {
-    try {
-      final results = await Connectivity().checkConnectivity();
-      return results.any((result) => result != ConnectivityResult.none);
-    } catch (_) {
-      return true;
-    }
-  }
-
   Future<void> _loadCategories() async {
     setState(() {
       _isLoading = true;
     });
 
-    if (!await _hasInternet()) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No internet connection'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
     try {
       final rows = await _supa.getAllCategories();
       final rawAll = rows.map(CategoryModel.fromMap).toList()
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-        
+
       // Override 0 counts by querying documents table counts dynamically
       final countsFutures = rawAll.map((cat) async {
         try {
@@ -73,7 +48,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           return cat;
         }
       });
-      
+
       final all = await Future.wait(countsFutures);
 
       final counts = <String, int>{};

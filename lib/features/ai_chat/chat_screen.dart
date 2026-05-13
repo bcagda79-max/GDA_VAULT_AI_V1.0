@@ -54,7 +54,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _initializeFromContext() {
     // Smart Initialization from PDF Viewer or Home FAB
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final hasInitialParams = widget.initialCategoryId != null ||
+      final hasInitialParams =
+          widget.initialCategoryId != null ||
           widget.initialSubCategoryId != null ||
           widget.initialYear != null ||
           widget.initialDocumentId != null;
@@ -66,7 +67,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         if (widget.initialCategoryId != null ||
             widget.initialSubCategoryId != null) {
           // Automatically select the specific category/sub-category
-          ref.read(chatProvider.notifier).selectSpecificCategory(
+          ref
+              .read(chatProvider.notifier)
+              .selectSpecificCategory(
                 widget.initialCategoryId,
                 widget.initialSubCategoryId,
               );
@@ -74,10 +77,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
         // If year is provided, pre-fill it for the user
         if (widget.initialYear != null) {
-          ref.read(chatProvider.notifier).updateYearRange(
-                widget.initialYear,
-                widget.initialYear,
-              );
+          ref
+              .read(chatProvider.notifier)
+              .updateYearRange(widget.initialYear, widget.initialYear);
         }
       }
       // If no params, simply retain the current chat session and its selections!
@@ -155,7 +157,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             child: Column(
               children: [
                 Expanded(
-                  child: !chatState.categoriesSelected &&
+                  child:
+                      !chatState.categoriesSelected &&
                           chatState.messages.isEmpty
                       ? _buildCategoryRequiredBanner(isDark)
                       : Column(
@@ -317,7 +320,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.divider,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.divider,
         ),
         boxShadow: [
           BoxShadow(
@@ -335,7 +340,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               color: AppColors.gold.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.gold),
+            child: const Icon(
+              Icons.calendar_today_rounded,
+              size: 16,
+              color: AppColors.gold,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -344,7 +353,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               style: AppTextStyles.dmSans.copyWith(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white.withValues(alpha: 0.7) : AppColors.charcoal.withValues(alpha: 0.7),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.7)
+                    : AppColors.charcoal.withValues(alpha: 0.7),
               ),
             ),
           ),
@@ -568,7 +579,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           border: Border.all(
             color: _inputFocused
                 ? AppColors.gold.withValues(alpha: 0.5)
-                : (isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.divider.withValues(alpha: 0.8)),
+                : (isDark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : AppColors.divider.withValues(alpha: 0.8)),
             width: 1,
           ),
           boxShadow: [

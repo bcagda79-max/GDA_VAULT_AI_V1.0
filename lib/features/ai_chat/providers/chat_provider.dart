@@ -410,7 +410,7 @@ class ChatNotifier extends Notifier<ChatState> {
 
   // Send message + get real AI response from n8n
   Future<void> sendMessage(String userText) async {
-    if (!state.canSendMessage) return;
+    if (userText.trim().isEmpty || !state.categoriesSelected || state.isLoading) return;
 
     // Use defaults if user hasn't selected years
     final effectiveYearFrom = state.yearFrom ?? '1996';

@@ -8,6 +8,7 @@ import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
 import 'package:gda_vault_ai/core/services/supabase_service.dart';
+import 'package:gda_vault_ai/core/utils/responsive_helper.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
 
 /// The home tab of the dashboard, showing a summary and quick actions.
@@ -97,6 +98,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isLargeScreen = ResponsiveHelper.isDesktop(context);
 
     return RefreshIndicator(
       color: AppColors.gold,
@@ -105,84 +107,97 @@ class _HomeTabState extends ConsumerState<HomeTab> {
       },
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.only(
-          left: 16,
-          right: 16,
+        padding: EdgeInsets.only(
+          left: isLargeScreen ? 24 : 16,
+          right: isLargeScreen ? 24 : 16,
           top: 16,
           bottom: 100,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildGreetingCard(
-              isDark,
-            ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.04, end: 0),
-            const SizedBox(height: 16),
-            _buildStatsRow(isDark)
-                .animate()
-                .fadeIn(delay: 150.ms, duration: 400.ms)
-                .slideY(begin: 0.04, end: 0),
-            const SizedBox(height: 20),
-            Text(
-              'BROWSE',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                    .withValues(alpha: 0.5),
-                letterSpacing: 1.2,
-              ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isLargeScreen ? 1180 : double.infinity,
             ),
-            const SizedBox(height: 10),
-            _buildBigButton(
-              context: context,
-              title: 'Categories',
-              subtitle: 'Board, Trust, Town & more',
-              icon: Icons.folder_copy_rounded,
-              bgColors: isDark
-                  ? [AppColors.secondaryBlueDark, AppColors.darkCard]
-                  : [AppColors.primaryBlue, const Color(0xFF3B82F6)],
-              onTap: () => context.push('/categories'),
-            ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
-            const SizedBox(height: 10),
-            _buildBigButton(
-              context: context,
-              title: 'Add New File',
-              subtitle: 'Scan or import a document',
-              icon: Icons.add_circle_outline_rounded,
-              bgColors: [AppColors.primaryBlue, const Color(0xFF2563EB)],
-              onTap: () => context.go('/dashboard/add'),
-            ).animate().fadeIn(delay: 250.ms, duration: 400.ms),
-            const SizedBox(height: 10),
-            _buildBigButton(
-              context: context,
-              title: 'Offline Files',
-              subtitle: 'Open cached documents without internet',
-              icon: Icons.cloud_done_rounded,
-              bgColors: isDark
-                  ? [AppColors.secondaryBlueDark, const Color(0xFF111827)]
-                  : [AppColors.secondarySlate, const Color(0xFF1F2937)],
-              onTap: () => context.push('/dashboard/offline-documents'),
-            ).animate().fadeIn(delay: 275.ms, duration: 400.ms),
-            const SizedBox(height: 24),
-            _buildRecentDocsHeader(
-              isDark,
-            ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
-            const SizedBox(height: 12),
-            _buildRecentDocsBody(
-              context,
-              isDark,
-            ).animate().fadeIn(delay: 350.ms, duration: 400.ms),
-          ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildGreetingCard(isDark)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: -0.04, end: 0),
+                const SizedBox(height: 16),
+                _buildStatsRow(isDark, isLargeScreen)
+                    .animate()
+                    .fadeIn(delay: 150.ms, duration: 400.ms)
+                    .slideY(begin: 0.04, end: 0),
+                const SizedBox(height: 20),
+                Text(
+                  'BROWSE',
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                        .withValues(alpha: 0.5),
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildBigButton(
+                  context: context,
+                  title: 'Categories',
+                  subtitle: 'Board, Trust, Town & more',
+                  icon: Icons.folder_copy_rounded,
+                  bgColors: isDark
+                      ? [AppColors.secondaryBlueDark, AppColors.darkCard]
+                      : [AppColors.primaryBlue, const Color(0xFF3B82F6)],
+                  onTap: () => context.push('/categories'),
+                ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
+                const SizedBox(height: 10),
+                _buildBigButton(
+                  context: context,
+                  title: 'Add New File',
+                  subtitle: 'Scan or import a document',
+                  icon: Icons.add_circle_outline_rounded,
+                  bgColors: [AppColors.primaryBlue, const Color(0xFF2563EB)],
+                  onTap: () => context.go('/dashboard/add'),
+                ).animate().fadeIn(delay: 250.ms, duration: 400.ms),
+                const SizedBox(height: 10),
+                _buildBigButton(
+                  context: context,
+                  title: 'Offline Files',
+                  subtitle: 'Open cached documents without internet',
+                  icon: Icons.cloud_done_rounded,
+                  bgColors: isDark
+                      ? [AppColors.secondaryBlueDark, const Color(0xFF111827)]
+                      : [AppColors.secondarySlate, const Color(0xFF1F2937)],
+                  onTap: () => context.push('/dashboard/offline-documents'),
+                ).animate().fadeIn(delay: 275.ms, duration: 400.ms),
+                const SizedBox(height: 24),
+                _buildRecentDocsHeader(
+                  isDark,
+                ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
+                const SizedBox(height: 12),
+                _buildRecentDocsBody(
+                  context,
+                  isDark,
+                ).animate().fadeIn(delay: 350.ms, duration: 400.ms),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildGreetingCard(bool isDark) {
+    final isLargeScreen = ResponsiveHelper.isDesktop(context);
+    // Responsive padding and sizing
+    final cardPadding = isLargeScreen ? 32.0 : 24.0;
+    final logoSize = isLargeScreen ? 130.0 : 110.0;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(cardPadding),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -209,8 +224,8 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(
-                child: Column(
+              if (isLargeScreen)
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
@@ -250,7 +265,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                     Text(
                       _getGreeting(),
                       style: AppTextStyles.playfairDisplay.copyWith(
-                        fontSize: 26,
+                        fontSize: isLargeScreen ? 32 : 26,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
                         height: 1.1,
@@ -287,32 +302,135 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                                 : AppColors.goldLightBrand,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            _getFormattedDate().toUpperCase(),
-                            style: AppTextStyles.dmSans.copyWith(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white.withValues(alpha: 0.9),
-                              letterSpacing: 0.5,
+                          Flexible(
+                            fit: FlexFit.loose,
+                            child: Text(
+                              _getFormattedDate().toUpperCase(),
+                              style: AppTextStyles.dmSans.copyWith(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white.withValues(alpha: 0.9),
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
+                  ]
+                )
+              else
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              (isDark
+                                      ? AppColors.goldDark
+                                      : AppColors.goldLightBrand)
+                                  .withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color:
+                                (isDark
+                                        ? AppColors.goldDark
+                                        : AppColors.goldLightBrand)
+                                    .withValues(alpha: 0.3),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Text(
+                          'SECURE VAULT',
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w900,
+                            color: isDark
+                                ? AppColors.goldDark
+                                : AppColors.goldLightBrand,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        _getGreeting(),
+                        style: AppTextStyles.playfairDisplay.copyWith(
+                          fontSize: isLargeScreen ? 32 : 26,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Galiyat Development Authority',
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withValues(alpha: 0.7),
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              size: 11,
+                              color: isDark
+                                  ? AppColors.goldDark
+                                  : AppColors.goldLightBrand,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              fit: FlexFit.loose,
+                              child: Text(
+                                _getFormattedDate().toUpperCase(),
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Container(
-                width: 110,
-                height: 110,
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                ),
-                padding: const EdgeInsets.all(4),
-                child: Image.asset(
-                  'assets/images/gda_logo.png',
-                  fit: BoxFit.contain,
+              if (isLargeScreen) const Spacer(),
+              if (!isLargeScreen) const SizedBox(width: 16),
+              Flexible(
+                fit: FlexFit.loose,
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: logoSize,
+                    maxHeight: logoSize,
+                  ),
+                  decoration: const BoxDecoration(color: Colors.transparent),
+                  padding: const EdgeInsets.all(4),
+                  child: Image.asset(
+                    'assets/images/gda_logo.png',
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ],
@@ -322,7 +440,49 @@ class _HomeTabState extends ConsumerState<HomeTab> {
     );
   }
 
-  Widget _buildStatsRow(bool isDark) {
+  Widget _buildRecentDocsHeader(bool isDark) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          'RECENT DOCUMENTS',
+          style: AppTextStyles.dmSans.copyWith(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                .withValues(alpha: 0.6),
+            letterSpacing: 1.2,
+          ),
+        ),
+        TextButton(
+          onPressed: () {},
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          ),
+          child: Row(
+            children: [
+              Text(
+                'See All',
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 12,
+                  color: isDark ? AppColors.gold : AppColors.navyDark,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 11,
+                color: isDark ? AppColors.gold : AppColors.navyDark,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsRow(bool isDark, bool isLargeScreen) {
     final totalDocs = _statsLoading
         ? '...'
         : _formatTotalDocs(_stats['total_documents']);
@@ -330,7 +490,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         ? '...'
         : _formatTotalPages(_stats['total_pages']);
     const totalCategories = '5';
-
+    final gap = isLargeScreen ? 20.0 : 10.0;
     return Row(
       children: [
         Expanded(
@@ -340,9 +500,10 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             icon: Icons.folder_copy_rounded,
             iconColor: AppColors.catBoard,
             isDark: isDark,
+            isLargeScreen: isLargeScreen,
           ),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: gap),
         Expanded(
           child: _StatBox(
             number: totalPages,
@@ -350,9 +511,10 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             icon: Icons.description_rounded,
             iconColor: AppColors.gdaGreen,
             isDark: isDark,
+            isLargeScreen: isLargeScreen,
           ),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: gap),
         Expanded(
           child: _StatBox(
             number: totalCategories,
@@ -360,6 +522,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             icon: Icons.category_rounded,
             iconColor: AppColors.gold,
             isDark: isDark,
+            isLargeScreen: isLargeScreen,
           ),
         ),
       ],
@@ -457,75 +620,6 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildRecentDocsHeader(bool isDark) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'RECENT DOCUMENTS',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                    .withValues(alpha: 0.5),
-                letterSpacing: 1.2,
-              ),
-            ),
-            Text(
-              _recentOpenedLoading
-                  ? 'Loading recent documents...'
-                  : 'Recently opened documents',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 12,
-                color: isDark ? AppColors.darkText : AppColors.charcoal,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        if (!_recentOpenedLoading && _recentlyOpened.isNotEmpty)
-          GestureDetector(
-            onTap: () => context.push('/dashboard/recent-documents'),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.gold.withValues(alpha: 0.1)
-                    : AppColors.navyDark.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark
-                      ? AppColors.gold.withValues(alpha: 0.3)
-                      : AppColors.navyDark.withValues(alpha: 0.12),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    'See All',
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 12,
-                      color: isDark ? AppColors.gold : AppColors.navyDark,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 11,
-                    color: isDark ? AppColors.gold : AppColors.navyDark,
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
     );
   }
 
@@ -764,7 +858,9 @@ class _RecentDocumentCard extends StatelessWidget {
                             Icons.description_rounded,
                             size: 11,
                             color:
-                                (isDark ? AppColors.darkText : AppColors.charcoal)
+                                (isDark
+                                        ? AppColors.darkText
+                                        : AppColors.charcoal)
                                     .withValues(alpha: 0.5),
                           ),
                           const SizedBox(width: 4),
@@ -774,7 +870,9 @@ class _RecentDocumentCard extends StatelessWidget {
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
                               color:
-                                  (isDark ? AppColors.darkText : AppColors.charcoal)
+                                  (isDark
+                                          ? AppColors.darkText
+                                          : AppColors.charcoal)
                                       .withValues(alpha: 0.5),
                             ),
                           ),
@@ -787,20 +885,26 @@ class _RecentDocumentCard extends StatelessWidget {
                             Icons.access_time_rounded,
                             size: 11,
                             color:
-                                (isDark ? AppColors.darkText : AppColors.charcoal)
+                                (isDark
+                                        ? AppColors.darkText
+                                        : AppColors.charcoal)
                                     .withValues(alpha: 0.4),
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              DateFormat('dd MMM, hh:mm a').format(document.uploadedAt),
+                              DateFormat(
+                                'dd MMM, hh:mm a',
+                              ).format(document.uploadedAt),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTextStyles.dmSans.copyWith(
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.w500,
                                 color:
-                                    (isDark ? AppColors.darkText : AppColors.charcoal)
+                                    (isDark
+                                            ? AppColors.darkText
+                                            : AppColors.charcoal)
                                         .withValues(alpha: 0.4),
                               ),
                             ),
@@ -825,6 +929,7 @@ class _StatBox extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final bool isDark;
+  final bool isLargeScreen;
 
   const _StatBox({
     required this.number,
@@ -832,12 +937,17 @@ class _StatBox extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.isDark,
+    this.isLargeScreen = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final paddingV = isLargeScreen ? 28.0 : 18.0;
+    final iconSize = isLargeScreen ? 44.0 : 36.0;
+    final numberFont = isLargeScreen ? 28.0 : 22.0;
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
+      padding: EdgeInsets.symmetric(vertical: paddingV, horizontal: 10),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -861,8 +971,8 @@ class _StatBox extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: iconSize,
+            height: iconSize,
             decoration: BoxDecoration(
               color: isDark
                   ? iconColor.withValues(alpha: 0.15)
@@ -873,22 +983,26 @@ class _StatBox extends StatelessWidget {
                 width: 0.5,
               ),
             ),
-            child: Icon(icon, size: 18, color: iconColor),
+            child: Icon(icon, size: iconSize * 0.4, color: iconColor),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: isLargeScreen ? 14 : 12),
           Text(
             number,
             style:
                 (isDark
                         ? AppTextStyles.statNumberDark
                         : AppTextStyles.statNumber)
-                    .copyWith(fontSize: 22, height: 1.0, letterSpacing: -0.5),
+                    .copyWith(
+                      fontSize: numberFont,
+                      height: 1.0,
+                      letterSpacing: -0.5,
+                    ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: AppTextStyles.dmSans.copyWith(
-              fontSize: 10,
+              fontSize: isLargeScreen ? 12 : 10,
               color: (isDark ? AppColors.darkText : AppColors.charcoal)
                   .withValues(alpha: 0.55),
               fontWeight: FontWeight.w600,

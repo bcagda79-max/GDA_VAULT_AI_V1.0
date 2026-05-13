@@ -25,11 +25,13 @@ class SettingsTab extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Professional Centered Header Section (Sub-AppBar style)
-          SliverToBoxAdapter(child: _buildSectionHeader(context, isDark)),
+      body: Column(
+        children: [
+          _buildSectionHeader(context, isDark),
+          Expanded(
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
 
           SliverPadding(
             padding: const EdgeInsets.symmetric(vertical: 20),
@@ -66,6 +68,9 @@ class SettingsTab extends ConsumerWidget {
           ),
         ],
       ),
+    ),
+    ],
+    ),
     );
   }
 
@@ -393,11 +398,7 @@ class SettingsTab extends ConsumerWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(
-                'assets/images/gda_logo.png',
-                width: 80,
-                height: 80,
-              ),
+              Image.asset('assets/images/gda_logo.png', width: 80, height: 80),
               const SizedBox(height: 20),
               Text(
                 "GDA Vault AI",
@@ -414,7 +415,8 @@ class SettingsTab extends ConsumerWidget {
                 style: AppTextStyles.dmSans.copyWith(
                   fontSize: 13,
                   height: 1.5,
-                  color: (isDark ? Colors.white : AppColors.charcoal).withValues(alpha: 0.8),
+                  color: (isDark ? Colors.white : AppColors.charcoal)
+                      .withValues(alpha: 0.8),
                 ),
               ),
               const SizedBox(height: 24),

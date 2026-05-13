@@ -13,9 +13,15 @@ class AiChatDrawer extends ConsumerWidget {
     final chatState = ref.watch(chatProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Use a compact drawer on phones but a half-screen panel on desktop for better usability.
+    final drawerWidth = screenWidth >= 900
+        ? screenWidth * 0.5
+        : screenWidth * 0.85;
+
     return Drawer(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
-      width: MediaQuery.of(context).size.width * 0.85,
+      width: drawerWidth,
       child: Column(
         children: [
           _buildTopBar(context, ref, isDark),

@@ -9,7 +9,12 @@ import 'package:gda_vault_ai/providers/theme_provider.dart';
 /// The custom AppBar for the main dashboard screen.
 class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final int currentIndex;
-  const HomeAppBar({super.key, required this.currentIndex});
+
+  /// Optional left inset to align appbar content when a permanent
+  /// desktop navigation panel is present.
+  final double leftInset;
+
+  const HomeAppBar({super.key, required this.currentIndex, this.leftInset = 0});
 
   @override
   Size get preferredSize => const Size.fromHeight(76.0);
@@ -47,7 +52,7 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
         child: SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+            padding: EdgeInsets.fromLTRB(20 + leftInset, 8, 20, 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -65,7 +70,8 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
                           width: 1,
                         ),
                       ),
-                      padding: const EdgeInsets.all(6),
+                      // Increase padding so inner image renders at ~28px (44 - 8*2)
+                      padding: const EdgeInsets.all(8),
                       child: Image.asset(
                         'assets/images/gda_logo.png',
                         fit: BoxFit.contain,

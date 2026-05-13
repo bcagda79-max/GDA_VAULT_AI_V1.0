@@ -1,11 +1,11 @@
 import 'dart:io';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
+import 'package:gda_vault_ai/core/utils/responsive_helper.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class PdfViewerScreen extends StatefulWidget {
@@ -31,7 +31,6 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
   bool _showThumbnails = true;
   bool _isLoading = true;
   bool _isDownloading = false;
-  bool _hasInternet = true;
   String? _localPdfPath;
   String? _pdfUrl;
   String? _errorMessage;
@@ -43,18 +42,8 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
   void initState() {
     super.initState();
     _pdfViewerController = PdfViewerController();
-    _checkConnectivity();
     PdfViewerService.instance.recordRecentlyOpened(widget.document);
     _loadPdf();
-  }
-
-  Future<void> _checkConnectivity() async {
-    final result = await Connectivity().checkConnectivity();
-    if (mounted) {
-      setState(() {
-        _hasInternet = result.any((r) => r != ConnectivityResult.none);
-      });
-    }
   }
 
   Future<void> _loadPdf() async {
@@ -81,17 +70,6 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
           _localPdfPath = localPath.path;
           _isLoading = false;
         });
-        return;
-      }
-
-      // If no local file, we must have internet to load from network
-      if (!_hasInternet) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _errorMessage = 'No internet connection and file not cached.';
-          });
-        }
         return;
       }
 
@@ -161,13 +139,27 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
   }
 
   Future<void> _deleteDocument() async {
-    final success = await PdfViewerService.instance.removeOfflineDocument(widget.document.storagePath);
+    final success = await PdfViewerService.instance.removeOfflineDocument(
+      widget.document.storagePath,
+    );
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('File removed from offline storage')),
       );
       context.pop(); // Go back as the file is gone
     }
+  }
+
+  void _zoomIn() {
+    setState(() {
+      _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel + 0.25).clamp(1.0, 5.0);
+    });
+  }
+
+  void _zoomOut() {
+    setState(() {
+      _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel - 0.25).clamp(1.0, 5.0);
+    });
   }
 
   @override
@@ -202,7 +194,20 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
           ),
           centerTitle: true,
           actions: [
-            if (!isOfflineFile && _hasInternet)
+            if (ResponsiveHelper.isDesktop(context)) ...[
+              IconButton(
+                icon: const Icon(Icons.zoom_out_rounded, color: Colors.white),
+                onPressed: _zoomOut,
+                tooltip: 'Zoom out',
+              ),
+              IconButton(
+                icon: const Icon(Icons.zoom_in_rounded, color: Colors.white),
+                onPressed: _zoomIn,
+                tooltip: 'Zoom in',
+              ),
+              const SizedBox(width: 8),
+            ],
+            if (!isOfflineFile)
               IconButton(
                 icon: const Icon(Icons.download_rounded, color: Colors.white),
                 onPressed: _isDownloading ? null : _downloadOffline,
@@ -236,7 +241,10 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                 if (isOfflineFile)
                   const PopupMenuItem<String>(
                     value: 'delete_offline',
-                    child: Text('Delete Offline Copy', style: TextStyle(color: Colors.red)),
+                    child: Text(
+                      'Delete Offline Copy',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ),
               ],
             ),
@@ -289,7 +297,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                   ),
                 ),
               ),
-            if (!_isLoading && _totalPages > 0 && _hasInternet)
+            if (!_isLoading && _totalPages > 0)
               _BottomAskAIButton(
                 document: widget.document,
                 bottomOffset: _isDownloading ? 110 : 14,

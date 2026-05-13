@@ -708,7 +708,9 @@ class _Content extends StatelessWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        DateFormat('dd MMM yyyy, hh:mm a').format(document.uploadedAt),
+                        DateFormat(
+                          'dd MMM yyyy, hh:mm a',
+                        ).format(document.uploadedAt),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.numberStyle(
