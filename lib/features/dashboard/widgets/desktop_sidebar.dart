@@ -11,137 +11,200 @@ class DesktopSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.navyDark : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.26 : 0.08),
-            blurRadius: 24,
-            offset: const Offset(4, 0),
-          ),
-        ],
+      width: 270,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF0D1B3E), Color(0xFF1A237E)],
+        ),
+        border: Border(right: BorderSide(color: Color(0xFF2A3F7E), width: 1)),
       ),
       child: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(
-              height: 72,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final compact = constraints.maxWidth < 120;
-                    return Row(
-                      children: [
-                        _SidebarLogo(
-                          errorColor: isDark
-                              ? Colors.white
-                              : AppColors.charcoal,
-                        ),
-                        const SizedBox(width: 12),
-                        if (!compact)
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'GDA VAULT AI',
-                                  style: AppTextStyles.dmSans.copyWith(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDark
-                                        ? Colors.white
-                                        : AppColors.charcoal,
-                                    letterSpacing: 0.8,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  'Galiyat Development Authority',
-                                  style: AppTextStyles.dmSans.copyWith(
-                                    fontSize: 8.5,
-                                    color:
-                                        (isDark
-                                                ? Colors.white
-                                                : AppColors.charcoal)
-                                            .withValues(alpha: 0.65),
-                                    letterSpacing: 0.2,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    );
-                  },
+            Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF0A1628),
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFF2A3F7E), width: 1),
                 ),
               ),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 18),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFC5A059),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/images/gda_logo.png',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Center(
+                                  child: Text(
+                                    'GDA',
+                                    style: AppTextStyles.dmSans.copyWith(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFFC5A059),
+                                    ),
+                                  ),
+                                ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'GDA VAULT AI',
+                              style: AppTextStyles.dmSans.copyWith(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFFC5A059),
+                                letterSpacing: 2.0,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Galiyat Development Authority',
+                              style: AppTextStyles.dmSans.copyWith(
+                                fontSize: 10.5,
+                                color: const Color(0xFF6B82AA),
+                                letterSpacing: 0.3,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    height: 1,
+                    width: 40,
+                    color: const Color(0xFFC5A059).withValues(alpha: 0.6),
+                  ),
+                ],
+              ),
             ),
-            Divider(height: 1, color: AppColors.gold.withValues(alpha: 0.18)),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 14,
-                ),
+              child: SingleChildScrollView(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _SidebarItem(
-                      icon: Icons.home_rounded,
-                      label: 'Home',
-                      route: '/dashboard',
-                      currentRoute: currentRoute,
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: 20,
+                        top: 20,
+                        bottom: 6,
+                      ),
+                      child: Text(
+                        'NAVIGATION',
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 9.5,
+                          color: const Color(0xFF4A6394),
+                          letterSpacing: 2.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    _SidebarItem(
-                      icon: Icons.folder_copy_rounded,
-                      label: 'Categories',
-                      route: '/categories',
-                      currentRoute: currentRoute,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0),
+                      child: Column(
+                        children: [
+                          _SidebarItem(
+                            icon: Icons.grid_view_rounded,
+                            label: 'Home',
+                            route: '/dashboard',
+                            currentRoute: currentRoute,
+                          ),
+                          _SidebarItem(
+                            icon: Icons.folder_outlined,
+                            label: 'Categories',
+                            route: '/categories',
+                            currentRoute: currentRoute,
+                          ),
+                          _SidebarItem(
+                            icon: Icons.note_add_outlined,
+                            label: 'Add Document',
+                            route: '/dashboard/add',
+                            currentRoute: currentRoute,
+                          ),
+                          _SidebarItem(
+                            icon: Icons.auto_awesome_outlined,
+                            label: 'AI Chat',
+                            route: '/dashboard/chat',
+                            currentRoute: currentRoute,
+                          ),
+                          const Divider(
+                            color: Color(0xFF1E3260),
+                            thickness: 0.8,
+                            indent: 20,
+                            endIndent: 20,
+                            height: 20,
+                          ),
+                          _SidebarItem(
+                            icon: Icons.settings_outlined,
+                            label: 'Settings',
+                            route: '/dashboard/settings',
+                            currentRoute: currentRoute,
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    _SidebarItem(
-                      icon: Icons.add_circle_outline_rounded,
-                      label: 'Add Document',
-                      route: '/dashboard/add',
-                      currentRoute: currentRoute,
+                    const Divider(
+                      color: Color(0xFF1E3260),
+                      thickness: 0.8,
+                      indent: 20,
+                      endIndent: 20,
+                      height: 20,
                     ),
-                    const SizedBox(height: 6),
-                    _SidebarItem(
-                      icon: Icons.auto_awesome_rounded,
-                      label: 'AI Chat',
-                      route: '/dashboard/chat',
-                      currentRoute: currentRoute,
-                      badgeColor: AppColors.gold,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                      child: Center(
+                        child: Text(
+                          'GDA VAULT AI  V1.0',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 9,
+                            color: const Color(0xFF2D4070),
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    _SidebarItem(
-                      icon: Icons.settings_rounded,
-                      label: 'Settings',
-                      route: '/dashboard/settings',
-                      currentRoute: currentRoute,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0),
+                      child: _SidebarItem(
+                        icon: Icons.logout_rounded,
+                        label: 'EXIT',
+                        route: '',
+                        currentRoute: '',
+                        isDestructive: true,
+                        onTap: () => _showExitDialog(context),
+                      ),
                     ),
-                    const Spacer(),
-
-                    _SidebarItem(
-                      icon: Icons.logout_rounded,
-                      label: 'Exit',
-                      route: '',
-                      currentRoute: '',
-                      isDestructive: true,
-                      onTap: () => _showExitDialog(context),
-                    ),
-                    SizedBox(
-                      height: MediaQuery.of(context).padding.bottom + 12,
-                    ),
+                    SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
                   ],
                 ),
               ),
@@ -201,7 +264,6 @@ class _SidebarItem extends StatefulWidget {
   final String label;
   final String route;
   final String currentRoute;
-  final Color? badgeColor;
   final bool isDestructive;
   final VoidCallback? onTap;
 
@@ -210,7 +272,6 @@ class _SidebarItem extends StatefulWidget {
     required this.label,
     required this.route,
     required this.currentRoute,
-    this.badgeColor,
     this.isDestructive = false,
     this.onTap,
   });
@@ -236,16 +297,40 @@ class _SidebarItemState extends State<_SidebarItem> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconColor = widget.isDestructive
-        ? AppColors.catPrivate.withValues(alpha: 0.75)
+    final isHovered = _hovered;
+    final isExit = widget.isDestructive;
+    final activeColor = const Color(0xFFC5A059);
+    final hoverBg = const Color(0xFF0F2040);
+    final activeBg = const Color(0xFF162B4F);
+    final inactiveIconColor = const Color(0xFF7B93C8);
+    final inactiveTextColor = const Color(0xFF7B93C8);
+    final hoverIconColor = const Color(0xFFB0C4E8);
+    final hoverTextColor = const Color(0xFFD0DCF0);
+    final exitColor = const Color(0xFFE57373);
+
+    final backgroundColor = isExit
+        ? (isHovered ? const Color(0xFF1A0A0A) : Colors.transparent)
         : _isActive
-        ? AppColors.gold
-        : _hovered
-        ? (isDark ? Colors.white : AppColors.charcoal)
-        : (isDark
-              ? Colors.white.withValues(alpha: 0.55)
-              : AppColors.charcoal.withValues(alpha: 0.6));
+        ? activeBg
+        : isHovered
+        ? hoverBg
+        : Colors.transparent;
+
+    final iconColor = isExit
+        ? exitColor
+        : _isActive
+        ? activeColor
+        : isHovered
+        ? hoverIconColor
+        : inactiveIconColor;
+
+    final textColor = isExit
+        ? exitColor
+        : _isActive
+        ? Colors.white
+        : isHovered
+        ? hoverTextColor
+        : inactiveTextColor;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -253,130 +338,40 @@ class _SidebarItemState extends State<_SidebarItem> {
       onExit: (_) => setState(() => _hovered = false),
       child: InkWell(
         onTap: widget.onTap ?? () => context.go(widget.route),
-        borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeInOut,
           width: double.infinity,
-          margin: const EdgeInsets.symmetric(vertical: 2),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          height: 44,
           decoration: BoxDecoration(
-            color: _isActive
-                ? AppColors.gold.withValues(alpha: 0.12)
-                : _hovered
-                ? Colors.white.withValues(alpha: 0.06)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: _isActive
-                ? Border.all(
-                    color: AppColors.gold.withValues(alpha: 0.24),
-                    width: 0.8,
-                  )
-                : null,
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxWidth < 100;
-              return Row(
-                children: [
-                  if (_isActive)
-                    Container(
-                      width: 3,
-                      height: 20,
-                      margin: const EdgeInsets.only(right: 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.gold,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                  Stack(
-                    children: [
-                      Icon(widget.icon, size: 20, color: iconColor),
-                      if (widget.badgeColor != null)
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: widget.badgeColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
-                  if (!compact)
-                    Expanded(
-                      child: Text(
-                        widget.label,
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 13,
-                          fontWeight: _isActive
-                              ? FontWeight.w700
-                              : FontWeight.w600,
-                          color: _isActive
-                              ? AppColors.gold
-                              : widget.isDestructive
-                              ? AppColors.catPrivate.withValues(alpha: 0.75)
-                              : (isDark
-                                    ? Colors.white.withValues(
-                                        alpha: _hovered ? 0.92 : 0.72,
-                                      )
-                                    : AppColors.charcoal.withValues(
-                                        alpha: _hovered ? 0.92 : 0.72,
-                                      )),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                  if (_isActive && !compact)
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 14,
-                      color: AppColors.gold.withValues(alpha: 0.7),
-                    ),
-                ],
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SidebarLogo extends StatelessWidget {
-  final Color errorColor;
-
-  const _SidebarLogo({required this.errorColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: AppColors.gold.withValues(alpha: 0.35),
-          width: 1.4,
-        ),
-      ),
-      child: ClipOval(
-        child: Image.asset(
-          'assets/images/gda_logo.png',
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Center(
-            child: Text(
-              'GDA',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: errorColor,
+            color: backgroundColor,
+            border: Border(
+              left: BorderSide(
+                color: _isActive ? activeColor : Colors.transparent,
+                width: 3,
               ),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Icon(widget.icon, size: 18, color: iconColor),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    widget.label.toUpperCase(),
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontSize: 12.5,
+                      fontWeight: _isActive ? FontWeight.w600 : FontWeight.w500,
+                      color: textColor,
+                      letterSpacing: 1.5,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

@@ -75,6 +75,7 @@ class ChatMessage {
   final DateTime timestamp;
   final List<SourceCitation> citations; // empty for user messages
   final bool isTyping; // true = show typing bubble
+  final bool fromCache; // true = instantaneous response from cache
 
   const ChatMessage({
     required this.id,
@@ -83,12 +84,14 @@ class ChatMessage {
     required this.timestamp,
     this.citations = const [],
     this.isTyping = false,
+    this.fromCache = false,
   });
 
   ChatMessage copyWith({
     String? content,
     bool? isTyping,
     List<SourceCitation>? citations,
+    bool? fromCache,
   }) {
     return ChatMessage(
       id: id,
@@ -97,6 +100,7 @@ class ChatMessage {
       timestamp: timestamp,
       citations: citations ?? this.citations,
       isTyping: isTyping ?? this.isTyping,
+      fromCache: fromCache ?? this.fromCache,
     );
   }
 }

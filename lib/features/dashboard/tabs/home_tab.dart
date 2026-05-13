@@ -225,99 +225,101 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (isLargeScreen)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            (isDark
-                                    ? AppColors.goldDark
-                                    : AppColors.goldLightBrand)
-                                .withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
                           color:
                               (isDark
                                       ? AppColors.goldDark
                                       : AppColors.goldLightBrand)
-                                  .withValues(alpha: 0.3),
-                          width: 0.8,
+                                  .withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color:
+                                (isDark
+                                        ? AppColors.goldDark
+                                        : AppColors.goldLightBrand)
+                                    .withValues(alpha: 0.3),
+                            width: 0.8,
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'SECURE VAULT',
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w900,
-                          color: isDark
-                              ? AppColors.goldDark
-                              : AppColors.goldLightBrand,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      _getGreeting(),
-                      style: AppTextStyles.playfairDisplay.copyWith(
-                        fontSize: isLargeScreen ? 32 : 26,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Galiyat Development Authority',
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.7),
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.calendar_today_rounded,
-                            size: 11,
+                        child: Text(
+                          'SECURE VAULT',
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w900,
                             color: isDark
                                 ? AppColors.goldDark
                                 : AppColors.goldLightBrand,
+                            letterSpacing: 1.2,
                           ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            fit: FlexFit.loose,
-                            child: Text(
-                              _getFormattedDate().toUpperCase(),
-                              style: AppTextStyles.dmSans.copyWith(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white.withValues(alpha: 0.9),
-                                letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        _getGreeting(),
+                        style: AppTextStyles.playfairDisplay.copyWith(
+                          fontSize: isLargeScreen ? 32 : 26,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Galiyat Development Authority',
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withValues(alpha: 0.7),
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              size: 11,
+                              color: isDark
+                                  ? AppColors.goldDark
+                                  : AppColors.goldLightBrand,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              fit: FlexFit.loose,
+                              child: Text(
+                                _getFormattedDate().toUpperCase(),
+                                style: AppTextStyles.dmSans.copyWith(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ]
+                    ],
+                  ),
                 )
               else
                 Expanded(
@@ -416,23 +418,40 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                     ],
                   ),
                 ),
-              if (isLargeScreen) const Spacer(),
-              if (!isLargeScreen) const SizedBox(width: 16),
-              Flexible(
-                fit: FlexFit.loose,
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxWidth: logoSize,
-                    maxHeight: logoSize,
+              if (isLargeScreen)
+                SizedBox(
+                  width: logoSize + 28,
+                  height: logoSize,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: SizedBox(
+                      width: logoSize,
+                      height: logoSize,
+                      child: Image.asset(
+                        'assets/images/gda_logo.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
-                  decoration: const BoxDecoration(color: Colors.transparent),
-                  padding: const EdgeInsets.all(4),
-                  child: Image.asset(
-                    'assets/images/gda_logo.png',
-                    fit: BoxFit.contain,
+                )
+              else
+                const SizedBox(width: 16),
+              if (!isLargeScreen)
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: logoSize,
+                      maxHeight: logoSize,
+                    ),
+                    decoration: const BoxDecoration(color: Colors.transparent),
+                    padding: const EdgeInsets.all(4),
+                    child: Image.asset(
+                      'assets/images/gda_logo.png',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ],

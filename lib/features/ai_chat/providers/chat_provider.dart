@@ -479,6 +479,7 @@ class ChatNotifier extends Notifier<ChatState> {
 
       final answer = response['answer']?.toString() ?? 'No response from AI.';
       final sourcesData = response['sources'] as List? ?? [];
+      final isFromCache = response['from_cache'] == true;
 
       final citations = sourcesData.map((s) {
         final citation = SourceCitation.fromJson(s as Map<String, dynamic>);
@@ -513,6 +514,7 @@ class ChatNotifier extends Notifier<ChatState> {
         isUser: false,
         timestamp: DateTime.now(),
         citations: citations,
+        fromCache: isFromCache,
       );
 
       // Save AI message

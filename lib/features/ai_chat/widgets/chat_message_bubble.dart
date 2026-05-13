@@ -3,13 +3,15 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/chat_state.dart';
+import '../providers/chat_font_size_provider.dart';
 import 'typing_indicator.dart';
 import 'source_citation_card.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 
-class ChatMessageBubble extends StatelessWidget {
+class ChatMessageBubble extends ConsumerWidget {
   final ChatMessage message;
 
   const ChatMessageBubble({super.key, required this.message});
@@ -19,8 +21,9 @@ class ChatMessageBubble extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final chatFontSize = ref.watch(chatFontSizeProvider);
 
     if (message.isTyping) {
       return Padding(
@@ -38,9 +41,9 @@ class ChatMessageBubble extends StatelessWidget {
                     : CrossAxisAlignment.start,
                 children: [
                   if (message.isUser)
-                    _buildUserMessage(context)
+                    _buildUserMessage(context, chatFontSize)
                   else
-                    _buildAiMessage(context, isDark),
+                    _buildAiMessage(context, isDark, chatFontSize),
                 ],
               )
               .animate()
@@ -54,7 +57,7 @@ class ChatMessageBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildUserMessage(BuildContext context) {
+  Widget _buildUserMessage(BuildContext context, double chatFontSize) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Row(
@@ -107,7 +110,7 @@ class ChatMessageBubble extends StatelessWidget {
             child: SelectableText(
               message.content,
               style: AppTextStyles.dmSans.copyWith(
-                fontSize: 14.5,
+                fontSize: chatFontSize,
                 color: Colors.white,
                 height: 1.5,
                 letterSpacing: 0.2,
@@ -145,7 +148,11 @@ class ChatMessageBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildAiMessage(BuildContext context, bool isDark) {
+  Widget _buildAiMessage(
+    BuildContext context,
+    bool isDark,
+    double chatFontSize,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -223,6 +230,27 @@ class ChatMessageBubble extends StatelessWidget {
                             .withValues(alpha: 0.3),
                       ),
                     ),
+                    if (!message.isUser && message.fromCache) ...[
+                      const SizedBox(width: 10),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.bolt_rounded,
+                            size: 12,
+                            color: Colors.green.shade400,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            'Instant response',
+                            style: AppTextStyles.dmSans.copyWith(
+                              fontSize: 10,
+                              color: Colors.green.shade400,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -236,47 +264,9 @@ class ChatMessageBubble extends StatelessWidget {
                       data: message.content,
                       selectable: true,
                       shrinkWrap: true,
-                      styleSheet: MarkdownStyleSheet(
-                        p: AppTextStyles.dmSans.copyWith(
-                          fontSize: 15.2,
-                          color: isDark
-                              ? AppColors.darkText
-                              : AppColors.charcoal,
-                          height: 1.58,
-                          letterSpacing: 0.08,
-                        ),
-                        strong: AppTextStyles.dmSans.copyWith(
-                          fontSize: 15.2,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? AppColors.darkText
-                              : AppColors.charcoal,
-                          height: 1.58,
-                          letterSpacing: 0.08,
-                        ),
-                        tableHead: AppTextStyles.dmSans.copyWith(
-                          fontSize: 12.2,
-                          fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : AppColors.navyDark,
-                          height: 1.3,
-                        ),
-                        tableBody: AppTextStyles.dmSans.copyWith(
-                          fontSize: 12.2,
-                          color: isDark
-                              ? AppColors.darkText
-                              : AppColors.charcoal,
-                          height: 1.38,
-                        ),
-                        tableBorder: TableBorder.all(
-                          color: AppColors.gold.withValues(alpha: 0.32),
-                          width: 0.5,
-                        ),
-                        tableColumnWidth: const IntrinsicColumnWidth(),
-                        tableScrollbarThumbVisibility: true,
-                        tableCellsPadding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 7,
-                        ),
+                      styleSheet: _buildMarkdownStyleSheet(
+                        isDark: isDark,
+                        chatFontSize: chatFontSize,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -284,7 +274,9 @@ class ChatMessageBubble extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       child: InkWell(
                         onTap: () {
-                          Clipboard.setData(ClipboardData(text: message.content));
+                          Clipboard.setData(
+                            ClipboardData(text: message.content),
+                          );
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Response copied to clipboard'),
@@ -301,8 +293,9 @@ class ChatMessageBubble extends StatelessWidget {
                               Icon(
                                 Icons.copy_rounded,
                                 size: 14,
-                                color: (isDark ? Colors.white : AppColors.charcoal)
-                                    .withValues(alpha: 0.5),
+                                color:
+                                    (isDark ? Colors.white : AppColors.charcoal)
+                                        .withValues(alpha: 0.5),
                               ),
                               const SizedBox(width: 6),
                               Text(
@@ -310,8 +303,11 @@ class ChatMessageBubble extends StatelessWidget {
                                 style: AppTextStyles.dmSans.copyWith(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: (isDark ? Colors.white : AppColors.charcoal)
-                                      .withValues(alpha: 0.5),
+                                  color:
+                                      (isDark
+                                              ? Colors.white
+                                              : AppColors.charcoal)
+                                          .withValues(alpha: 0.5),
                                 ),
                               ),
                             ],
@@ -375,6 +371,97 @@ class ChatMessageBubble extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  MarkdownStyleSheet _buildMarkdownStyleSheet({
+    required bool isDark,
+    required double chatFontSize,
+  }) {
+    final baseColor = isDark ? AppColors.darkText : AppColors.charcoal;
+    final headingBase = chatFontSize + 2;
+
+    return MarkdownStyleSheet(
+      p: AppTextStyles.dmSans.copyWith(
+        fontSize: chatFontSize,
+        color: baseColor,
+        height: 1.58,
+        letterSpacing: 0.08,
+      ),
+      strong: AppTextStyles.dmSans.copyWith(
+        fontSize: chatFontSize,
+        fontWeight: FontWeight.w700,
+        color: baseColor,
+        height: 1.58,
+        letterSpacing: 0.08,
+      ),
+      em: AppTextStyles.dmSans.copyWith(
+        fontSize: chatFontSize,
+        color: baseColor,
+        height: 1.58,
+      ),
+      code: AppTextStyles.dmSans.copyWith(
+        fontSize: chatFontSize - 1,
+        color: baseColor,
+        height: 1.45,
+      ),
+      h1: AppTextStyles.playfairDisplay.copyWith(
+        fontSize: headingBase + 4,
+        fontWeight: FontWeight.w800,
+        color: baseColor,
+        height: 1.2,
+      ),
+      h2: AppTextStyles.playfairDisplay.copyWith(
+        fontSize: headingBase + 2,
+        fontWeight: FontWeight.w800,
+        color: baseColor,
+        height: 1.25,
+      ),
+      h3: AppTextStyles.dmSans.copyWith(
+        fontSize: headingBase + 1,
+        fontWeight: FontWeight.w700,
+        color: baseColor,
+        height: 1.3,
+      ),
+      h4: AppTextStyles.dmSans.copyWith(
+        fontSize: headingBase,
+        fontWeight: FontWeight.w700,
+        color: baseColor,
+        height: 1.3,
+      ),
+      h5: AppTextStyles.dmSans.copyWith(
+        fontSize: chatFontSize,
+        fontWeight: FontWeight.w700,
+        color: baseColor,
+        height: 1.3,
+      ),
+      h6: AppTextStyles.dmSans.copyWith(
+        fontSize: chatFontSize,
+        fontWeight: FontWeight.w700,
+        color: baseColor,
+        height: 1.3,
+      ),
+      tableHead: AppTextStyles.dmSans.copyWith(
+        fontSize: chatFontSize - 2,
+        fontWeight: FontWeight.w800,
+        color: isDark ? Colors.white : AppColors.navyDark,
+        height: 1.3,
+      ),
+      tableBody: AppTextStyles.dmSans.copyWith(
+        fontSize: chatFontSize - 2,
+        color: baseColor,
+        height: 1.38,
+      ),
+      tableBorder: TableBorder.all(
+        color: AppColors.gold.withValues(alpha: 0.32),
+        width: 0.5,
+      ),
+      tableColumnWidth: const IntrinsicColumnWidth(),
+      tableScrollbarThumbVisibility: true,
+      tableCellsPadding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 7,
+      ),
     );
   }
 }
