@@ -103,492 +103,320 @@ class _DefaultCategorySelectorSheetState
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 14, bottom: 10),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : AppColors.charcoal.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Standardized, Professional AppBar with proper SafeArea handling
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF161E35) : AppColors.navyDark,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
               ),
             ),
-            // Standardized AppBar-style Header
-            Container(
-              height: 76,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [const Color(0xFF161E35), const Color(0xFF0A0F1E)]
-                      : [AppColors.navyDark, AppColors.navyMid],
-                ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: SafeArea(
-                bottom: false,
+            child: SafeArea(
+              bottom: false,
+              child: SizedBox(
+                height: 56,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const Icon(
-                          Icons.arrow_back_rounded,
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
                           color: Colors.white,
-                          size: 24,
+                          size: 20,
                         ),
                       ),
                       Expanded(
-                        child: Center(
-                          child: Text(
-                            "Default chat Categories",
-                            style: AppTextStyles.playfairDisplay.copyWith(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
-                            ),
+                        child: Text(
+                          "Default Chat Categories",
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 24), // Spacer for balance
+                      const SizedBox(width: 48), // Spacer for symmetry
                     ],
                   ),
                 ),
               ),
             ),
-            Container(
-              height: 1.2,
-              margin: EdgeInsets.zero,
+          ),
+
+          // Status/Hint Bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.divider.withValues(alpha: 0),
-                    AppColors.divider.withValues(alpha: 0.8),
-                    AppColors.divider.withValues(alpha: 0),
-                  ],
+                color: isDark
+                    ? AppColors.darkCard
+                    : AppColors.navyLight.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.navyLight.withValues(alpha: 0.1),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkCard
-                      : AppColors.navyLight.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: AppColors.navyLight.withValues(alpha: 0.15),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: AppColors.navyLight.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.category_rounded, // Changed from auto_awesome
-                        size: 15,
-                        color: AppColors.navyLight,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        selectedNames.isEmpty
-                            ? "No defaults selected yet."
-                            : "New chats will open with: ${selectedNames.join(', ')}",
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.75)
-                              : AppColors.charcoal.withValues(alpha: 0.75),
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: topCategories.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 10),
-                itemBuilder: (context, index) {
-                  final cat = topCategories[index];
-                  final isSelected = _selectedIds.contains(cat.id);
-                  final children =
-                      childrenByParent[cat.id] ?? const <ChatCategory>[];
-                  final hasChildren = children.isNotEmpty;
-                  final isExpanded =
-                      _expandedParentIds.contains(cat.id) ||
-                      (hasChildren && isSelected);
-                  return InkWell(
-                    onTap: () {
-                      _toggleCategory(cat.id);
-                      if (hasChildren) {
-                        _toggleParentExpansion(cat.id);
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(14),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? cat.color.withValues(alpha: isDark ? 0.12 : 0.08)
-                            : (isDark ? AppColors.darkCard : Colors.white),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isSelected
-                              ? cat.color.withValues(alpha: isDark ? 0.4 : 0.28)
-                              : (isDark
-                                    ? Colors.white.withValues(alpha: 0.08)
-                                    : AppColors.divider),
-                          width: isSelected ? 1.2 : 0.9,
-                        ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: cat.color.withValues(alpha: 0.08),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ]
-                            : [],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: cat.color.withValues(
-                                alpha: isSelected ? 0.18 : 0.08,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              cat.icon,
-                              color: cat.color.withValues(
-                                alpha: isSelected ? 1 : 0.7,
-                              ),
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  cat.name,
-                                  style: AppTextStyles.dmSans.copyWith(
-                                    fontSize: 14,
-                                    fontWeight: isSelected
-                                        ? FontWeight.w700
-                                        : FontWeight.w600,
-                                    color: isDark
-                                        ? Colors.white
-                                        : AppColors.charcoal,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  "${_formatCount(cat.docCount)} documents",
-                                  style: AppTextStyles.dmSans.copyWith(
-                                    fontSize: 10,
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.4)
-                                        : AppColors.charcoal.withValues(
-                                            alpha: 0.45,
-                                          ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isSelected
-                                  ? cat.color
-                                  : Colors.transparent,
-                              border: Border.all(
-                                color: isSelected
-                                    ? cat.color
-                                    : AppColors.divider,
-                                width: isSelected ? 2 : 1.4,
-                              ),
-                            ),
-                            child: isSelected
-                                ? const Icon(
-                                    Icons.check_rounded,
-                                    size: 13,
-                                    color: Colors.white,
-                                  )
-                                : null,
-                          ),
-                          if (hasChildren) ...[
-                            const SizedBox(width: 6),
-                            Icon(
-                              isExpanded
-                                  ? Icons.expand_less_rounded
-                                  : Icons.expand_more_rounded,
-                              size: 18,
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.45)
-                                  : AppColors.charcoal.withValues(alpha: 0.45),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            if (_selectedIds.any(
-              (id) => childrenByParent.values
-                  .expand((list) => list)
-                  .any((child) => child.id == id),
-            ))
-              const SizedBox(height: 6),
-            if (topCategories.any(
-              (cat) =>
-                  _expandedParentIds.contains(cat.id) ||
-                  (_selectedIds.contains(cat.id) &&
-                      (childrenByParent[cat.id]?.isNotEmpty ?? false)),
-            ))
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
-                child: Column(
-                  children: topCategories
-                      .where((cat) {
-                        final children =
-                            childrenByParent[cat.id] ?? const <ChatCategory>[];
-                        return children.isNotEmpty &&
-                            (_expandedParentIds.contains(cat.id) ||
-                                _selectedIds.contains(cat.id));
-                      })
-                      .expand((parent) {
-                        final children =
-                            childrenByParent[parent.id] ??
-                            const <ChatCategory>[];
-                        return children.map((child) {
-                          final isSelected = _selectedIds.contains(child.id);
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: InkWell(
-                              onTap: () => _toggleCategory(child.id),
-                              borderRadius: BorderRadius.circular(14),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? child.color.withValues(
-                                          alpha: isDark ? 0.12 : 0.08,
-                                        )
-                                      : (isDark
-                                            ? AppColors.darkCard.withValues(
-                                                alpha: 0.8,
-                                              )
-                                            : AppColors.paper.withValues(
-                                                alpha: 0.7,
-                                              )),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? child.color.withValues(
-                                            alpha: isDark ? 0.4 : 0.28,
-                                          )
-                                        : (isDark
-                                              ? Colors.white.withValues(
-                                                  alpha: 0.08,
-                                                )
-                                              : AppColors.divider),
-                                    width: isSelected ? 1.2 : 0.9,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const SizedBox(width: 20),
-                                    Container(
-                                      width: 34,
-                                      height: 34,
-                                      decoration: BoxDecoration(
-                                        color: child.color.withValues(
-                                          alpha: isSelected ? 0.18 : 0.08,
-                                        ),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(
-                                        child.icon,
-                                        color: child.color.withValues(
-                                          alpha: isSelected ? 1 : 0.7,
-                                        ),
-                                        size: 18,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            child.name,
-                                            style: AppTextStyles.dmSans
-                                                .copyWith(
-                                                  fontSize: 13,
-                                                  fontWeight: isSelected
-                                                      ? FontWeight.w700
-                                                      : FontWeight.w600,
-                                                  color: isDark
-                                                      ? Colors.white
-                                                      : AppColors.charcoal,
-                                                ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            "${_formatCount(child.docCount)} documents",
-                                            style: AppTextStyles.dmSans
-                                                .copyWith(
-                                                  fontSize: 10,
-                                                  color: isDark
-                                                      ? Colors.white.withValues(
-                                                          alpha: 0.4,
-                                                        )
-                                                      : AppColors.charcoal
-                                                            .withValues(
-                                                              alpha: 0.45,
-                                                            ),
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 180,
-                                      ),
-                                      width: 24,
-                                      height: 24,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: isSelected
-                                            ? child.color
-                                            : Colors.transparent,
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? child.color
-                                              : AppColors.divider,
-                                          width: isSelected ? 2 : 1.4,
-                                        ),
-                                      ),
-                                      child: isSelected
-                                          ? const Icon(
-                                              Icons.check_rounded,
-                                              size: 13,
-                                              color: Colors.white,
-                                            )
-                                          : null,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        });
-                      })
-                      .toList(),
-                ),
-              ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                16,
-                20,
-                20 + MediaQuery.of(context).padding.bottom,
               ),
               child: Row(
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                        side: BorderSide(
-                          color: AppColors.divider.withValues(alpha: 0.8),
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        "Cancel",
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : AppColors.charcoal,
-                        ),
-                      ),
-                    ),
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: isDark ? Colors.white70 : AppColors.navyLight,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: _selectedIds.isEmpty || _selectedIds.length > 2
-                          ? null
-                          : _save,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                        backgroundColor: AppColors.navyDark,
-                        disabledBackgroundColor: AppColors.navyDark.withValues(
-                          alpha: 0.35,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        "Save Defaults",
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
+                    child: Text(
+                      selectedNames.isEmpty
+                          ? "Select up to 2 default categories for new chats."
+                          : "New chats will open with: ${selectedNames.join(', ')}",
+                      style: AppTextStyles.dmSans.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.charcoal.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
                 ],
               ),
+            ),
+          ),
+
+          // Categories List
+          Expanded(
+            child: ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              itemCount: topCategories.length,
+              itemBuilder: (context, index) {
+                final parent = topCategories[index];
+                final isParentSelected = _selectedIds.contains(parent.id);
+                final children =
+                    childrenByParent[parent.id] ?? const <ChatCategory>[];
+                final hasChildren = children.isNotEmpty;
+                final isExpanded = _expandedParentIds.contains(parent.id);
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Parent Category Item
+                    _buildCategoryItem(
+                      category: parent,
+                      isSelected: isParentSelected,
+                      isDark: isDark,
+                      onTap: () {
+                        _toggleCategory(parent.id);
+                        if (hasChildren) {
+                          _toggleParentExpansion(parent.id);
+                        }
+                      },
+                      trailing: hasChildren
+                          ? Icon(
+                              isExpanded
+                                  ? Icons.keyboard_arrow_up_rounded
+                                  : Icons.keyboard_arrow_down_rounded,
+                              color: isDark ? Colors.white38 : Colors.black26,
+                            )
+                          : null,
+                    ),
+
+                    // Sub-categories (Conditional)
+                    if (hasChildren && isExpanded)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, bottom: 8),
+                        child: Column(
+                          children: children.map((child) {
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                left: 24,
+                                bottom: 8,
+                              ),
+                              child: _buildCategoryItem(
+                                category: child,
+                                isSelected: _selectedIds.contains(child.id),
+                                isDark: isDark,
+                                isSubCategory: true,
+                                onTap: () => _toggleCategory(child.id),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                  ],
+                );
+              },
+            ),
+          ),
+
+          // Footer Actions
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              16,
+              20,
+              20 + MediaQuery.of(context).padding.bottom,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      "Cancel",
+                      style: AppTextStyles.dmSans.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? Colors.white60
+                            : AppColors.charcoal.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _selectedIds.isEmpty ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                      backgroundColor: AppColors.navyDark,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      disabledBackgroundColor: AppColors.navyDark.withOpacity(
+                        0.4,
+                      ),
+                    ),
+                    child: Text(
+                      "Save Defaults",
+                      style: AppTextStyles.dmSans.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryItem({
+    required ChatCategory category,
+    required bool isSelected,
+    required bool isDark,
+    required VoidCallback onTap,
+    bool isSubCategory = false,
+    Widget? trailing,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? category.color.withOpacity(isDark ? 0.15 : 0.08)
+              : (isDark ? AppColors.darkCard : Colors.white),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? category.color.withOpacity(0.5)
+                : (isDark ? Colors.white10 : AppColors.divider),
+            width: isSelected ? 1.5 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: category.color.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: isSubCategory ? 32 : 40,
+              height: isSubCategory ? 32 : 40,
+              decoration: BoxDecoration(
+                color: category.color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(isSubCategory ? 8 : 10),
+              ),
+              child: Icon(
+                category.icon,
+                color: category.color,
+                size: isSubCategory ? 16 : 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    category.name,
+                    style: AppTextStyles.dmSans.copyWith(
+                      fontSize: isSubCategory ? 13 : 14,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w600,
+                      color: isDark ? Colors.white : AppColors.charcoal,
+                    ),
+                  ),
+                  if (!isSubCategory)
+                    Text(
+                      "${_formatCount(category.docCount)} documents",
+                      style: AppTextStyles.dmSans.copyWith(
+                        fontSize: 10,
+                        color: isDark
+                            ? Colors.white38
+                            : AppColors.charcoal.withOpacity(0.4),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (trailing != null) trailing,
+            const SizedBox(width: 8),
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? category.color : Colors.transparent,
+                border: Border.all(
+                  color: isSelected ? category.color : AppColors.divider,
+                  width: 1.5,
+                ),
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check, size: 12, color: Colors.white)
+                  : null,
             ),
           ],
         ),

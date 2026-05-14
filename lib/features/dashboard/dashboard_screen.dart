@@ -167,7 +167,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         widget.child,
                         if (!hideBottomNav &&
                             currentIndex != 1 &&
-                            currentIndex != 3)
+                            currentIndex != 3 &&
+                            currentIndex != 4)
                           Positioned(
                             bottom: fabBottom,
                             right: fabRight,
@@ -182,9 +183,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 children: [
                   widget.child,
                   if (!hideBottomNav &&
-                      currentIndex !=
-                          1 && // Hide on Categories tab (to show FAB properly)
-                      currentIndex != 3) // Hide on Chat tab
+                      currentIndex != 1 && // Hide on Categories tab
+                      currentIndex != 3 && // Hide on Chat tab
+                      currentIndex != 4) // Hide on Settings tab
                     Positioned(
                       bottom: fabBottom,
                       right: fabRight,

@@ -33,8 +33,15 @@ class AiChatService {
           .timeout(const Duration(seconds: 60));
 
       if (response.statusCode == 200) {
-        final result = jsonDecode(response.body) as Map<String, dynamic>;
-        return result;
+        if (response.body.isEmpty) {
+          throw Exception('Empty response from AI server');
+        }
+        try {
+          final result = jsonDecode(response.body) as Map<String, dynamic>;
+          return result;
+        } catch (e) {
+          throw Exception('Invalid JSON from AI server: ${response.body}');
+        }
       } else {
         throw Exception('Chat API error: ${response.statusCode}');
       }

@@ -20,25 +20,22 @@ class DesktopShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final sidebarWidth = ResponsiveHelper.sidebarWidth(context);
-    
+
     // Use the actual URI path from context for more reliable sub-route detection
     final effectiveRoute = GoRouterState.of(context).uri.path;
-    
+
     // Robust check: Only show if route is exactly '/dashboard' or '/'
     // Hide if it contains sub-paths like /dashboard/recent-documents
-    final showHomeAppBar = effectiveRoute == '/dashboard' || 
-                          effectiveRoute == '/dashboard/' || 
-                          effectiveRoute == '/';
+    final showHomeAppBar =
+        effectiveRoute == '/dashboard' ||
+        effectiveRoute == '/dashboard/' ||
+        effectiveRoute == '/';
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
       body: Row(
         children: [
-          SizedBox(
-            width: sidebarWidth,
-            child: DesktopSidebar(currentRoute: effectiveRoute),
-          ),
+          DesktopSidebar(currentRoute: effectiveRoute),
           Expanded(
             child: Column(
               children: [

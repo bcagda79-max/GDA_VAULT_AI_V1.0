@@ -327,7 +327,14 @@ class SettingsTab extends ConsumerWidget {
                 context: context,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
-                builder: (ctx) => const DefaultCategorySelectorSheet(),
+                builder: (ctx) => DraggableScrollableSheet(
+                  initialChildSize: 0.75,
+                  minChildSize: 0.5,
+                  maxChildSize: 0.9,
+                  expand: false,
+                  builder: (_, scrollController) =>
+                      const DefaultCategorySelectorSheet(),
+                ),
               );
             },
           ),
