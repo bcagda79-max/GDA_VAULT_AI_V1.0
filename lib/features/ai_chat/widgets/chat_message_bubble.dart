@@ -230,27 +230,6 @@ class ChatMessageBubble extends ConsumerWidget {
                             .withValues(alpha: 0.3),
                       ),
                     ),
-                    if (!message.isUser && message.fromCache) ...[
-                      const SizedBox(width: 10),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.bolt_rounded,
-                            size: 12,
-                            color: Colors.green.shade400,
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            'Instant response',
-                            style: AppTextStyles.dmSans.copyWith(
-                              fontSize: 10,
-                              color: Colors.green.shade400,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -272,47 +251,9 @@ class ChatMessageBubble extends ConsumerWidget {
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: InkWell(
-                        onTap: () {
-                          Clipboard.setData(
-                            ClipboardData(text: message.content),
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Response copied to clipboard'),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(6),
-                        child: Padding(
-                          padding: const EdgeInsets.all(6.0),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.copy_rounded,
-                                size: 14,
-                                color:
-                                    (isDark ? Colors.white : AppColors.charcoal)
-                                        .withValues(alpha: 0.5),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                "Copy",
-                                style: AppTextStyles.dmSans.copyWith(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color:
-                                      (isDark
-                                              ? Colors.white
-                                              : AppColors.charcoal)
-                                          .withValues(alpha: 0.5),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      child: _CopyButton(
+                        textToCopy: message.content,
+                        isDark: isDark,
                       ),
                     ),
                     if (message.citations.isNotEmpty) ...[
@@ -461,6 +402,88 @@ class ChatMessageBubble extends ConsumerWidget {
       tableCellsPadding: const EdgeInsets.symmetric(
         horizontal: 10,
         vertical: 7,
+      ),
+    );
+  }
+}
+
+enum _CopyState { idle, loading, copied }
+
+class _CopyButton extends StatefulWidget {
+  final String textToCopy;
+  final bool isDark;
+
+  const _CopyButton({
+    super.key,
+    required this.textToCopy,
+    required this.isDark,
+  });
+
+  @override
+  State<_CopyButton> createState() => _CopyButtonState();
+}
+
+class _CopyButtonState extends State<_CopyButton> {
+  _CopyState _state = _CopyState.idle;
+
+  Future<void> _handleCopy() async {
+    if (_state != _CopyState.idle) return;
+
+    setState(() => _state = _CopyState.loading);
+
+    await Clipboard.setData(ClipboardData(text: widget.textToCopy));
+
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+
+    setState(() => _state = _CopyState.copied);
+
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    setState(() => _state = _CopyState.idle);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = (widget.isDark ? Colors.white : AppColors.charcoal)
+        .withValues(alpha: 0.5);
+
+    return InkWell(
+      onTap: _handleCopy,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.all(6.0),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: _state == _CopyState.loading
+                  ? CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                    )
+                  : Icon(
+                      _state == _CopyState.copied
+                          ? Icons.check_rounded
+                          : Icons.copy_rounded,
+                      size: 14,
+                      color: color,
+                    ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              _state == _CopyState.copied ? "Copied" : "Copy",
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

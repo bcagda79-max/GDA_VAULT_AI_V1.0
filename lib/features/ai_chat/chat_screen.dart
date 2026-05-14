@@ -196,8 +196,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   PreferredSizeWidget _buildAppBar(bool isDark) {
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     return PreferredSize(
-      preferredSize: const Size.fromHeight(76.0),
+      preferredSize: Size.fromHeight(isLandscape ? 48.0 : 56.0),
       child: AppBar(
         backgroundColor: Colors.transparent,
         flexibleSpace: Container(
@@ -514,48 +516,50 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-          Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: AppColors.gold.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+            Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppColors.gold.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    size: 30,
+                    color: AppColors.gold,
+                  ),
+                )
+                .animate(
+                  onPlay: (controller) => controller.repeat(reverse: true),
+                )
+                .moveY(
+                  begin: -5,
+                  end: 5,
+                  duration: 2.seconds,
+                  curve: Curves.easeInOut,
                 ),
-                child: const Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  size: 30,
-                  color: AppColors.gold,
-                ),
-              )
-              .animate(onPlay: (controller) => controller.repeat(reverse: true))
-              .moveY(
-                begin: -5,
-                end: 5,
-                duration: 2.seconds,
-                curve: Curves.easeInOut,
-              ),
-          const SizedBox(height: 20),
-          Text(
-            "Ready to Search",
-            style: AppTextStyles.playfairDisplay.copyWith(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: isDark ? AppColors.darkText : AppColors.charcoal,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Ask anything about the selected\ndocument categories",
-            textAlign: TextAlign.center,
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 14,
-              color: (isDark ? Colors.white : AppColors.charcoal).withValues(
-                alpha: 0.4,
+            const SizedBox(height: 20),
+            Text(
+              "Ready to Search",
+              style: AppTextStyles.playfairDisplay.copyWith(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: isDark ? AppColors.darkText : AppColors.charcoal,
               ),
             ),
-          ),
-        ],
-      ),
+            const SizedBox(height: 8),
+            Text(
+              "Ask anything about the selected\ndocument categories",
+              textAlign: TextAlign.center,
+              style: AppTextStyles.dmSans.copyWith(
+                fontSize: 14,
+                color: (isDark ? Colors.white : AppColors.charcoal).withValues(
+                  alpha: 0.4,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

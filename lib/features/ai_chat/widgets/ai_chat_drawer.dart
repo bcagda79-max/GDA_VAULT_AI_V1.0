@@ -13,16 +13,20 @@ class AiChatDrawer extends ConsumerWidget {
     final chatState = ref.watch(chatProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final screenWidth = MediaQuery.of(context).size.width;
-    // Use a compact drawer on phones but a half-screen panel on desktop for better usability.
+    final mq = MediaQuery.of(context);
+    final screenWidth = mq.size.width;
+    final isLandscape = mq.orientation == Orientation.landscape;
+    // Desktop: half-screen. Mobile: 70% in portrait, 30% in landscape to avoid overflow.
     final drawerWidth = screenWidth >= 900
         ? screenWidth * 0.5
-        : screenWidth * 0.85;
+        : (isLandscape ? screenWidth * 0.3 : screenWidth * 0.7);
 
     return Drawer(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
       width: drawerWidth,
-      child: Column(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        physics: const BouncingScrollPhysics(),
         children: [
           _buildTopBar(context, ref, isDark),
           _buildMainActions(context, ref, isDark),
@@ -220,45 +224,49 @@ class AiChatDrawer extends ConsumerWidget {
     WidgetRef ref,
     bool isDark,
   ) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Text(
-              'Chats',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: (isDark ? Colors.white : Colors.black).withValues(
-                  alpha: 0.4,
-                ),
+    // This section is placed inside the drawer ListView; avoid using Expanded
+    // so it doesn't try to apply Flex parent data. Use a shrink-wrapped ListView
+    // for the session list instead.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Text(
+            'Chats',
+            style: AppTextStyles.dmSans.copyWith(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: (isDark ? Colors.white : Colors.black).withValues(
+                alpha: 0.4,
               ),
             ),
           ),
-          Expanded(
-            child: state.recentSessions.isEmpty
-                ? _buildEmptyHistory(isDark)
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: state.recentSessions.length,
-                    itemBuilder: (context, index) {
-                      final session = state.recentSessions[index];
-                      final isSelected = state.sessionId == session['id'];
-                      return _buildHistoryItem(
-                        context,
-                        session,
-                        isSelected,
-                        ref,
-                        isDark,
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
+        ),
+        state.recentSessions.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: _buildEmptyHistory(isDark),
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: state.recentSessions.length,
+                itemBuilder: (context, index) {
+                  final session = state.recentSessions[index];
+                  final isSelected = state.sessionId == session['id'];
+                  return _buildHistoryItem(
+                    context,
+                    session,
+                    isSelected,
+                    ref,
+                    isDark,
+                  );
+                },
+              ),
+      ],
     );
   }
 

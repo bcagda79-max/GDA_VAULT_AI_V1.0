@@ -413,8 +413,11 @@ class ChatNotifier extends Notifier<ChatState> {
     if (userText.trim().isEmpty || !state.categoriesSelected || state.isLoading) return;
 
     // Use defaults if user hasn't selected years
+    final currentYear = DateTime.now().year;
+    final maxYear = currentYear > 2026 ? currentYear.toString() : '2026';
+    
     final effectiveYearFrom = state.yearFrom ?? '1996';
-    final effectiveYearTo = state.yearTo ?? '2026';
+    final effectiveYearTo = state.yearTo ?? maxYear;
 
     final userMsg = ChatMessage(
       id: _uuid.v4(),
@@ -479,7 +482,6 @@ class ChatNotifier extends Notifier<ChatState> {
 
       final answer = response['answer']?.toString() ?? 'No response from AI.';
       final sourcesData = response['sources'] as List? ?? [];
-      final isFromCache = response['from_cache'] == true;
 
       final citations = sourcesData.map((s) {
         final citation = SourceCitation.fromJson(s as Map<String, dynamic>);
@@ -514,7 +516,6 @@ class ChatNotifier extends Notifier<ChatState> {
         isUser: false,
         timestamp: DateTime.now(),
         citations: citations,
-        fromCache: isFromCache,
       );
 
       // Save AI message

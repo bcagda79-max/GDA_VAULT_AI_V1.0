@@ -51,7 +51,7 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(76.0),
+        preferredSize: const Size.fromHeight(56.0),
         child: AppBar(
           automaticallyImplyLeading: false,
           flexibleSpace: Container(

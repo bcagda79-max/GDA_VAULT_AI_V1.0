@@ -159,79 +159,42 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(76.0),
+        preferredSize: const Size.fromHeight(56.0),
         child: AppBar(
-          automaticallyImplyLeading: false,
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [AppColors.darkSurface, AppColors.darkBg]
-                    : [AppColors.navyDark, AppColors.navyMid],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => context.pop(),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        child: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              title,
-                              style: AppTextStyles.playfairDisplay.copyWith(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: 0.5,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              'OFFLINE ARCHIVE',
-                              style: AppTextStyles.dmSans.copyWith(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.gdaGold.withValues(alpha: 0.8),
-                                letterSpacing: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 34), // Balance the back button
-                  ],
-                ),
-              ),
-            ),
-          ),
+          backgroundColor: isDark ? AppColors.darkSurface : AppColors.navyDark,
           elevation: 0,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+            onPressed: () => context.pop(),
+          ),
+          title: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: AppTextStyles.playfairDisplay.copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                'OFFLINE ARCHIVE',
+                style: AppTextStyles.dmSans.copyWith(
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.gdaGold.withValues(alpha: 0.8),
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+          centerTitle: true,
         ),
       ),
       body: Stack(

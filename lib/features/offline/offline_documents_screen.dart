@@ -242,7 +242,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(76.0),
+        preferredSize: const Size.fromHeight(56.0),
         child: AppBar(
           automaticallyImplyLeading: false,
           flexibleSpace: Container(
@@ -265,7 +265,10 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 child: Row(
                   children: [
                     const SizedBox(width: 40),
@@ -273,11 +276,12 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               'Offline Files',
                               style: AppTextStyles.playfairDisplay.copyWith(
-                                fontSize: 20,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
                                 letterSpacing: 0.5,

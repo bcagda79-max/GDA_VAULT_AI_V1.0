@@ -17,7 +17,7 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const HomeAppBar({super.key, required this.currentIndex, this.leftInset = 0});
 
   @override
-  Size get preferredSize => const Size.fromHeight(76.0);
+  Size get preferredSize => const Size.fromHeight(56.0);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,72 +52,38 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
         child: SafeArea(
           bottom: false,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(20 + leftInset, 8, 20, 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // LEFT GROUP: Logo + Text
-                Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          width: 1,
-                        ),
-                      ),
-                      // Increase padding so inner image renders at ~28px (44 - 8*2)
-                      padding: const EdgeInsets.all(8),
-                      child: Image.asset(
-                        'assets/images/gda_logo.png',
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => Center(
-                          child: Text(
-                            "GDA",
-                            style: AppTextStyles.dmSans.copyWith(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.gold,
-                            ),
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'DASHBOARD',
+                          style: AppTextStyles.playfairDisplay.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 0.8,
                           ),
                         ),
-                      ),
-                    ).animate().fadeIn(duration: 600.ms).scale(delay: 100.ms),
-                    const SizedBox(width: 14),
-                    Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "GDA VAULT AI",
-                              style: AppTextStyles.playfairDisplay.copyWith(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.gold,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                            Text(
-                              "Galiyat Development Authority",
-                              style: AppTextStyles.dmSans.copyWith(
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white.withValues(alpha: 0.6),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        )
-                        .animate()
-                        .fadeIn(duration: 600.ms, delay: 200.ms)
-                        .slideX(begin: -0.1, end: 0),
-                  ],
+                        Text(
+                          'Galiyat Development Authority',
+                          style: AppTextStyles.dmSans.copyWith(
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white.withValues(alpha: 0.5),
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                // Theme toggle removed as requested
               ],
             ),
           ),

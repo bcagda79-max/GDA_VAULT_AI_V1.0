@@ -141,7 +141,7 @@ class AddScreen extends StatelessWidget {
 
   PreferredSizeWidget _buildAppBar(bool isDark) {
     return PreferredSize(
-      preferredSize: const Size.fromHeight(76.0),
+      preferredSize: const Size.fromHeight(56.0),
       child: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
@@ -165,7 +165,7 @@ class AddScreen extends StatelessWidget {
           child: SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: Row(
                 children: [
                   // Centered Title
@@ -174,10 +174,10 @@ class AddScreen extends StatelessWidget {
                       child: Text(
                         "Add Document",
                         style: AppTextStyles.playfairDisplay.copyWith(
-                          fontSize: 20,
+                          fontSize: 16,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
-                          letterSpacing: 0.5,
+                          letterSpacing: 0.4,
                         ),
                       ),
                     ),

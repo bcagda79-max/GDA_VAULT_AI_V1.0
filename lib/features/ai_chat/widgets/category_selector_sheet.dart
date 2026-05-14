@@ -612,8 +612,10 @@ class CategorySelectorSheet extends ConsumerWidget {
     required Function(String?) onChanged,
     required bool isDark,
   }) {
+    final currentYear = DateTime.now().year;
+    final maxYear = currentYear > 2026 ? currentYear : 2026;
     final years = List.generate(
-      2026 - 1960 + 1,
+      maxYear - 1960 + 1,
       (index) => (1960 + index).toString(),
     ).reversed.toList();
 

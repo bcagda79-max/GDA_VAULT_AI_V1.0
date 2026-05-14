@@ -165,6 +165,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
   @override
   Widget build(BuildContext context) {
     final isOfflineFile = _localPdfPath != null;
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return PopScope(
       canPop: true,
@@ -218,6 +219,29 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
               onPressed: () =>
                   setState(() => _showThumbnails = !_showThumbnails),
             ),
+            if (MediaQuery.of(context).orientation == Orientation.landscape)
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: TextButton.icon(
+                  onPressed: () => context.go(
+                    '/dashboard/chat',
+                    extra: {
+                      'documentId': widget.document.id,
+                      'from': 'pdf_viewer',
+                      'categoryId': widget.document.categoryId,
+                      'subCategoryId': widget.document.subCategoryId,
+                      'year': widget.document.yearStart.toString(),
+                    },
+                  ),
+                  icon: const Icon(Icons.auto_awesome, color: AppColors.gdaGold, size: 16),
+                  label: const Text('ASK AI', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: Colors.white),
               onSelected: (value) {
@@ -297,7 +321,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                   ),
                 ),
               ),
-            if (!_isLoading && _totalPages > 0)
+            if (!_isLoading && _totalPages > 0 && MediaQuery.of(context).orientation == Orientation.portrait)
               _BottomAskAIButton(
                 document: widget.document,
                 bottomOffset: _isDownloading ? 110 : 14,

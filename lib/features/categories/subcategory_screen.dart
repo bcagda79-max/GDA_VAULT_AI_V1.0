@@ -77,7 +77,7 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
         appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(76.0),
+          preferredSize: const Size.fromHeight(56.0),
           child: AppBar(
             automaticallyImplyLeading: false,
             flexibleSpace: Container(
@@ -100,7 +100,10 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
               child: SafeArea(
                 bottom: false,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   child: Row(
                     children: [
                       // Far left icon
@@ -124,10 +127,10 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
                             child: Text(
                               widget.categoryName,
                               style: AppTextStyles.playfairDisplay.copyWith(
-                                fontSize: 20,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
-                                letterSpacing: 0.5,
+                                letterSpacing: 0.4,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

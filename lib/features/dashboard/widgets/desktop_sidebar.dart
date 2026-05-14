@@ -27,82 +27,60 @@ class DesktopSidebar extends StatelessWidget {
           children: [
             Container(
               decoration: const BoxDecoration(
-                color: Color(0xFF0A1628),
+                color: Color(0xFF091325),
                 border: Border(
-                  bottom: BorderSide(color: Color(0xFF2A3F7E), width: 1),
+                  bottom: BorderSide(color: Color(0xFF1E2D56), width: 1),
                 ),
               ),
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 18),
+              padding: const EdgeInsets.fromLTRB(24, 32, 20, 24),
               child: Column(
                 children: [
-                  Row(
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: const Color(0xFFC5A059),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: ClipOval(
+                      Center(
+                        child: Hero(
+                          tag: 'desktop_sidebar_logo',
                           child: Image.asset(
                             'assets/images/gda_logo.png',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Center(
-                                  child: Text(
-                                    'GDA',
-                                    style: AppTextStyles.dmSans.copyWith(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: const Color(0xFFC5A059),
-                                    ),
-                                  ),
-                                ),
+                            width: 64,
+                            height: 64,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => Text(
+                              'GDA',
+                              style: AppTextStyles.dmSans.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.gold,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'GDA VAULT AI',
-                              style: AppTextStyles.dmSans.copyWith(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFFC5A059),
-                                letterSpacing: 2.0,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Galiyat Development Authority',
-                              style: AppTextStyles.dmSans.copyWith(
-                                fontSize: 10.5,
-                                color: const Color(0xFF6B82AA),
-                                letterSpacing: 0.3,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                      const SizedBox(height: 16),
+                      Text(
+                        'GDA VAULT AI',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.gold,
+                          letterSpacing: 2.0,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Galiyat Development Authority',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.dmSans.copyWith(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFFA0B3D6),
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    height: 1,
-                    width: 40,
-                    color: const Color(0xFFC5A059).withValues(alpha: 0.6),
                   ),
                 ],
               ),
@@ -179,20 +157,7 @@ class DesktopSidebar extends StatelessWidget {
                       endIndent: 20,
                       height: 20,
                     ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-                      child: Center(
-                        child: Text(
-                          'GDA VAULT AI  V1.0',
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 9,
-                            color: const Color(0xFF2D4070),
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ),
-                    ),
+                    const SizedBox(height: 16),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 0),
                       child: _SidebarItem(

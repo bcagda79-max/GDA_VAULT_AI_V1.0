@@ -36,7 +36,7 @@ class DesktopTopBar extends ConsumerWidget {
     final dateStr = DateFormat('EEEE, d MMMM yyyy').format(DateTime.now());
 
     return Container(
-      height: 64,
+      height: 80,
       padding: EdgeInsets.symmetric(horizontal: padding),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : Colors.white,

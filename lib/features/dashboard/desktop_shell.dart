@@ -5,6 +5,7 @@ import 'package:gda_vault_ai/core/utils/responsive_helper.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/desktop_sidebar.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/home_app_bar.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 
 class DesktopShell extends ConsumerWidget {
   final Widget child;
@@ -20,7 +21,15 @@ class DesktopShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sidebarWidth = ResponsiveHelper.sidebarWidth(context);
-    final showHomeAppBar = currentRoute == '/dashboard';
+    
+    // Use the actual URI path from context for more reliable sub-route detection
+    final effectiveRoute = GoRouterState.of(context).uri.path;
+    
+    // Robust check: Only show if route is exactly '/dashboard' or '/'
+    // Hide if it contains sub-paths like /dashboard/recent-documents
+    final showHomeAppBar = effectiveRoute == '/dashboard' || 
+                          effectiveRoute == '/dashboard/' || 
+                          effectiveRoute == '/';
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
@@ -28,7 +37,7 @@ class DesktopShell extends ConsumerWidget {
         children: [
           SizedBox(
             width: sidebarWidth,
-            child: DesktopSidebar(currentRoute: currentRoute),
+            child: DesktopSidebar(currentRoute: effectiveRoute),
           ),
           Expanded(
             child: Column(
@@ -54,7 +63,7 @@ class DesktopShell extends ConsumerWidget {
                         );
                       },
                       child: KeyedSubtree(
-                        key: ValueKey(currentRoute),
+                        key: ValueKey(effectiveRoute),
                         child: child,
                       ),
                     ),

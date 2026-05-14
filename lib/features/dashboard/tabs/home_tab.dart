@@ -10,6 +10,7 @@ import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
 import 'package:gda_vault_ai/core/services/supabase_service.dart';
 import 'package:gda_vault_ai/core/utils/responsive_helper.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
+import 'package:gda_vault_ai/features/dashboard/tabs/desktop_home_tab.dart';
 
 /// The home tab of the dashboard, showing a summary and quick actions.
 class HomeTab extends ConsumerStatefulWidget {
@@ -100,6 +101,23 @@ class _HomeTabState extends ConsumerState<HomeTab> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isLargeScreen = ResponsiveHelper.isDesktop(context);
 
+    if (isLargeScreen) {
+      return DesktopHomeTab(
+        stats: _stats,
+        recentlyOpened: _recentlyOpened,
+        statsLoading: _statsLoading,
+        recentOpenedLoading: _recentOpenedLoading,
+        getGreeting: _getGreeting,
+        getFormattedDate: _getFormattedDate,
+        formatTotalDocs: _formatTotalDocs,
+        formatTotalPages: _formatTotalPages,
+        onRefresh: () async {
+          await Future.wait([_loadStats(), _loadRecentlyOpened()]);
+        },
+        isDark: isDark,
+      );
+    }
+
     return RefreshIndicator(
       color: AppColors.gold,
       onRefresh: () async {
@@ -107,9 +125,9 @@ class _HomeTabState extends ConsumerState<HomeTab> {
       },
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.only(
-          left: isLargeScreen ? 24 : 16,
-          right: isLargeScreen ? 24 : 16,
+        padding: const EdgeInsets.only(
+          left: 16,
+          right: 16,
           top: 16,
           bottom: 100,
         ),
@@ -433,27 +451,32 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                       ),
                     ),
                   ),
-                )
-              else
-                const SizedBox(width: 16),
-              if (!isLargeScreen)
-                Flexible(
-                  fit: FlexFit.loose,
+                ),
+            ],
+          ),
+          
+          // MOBILE LOGO: Positioned at the extreme right to satisfy "fully right side"
+          if (!isLargeScreen)
+            Positioned(
+              right: -12, // Slight offset for a premium overlapping/edge-aligned look
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: Opacity(
+                  opacity: 0.8,
                   child: Container(
                     constraints: BoxConstraints(
-                      maxWidth: logoSize,
-                      maxHeight: logoSize,
+                      maxWidth: logoSize * 0.9,
+                      maxHeight: logoSize * 0.9,
                     ),
-                    decoration: const BoxDecoration(color: Colors.transparent),
-                    padding: const EdgeInsets.all(4),
                     child: Image.asset(
                       'assets/images/gda_logo.png',
                       fit: BoxFit.contain,
                     ),
                   ),
                 ),
-            ],
-          ),
+              ),
+            ),
         ],
       ),
     );
