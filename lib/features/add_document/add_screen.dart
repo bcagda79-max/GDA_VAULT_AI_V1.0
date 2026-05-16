@@ -8,6 +8,7 @@ import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/services/document_upload_service.dart';
 import 'package:gda_vault_ai/core/utils/pdf_utils.dart';
+import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 
 /// The hub for adding new documents via scan or file import.
 class AddScreen extends StatelessWidget {
@@ -72,7 +73,7 @@ class AddScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-      appBar: _buildAppBar(isDark),
+      appBar: _buildAppBar(context, isDark),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -139,9 +140,14 @@ class AddScreen extends StatelessWidget {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(bool isDark) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, bool isDark) {
+    final isDesktop = ResponsiveAppBar.isDesktop(context);
     return PreferredSize(
-      preferredSize: const Size.fromHeight(56.0),
+      preferredSize: Size.fromHeight(
+        isDesktop
+            ? ResponsiveAppBar.desktopHeight
+            : ResponsiveAppBar.mobileHeight,
+      ),
       child: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
@@ -165,7 +171,9 @@ class AddScreen extends StatelessWidget {
           child: SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: isDesktop
+                  ? ResponsiveAppBar.desktopPadding
+                  : ResponsiveAppBar.mobilePadding,
               child: Row(
                 children: [
                   // Centered Title
@@ -174,7 +182,7 @@ class AddScreen extends StatelessWidget {
                       child: Text(
                         "Add Document",
                         style: AppTextStyles.playfairDisplay.copyWith(
-                          fontSize: 16,
+                          fontSize: isDesktop ? 20 : 16,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
                           letterSpacing: 0.4,

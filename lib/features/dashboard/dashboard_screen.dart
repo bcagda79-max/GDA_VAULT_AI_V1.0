@@ -149,6 +149,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ? null
             : HomeAppBar(
                 currentIndex: currentIndex,
+                isDesktop: isLargeScreen,
                 leftInset: isLargeScreen
                     ? ResponsiveHelper.sidebarWidth(context)
                     : 0,

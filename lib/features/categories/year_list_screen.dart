@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 import 'package:gda_vault_ai/core/services/supabase_service.dart';
 import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
@@ -164,12 +165,18 @@ class _YearListScreenState extends State<YearListScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
     return PopScope(
       canPop: true,
       child: Scaffold(
         appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(56.0),
+          preferredSize: Size.fromHeight(
+            ResponsiveAppBar.isDesktop(context)
+                ? ResponsiveAppBar.desktopHeight
+                : ResponsiveAppBar.mobileHeight,
+          ),
           child: AppBar(
             automaticallyImplyLeading: false,
             flexibleSpace: Container(
@@ -192,10 +199,9 @@ class _YearListScreenState extends State<YearListScreen> {
               child: SafeArea(
                 bottom: false,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
+                  padding: ResponsiveAppBar.isDesktop(context)
+                      ? ResponsiveAppBar.desktopPadding
+                      : ResponsiveAppBar.mobilePadding,
                   child: Row(
                     children: [
                       // Far left icon
@@ -219,7 +225,9 @@ class _YearListScreenState extends State<YearListScreen> {
                             child: Text(
                               _getCleanTitle(),
                               style: AppTextStyles.playfairDisplay.copyWith(
-                                fontSize: 16,
+                                fontSize: ResponsiveAppBar.isDesktop(context)
+                                    ? 20
+                                    : 16,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
                                 letterSpacing: 0.4,
@@ -244,7 +252,7 @@ class _YearListScreenState extends State<YearListScreen> {
           children: [
             Column(
               children: [
-                const SizedBox(height: 10),
+                SizedBox(height: isLandscape ? 4 : 10),
                 _SortAndFilterBar(
                   yearListLength: _availableYears.length,
                   isDescending: _isDescending,
@@ -375,15 +383,20 @@ class _SortAndFilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: isLandscape ? 8 : 12,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             "YEARLY FOLDERS",
             style: AppTextStyles.dmSans.copyWith(
-              fontSize: 10,
+              fontSize: isLandscape ? 9 : 10,
               fontWeight: FontWeight.w900,
               color: AppColors.gold,
               letterSpacing: 1.5,
@@ -400,7 +413,7 @@ class _SortAndFilterBar extends StatelessWidget {
             child: Text(
               '$yearListLength Years',
               style: AppTextStyles.dmSans.copyWith(
-                fontSize: 10,
+                fontSize: isLandscape ? 9 : 10,
                 fontWeight: FontWeight.w800,
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.5)
@@ -429,22 +442,34 @@ class _YearFolderStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     if (yearFolders.isEmpty) return const SizedBox.shrink();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final isDesktop = ResponsiveAppBar.isDesktop(context);
+    final stripHeight = isDesktop ? 112.0 : (isLandscape ? 72.0 : 96.0);
+    final chipWidth = isDesktop ? 96.0 : (isLandscape ? 66.0 : 78.0);
+    final chipPadding = isDesktop ? 12.0 : (isLandscape ? 8.0 : 10.0);
+    final chipRadius = isDesktop ? 20.0 : 16.0;
+    final yearFontSize = isDesktop ? 17.0 : (isLandscape ? 14.0 : 15.0);
 
     return Container(
-      height: 120,
-      padding: const EdgeInsets.only(left: 10, right: 10, bottom: 12),
+      height: stripHeight,
+      padding: EdgeInsets.only(
+        left: 10,
+        right: 10,
+        bottom: isLandscape ? 8 : 12,
+      ),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: yearFolders.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 12),
+        separatorBuilder: (_, _) => SizedBox(width: isLandscape ? 8 : 12),
         itemBuilder: (context, index) {
           final year = yearFolders[index];
           final isSelected = selectedYear == year;
           return GestureDetector(
             onTap: () => onSelected(year),
             child: Container(
-              width: 90,
-              padding: const EdgeInsets.all(12),
+              width: chipWidth,
+              padding: EdgeInsets.all(chipPadding),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -456,7 +481,7 @@ class _YearFolderStrip extends StatelessWidget {
                           isDark ? const Color(0xFF161E35) : Colors.white,
                         ],
                 ),
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(chipRadius),
                 border: Border.all(
                   color: isSelected
                       ? AppColors.gold.withValues(alpha: 0.4)
@@ -475,39 +500,20 @@ class _YearFolderStrip extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : AppColors.gold.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.folder_rounded,
-                      color: isSelected ? Colors.white : AppColors.gold,
-                      size: 20,
-                    ),
+              child: Center(
+                child: Text(
+                  '$year',
+                  style: AppTextStyles.numberStyle(
+                    fontSize: yearFontSize,
+                    fontWeight: FontWeight.w900,
+                    color: isSelected
+                        ? Colors.white
+                        : (isDark
+                              ? Colors.white.withValues(alpha: 0.8)
+                              : AppColors.navyDark),
+                    letterSpacing: 0.4,
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    '$year',
-                    style: AppTextStyles.numberStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: isSelected
-                          ? Colors.white
-                          : (isDark
-                                ? Colors.white.withValues(alpha: 0.8)
-                                : AppColors.navyDark),
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           );

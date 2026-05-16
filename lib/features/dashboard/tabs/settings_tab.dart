@@ -11,6 +11,7 @@ import 'package:gda_vault_ai/features/ai_chat/models/chat_state.dart';
 import 'package:gda_vault_ai/features/ai_chat/widgets/default_category_selector_sheet.dart';
 import 'package:gda_vault_ai/providers/theme_provider.dart';
 import 'package:gda_vault_ai/features/dashboard/providers/dashboard_stats_provider.dart';
+import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 
 /// The settings tab, allowing user to configure the app.
 class SettingsTab extends ConsumerWidget {
@@ -75,9 +76,12 @@ class SettingsTab extends ConsumerWidget {
   }
 
   Widget _buildSectionHeader(BuildContext context, bool isDark) {
+    final isDesktop = ResponsiveAppBar.isDesktop(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: isDesktop
+          ? ResponsiveAppBar.desktopPadding
+          : const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -97,7 +101,9 @@ class SettingsTab extends ConsumerWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: isDesktop
+              ? ResponsiveAppBar.desktopPadding
+              : const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -110,10 +116,10 @@ class SettingsTab extends ConsumerWidget {
                       Text(
                         "Setting",
                         style: AppTextStyles.playfairDisplay.copyWith(
-                          fontSize: 18,
+                          fontSize: isDesktop ? 20 : 18,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
-                          letterSpacing: 0.6,
+                          letterSpacing: isDesktop ? 0.8 : 0.6,
                         ),
                       ),
                     ],

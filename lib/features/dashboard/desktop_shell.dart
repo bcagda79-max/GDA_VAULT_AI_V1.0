@@ -39,7 +39,8 @@ class DesktopShell extends ConsumerWidget {
           Expanded(
             child: Column(
               children: [
-                if (showHomeAppBar) const HomeAppBar(currentIndex: 0),
+                if (showHomeAppBar)
+                  const HomeAppBar(currentIndex: 0, isDesktop: true),
                 Expanded(
                   child: Container(
                     color: isDark ? AppColors.darkBg : AppColors.paper,

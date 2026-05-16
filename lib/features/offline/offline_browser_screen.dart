@@ -5,6 +5,7 @@ import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/constants/supabase_constants.dart';
 import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
+import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 
 enum OfflineBrowserViewType { subcategories, years, files }
 
@@ -159,7 +160,11 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(56.0),
+        preferredSize: Size.fromHeight(
+          ResponsiveAppBar.isDesktop(context)
+              ? ResponsiveAppBar.desktopHeight
+              : ResponsiveAppBar.mobileHeight,
+        ),
         child: AppBar(
           backgroundColor: isDark ? AppColors.darkSurface : AppColors.navyDark,
           elevation: 0,
@@ -178,7 +183,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
               Text(
                 title,
                 style: AppTextStyles.playfairDisplay.copyWith(
-                  fontSize: 14,
+                  fontSize: ResponsiveAppBar.isDesktop(context) ? 18 : 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -186,7 +191,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
               Text(
                 'OFFLINE ARCHIVE',
                 style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 8,
+                  fontSize: ResponsiveAppBar.isDesktop(context) ? 10 : 8,
                   fontWeight: FontWeight.bold,
                   color: AppColors.gdaGold.withValues(alpha: 0.8),
                   letterSpacing: 0.8,

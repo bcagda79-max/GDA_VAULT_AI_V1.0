@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 import 'package:intl/intl.dart';
 import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
@@ -51,7 +52,11 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(56.0),
+        preferredSize: Size.fromHeight(
+          ResponsiveAppBar.isDesktop(context)
+              ? ResponsiveAppBar.desktopHeight
+              : ResponsiveAppBar.mobileHeight,
+        ),
         child: AppBar(
           automaticallyImplyLeading: false,
           flexibleSpace: Container(
@@ -74,7 +79,9 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: ResponsiveAppBar.isDesktop(context)
+                    ? ResponsiveAppBar.desktopPadding
+                    : const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
                     GestureDetector(
@@ -96,7 +103,9 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
                             Text(
                               'Recent Documents',
                               style: AppTextStyles.playfairDisplay.copyWith(
-                                fontSize: 20,
+                                fontSize: ResponsiveAppBar.isDesktop(context)
+                                    ? 22
+                                    : 20,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
                                 letterSpacing: 0.5,
@@ -107,7 +116,9 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
                             Text(
                               'RECENTLY OPENED',
                               style: AppTextStyles.dmSans.copyWith(
-                                fontSize: 10,
+                                fontSize: ResponsiveAppBar.isDesktop(context)
+                                    ? 11
+                                    : 10,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.gdaGold.withValues(alpha: 0.8),
                                 letterSpacing: 1.5,

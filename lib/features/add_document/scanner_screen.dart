@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 
 import 'package:gda_vault_ai/features/add_document/providers/scan_provider.dart';
 
@@ -356,8 +357,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
 
   // ── C3: GDA-style AppBar matching home screen ──
   PreferredSizeWidget _buildGdaAppBar() {
+    final isDesktop = ResponsiveAppBar.isDesktop(context);
     return PreferredSize(
-      preferredSize: const Size.fromHeight(62),
+      preferredSize: Size.fromHeight(isDesktop ? 72 : 62),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.navyDark,
@@ -371,7 +373,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
         child: SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: isDesktop
+                ? const EdgeInsets.symmetric(horizontal: 20, vertical: 12)
+                : const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
                 // Left: Close button

@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 import 'package:gda_vault_ai/core/services/supabase_service.dart';
 import 'package:gda_vault_ai/models/category_model.dart';
 import 'package:shimmer/shimmer.dart';
@@ -101,7 +102,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
         appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(56.0),
+          preferredSize: Size.fromHeight(
+            ResponsiveAppBar.isDesktop(context)
+                ? ResponsiveAppBar.desktopHeight
+                : ResponsiveAppBar.mobileHeight,
+          ),
           child: AppBar(
             automaticallyImplyLeading: false,
             flexibleSpace: Container(
@@ -124,10 +129,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               child: SafeArea(
                 bottom: false,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
+                  padding: ResponsiveAppBar.isDesktop(context)
+                      ? ResponsiveAppBar.desktopPadding
+                      : ResponsiveAppBar.mobilePadding,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -140,7 +144,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               Text(
                                 'Categories',
                                 style: AppTextStyles.playfairDisplay.copyWith(
-                                  fontSize: 16,
+                                  fontSize: ResponsiveAppBar.isDesktop(context)
+                                      ? 20
+                                      : 16,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
                                   letterSpacing: 0.4,

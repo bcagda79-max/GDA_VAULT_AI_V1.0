@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 import 'package:gda_vault_ai/core/utils/pdf_utils.dart';
 import 'package:gda_vault_ai/features/add_document/providers/recent_scans_provider.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
@@ -50,7 +51,7 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
   Future<void> _openFile(BuildContext context, File file) async {
     final name = file.uri.pathSegments.last;
     final modDate = file.statSync().modified;
-    
+
     // Get actual page count for PDF, otherwise default to 1 for images
     int actualPageCount = 1;
     if (name.toLowerCase().endsWith('.pdf')) {
@@ -66,7 +67,7 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
       pageCount: actualPageCount,
       uploadedAt: modDate,
     );
-    
+
     if (!context.mounted) return;
     context.push(
       '/categories/sub/scan/years/pdf',
@@ -121,6 +122,7 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
   }
 
   PreferredSizeWidget _buildAppBar(bool isDark) {
+    final isDesktop = ResponsiveAppBar.isDesktop(context);
     return AppBar(
       backgroundColor: AppColors.navyDark,
       elevation: 0,
@@ -131,7 +133,7 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
           Text(
             'Recent Scans',
             style: AppTextStyles.dmSans.copyWith(
-              fontSize: 16,
+              fontSize: isDesktop ? 18 : 16,
               fontWeight: FontWeight.w700,
               color: Colors.white,
             ),
@@ -139,7 +141,7 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
           Text(
             'Galiyat Development Authority',
             style: AppTextStyles.dmSans.copyWith(
-              fontSize: 9,
+              fontSize: isDesktop ? 10 : 9,
               color: Colors.white.withValues(alpha: 0.55),
               letterSpacing: 0.5,
             ),
@@ -155,25 +157,31 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
         ),
       ],
       bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(56),
+        preferredSize: Size.fromHeight(isDesktop ? 64 : 56),
         child: _buildSearchBar(),
       ),
     );
   }
 
   Widget _buildSearchBar() {
+    final isDesktop = ResponsiveAppBar.isDesktop(context);
     return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      height: isDesktop ? 64 : 56,
+      padding: isDesktop
+          ? const EdgeInsets.symmetric(horizontal: 20, vertical: 12)
+          : const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       color: AppColors.navyDark,
       child: TextField(
         controller: _searchCtrl,
         onChanged: (v) => setState(() => _query = v),
-        style: AppTextStyles.dmSans.copyWith(fontSize: 14, color: Colors.white),
+        style: AppTextStyles.dmSans.copyWith(
+          fontSize: isDesktop ? 15 : 14,
+          color: Colors.white,
+        ),
         decoration: InputDecoration(
           hintText: 'Search scans…',
           hintStyle: AppTextStyles.dmSans.copyWith(
-            fontSize: 14,
+            fontSize: isDesktop ? 15 : 14,
             color: Colors.white.withValues(alpha: 0.4),
           ),
           prefixIcon: const Icon(

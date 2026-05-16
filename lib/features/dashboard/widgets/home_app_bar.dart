@@ -4,20 +4,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
+import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 import 'package:gda_vault_ai/providers/theme_provider.dart';
 
 /// The custom AppBar for the main dashboard screen.
 class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final int currentIndex;
 
+  final bool isDesktop;
+
   /// Optional left inset to align appbar content when a permanent
   /// desktop navigation panel is present.
   final double leftInset;
 
-  const HomeAppBar({super.key, required this.currentIndex, this.leftInset = 0});
+  const HomeAppBar({
+    super.key,
+    required this.currentIndex,
+    this.leftInset = 0,
+    this.isDesktop = false,
+  });
 
   @override
-  Size get preferredSize => const Size.fromHeight(56.0);
+  Size get preferredSize => Size.fromHeight(
+    isDesktop ? ResponsiveAppBar.desktopHeight : ResponsiveAppBar.mobileHeight,
+  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,7 +62,9 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
         child: SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: isDesktop
+                ? ResponsiveAppBar.desktopPadding
+                : ResponsiveAppBar.mobilePadding,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -65,7 +77,7 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         Text(
                           'DASHBOARD',
                           style: AppTextStyles.playfairDisplay.copyWith(
-                            fontSize: 16,
+                            fontSize: isDesktop ? 20 : 16,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
                             letterSpacing: 0.8,
@@ -74,7 +86,7 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         Text(
                           'Galiyat Development Authority',
                           style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 8,
+                            fontSize: isDesktop ? 10 : 8,
                             fontWeight: FontWeight.bold,
                             color: Colors.white.withValues(alpha: 0.5),
                             letterSpacing: 0.8,

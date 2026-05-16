@@ -4,6 +4,7 @@ import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/constants/supabase_constants.dart';
 import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
+import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gda_vault_ai/features/offline/offline_browser_screen.dart';
 
@@ -242,7 +243,11 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(56.0),
+        preferredSize: Size.fromHeight(
+          ResponsiveAppBar.isDesktop(context)
+              ? ResponsiveAppBar.desktopHeight
+              : ResponsiveAppBar.mobileHeight,
+        ),
         child: AppBar(
           automaticallyImplyLeading: false,
           flexibleSpace: Container(
@@ -265,10 +270,9 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
+                padding: ResponsiveAppBar.isDesktop(context)
+                    ? ResponsiveAppBar.desktopPadding
+                    : ResponsiveAppBar.mobilePadding,
                 child: Row(
                   children: [
                     const SizedBox(width: 40),
@@ -281,7 +285,9 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                             Text(
                               'Offline Files',
                               style: AppTextStyles.playfairDisplay.copyWith(
-                                fontSize: 16,
+                                fontSize: ResponsiveAppBar.isDesktop(context)
+                                    ? 20
+                                    : 16,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
                                 letterSpacing: 0.5,
@@ -290,7 +296,9 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                             Text(
                               'Locally cached documents',
                               style: AppTextStyles.dmSans.copyWith(
-                                fontSize: 10,
+                                fontSize: ResponsiveAppBar.isDesktop(context)
+                                    ? 10
+                                    : 10,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white.withValues(alpha: 0.5),
                                 letterSpacing: 1.5,

@@ -7,6 +7,7 @@ import 'package:gda_vault_ai/features/ai_chat/models/chat_state.dart';
 import 'widgets/chat_message_bubble.dart';
 import 'widgets/category_selector_sheet.dart';
 import 'widgets/ai_chat_drawer.dart';
+import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 
@@ -198,8 +199,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   PreferredSizeWidget _buildAppBar(bool isDark) {
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
+    final isDesktop = ResponsiveAppBar.isDesktop(context);
     return PreferredSize(
-      preferredSize: Size.fromHeight(isLandscape ? 48.0 : 56.0),
+      preferredSize: Size.fromHeight(
+        isDesktop
+            ? ResponsiveAppBar.desktopHeight
+            : (isLandscape ? 48.0 : 56.0),
+      ),
       child: AppBar(
         backgroundColor: Colors.transparent,
         flexibleSpace: Container(
@@ -223,7 +229,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             bottom: false,
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: isDesktop
+                    ? ResponsiveAppBar.desktopPadding
+                    : const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -251,10 +259,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           Text(
                             "GDA AI CHAT",
                             style: AppTextStyles.playfairDisplay.copyWith(
-                              fontSize: 18,
+                              fontSize: isDesktop ? 20 : 18,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
-                              letterSpacing: 1.0,
+                              letterSpacing: isDesktop ? 1.2 : 1.0,
                             ),
                           ),
                         ],
