@@ -346,13 +346,6 @@ class _DesktopSidebarState extends State<DesktopSidebar> {
     );
   }
 
-  bool _isActiveForRoute(String current, String route) {
-    if (route.isEmpty) return false;
-    if (route == '/dashboard') return current == '/dashboard';
-    if (current == route) return true;
-    return current.startsWith('$route/');
-  }
-
   void _showExitDialog(BuildContext context) {
     showDialog(
       context: context,

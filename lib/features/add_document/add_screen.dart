@@ -70,6 +70,7 @@ class AddScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final width = MediaQuery.of(context).size.width;
+    final showScannerOption = !ResponsiveAppBar.isDesktop(context);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
@@ -110,27 +111,28 @@ class AddScreen extends StatelessWidget {
                     .animate(delay: 150.ms)
                     .fadeIn(duration: 400.ms)
                     .slideX(begin: 0.04, end: 0),
-                AppSpacing.vertical(14),
-                _buildMethodCard(
-                      context: context,
-                      isDark: isDark,
-                      title: "Scan Document",
-                      subtitle: "Use camera to scan physical documents",
-                      icon: Icons.document_scanner_rounded,
-                      gradient: const [AppColors.catBoard, Color(0xFF1A3A6B)],
-                      onTap: () => context.push('/dashboard/add/scanner'),
-                      isRecommended: false,
-                      features: const [
-                        _Feature(Icons.auto_fix_high, "Auto Edge Detect"),
-                        _Feature(Icons.brightness_6, "Auto Enhance"),
-                        _Feature(Icons.filter_none, "Multi-Page"),
-                        _Feature(Icons.picture_as_pdf, "Export PDF"),
-                      ],
-                      actionLabel: "Open Scanner",
-                    )
-                    .animate(delay: 250.ms)
-                    .fadeIn(duration: 400.ms)
-                    .slideX(begin: 0.04, end: 0),
+                if (showScannerOption) AppSpacing.vertical(14),
+                if (showScannerOption)
+                  _buildMethodCard(
+                        context: context,
+                        isDark: isDark,
+                        title: "Scan Document",
+                        subtitle: "Use camera to scan physical documents",
+                        icon: Icons.document_scanner_rounded,
+                        gradient: const [AppColors.catBoard, Color(0xFF1A3A6B)],
+                        onTap: () => context.push('/dashboard/add/scanner'),
+                        isRecommended: false,
+                        features: const [
+                          _Feature(Icons.auto_fix_high, "Auto Edge Detect"),
+                          _Feature(Icons.brightness_6, "Auto Enhance"),
+                          _Feature(Icons.filter_none, "Multi-Page"),
+                          _Feature(Icons.picture_as_pdf, "Export PDF"),
+                        ],
+                        actionLabel: "Open Scanner",
+                      )
+                      .animate(delay: 250.ms)
+                      .fadeIn(duration: 400.ms)
+                      .slideX(begin: 0.04, end: 0),
                 AppSpacing.vertical(32),
               ]),
             ),

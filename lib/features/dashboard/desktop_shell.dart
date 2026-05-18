@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
-import 'package:gda_vault_ai/core/utils/responsive_helper.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/desktop_sidebar.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/home_app_bar.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 class DesktopShell extends ConsumerWidget {

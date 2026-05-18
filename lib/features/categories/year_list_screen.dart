@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
@@ -294,17 +293,11 @@ class _YearListScreenState extends State<YearListScreen> {
                             itemBuilder: (context, index) {
                               final document = _visibleDocuments[index];
                               return _YearListItem(
-                                    document: document,
-                                    categoryColor: widget.categoryColor,
-                                    categoryName: widget.categoryName,
-                                    onDownload: () =>
-                                        _downloadDocument(document),
-                                  )
-                                  .animate(
-                                    delay: Duration(milliseconds: index * 50),
-                                  )
-                                  .fadeIn()
-                                  .slideX(begin: 0.04);
+                                document: document,
+                                categoryColor: widget.categoryColor,
+                                categoryName: widget.categoryName,
+                                onDownload: () => _downloadDocument(document),
+                              );
                             },
                           ),
                         ),

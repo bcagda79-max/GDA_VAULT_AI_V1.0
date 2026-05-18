@@ -152,20 +152,21 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
 
   void _zoomIn() {
     setState(() {
-      _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel + 0.25).clamp(1.0, 5.0);
+      _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel + 0.25)
+          .clamp(1.0, 5.0);
     });
   }
 
   void _zoomOut() {
     setState(() {
-      _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel - 0.25).clamp(1.0, 5.0);
+      _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel - 0.25)
+          .clamp(1.0, 5.0);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final isOfflineFile = _localPdfPath != null;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return PopScope(
       canPop: true,
@@ -233,12 +234,25 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                       'year': widget.document.yearStart.toString(),
                     },
                   ),
-                  icon: const Icon(Icons.auto_awesome, color: AppColors.gdaGold, size: 16),
-                  label: const Text('ASK AI', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                  icon: const Icon(
+                    Icons.auto_awesome,
+                    color: AppColors.gdaGold,
+                    size: 16,
+                  ),
+                  label: const Text(
+                    'ASK AI',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   style: TextButton.styleFrom(
                     backgroundColor: Colors.white.withValues(alpha: 0.1),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
@@ -321,7 +335,9 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                   ),
                 ),
               ),
-            if (!_isLoading && _totalPages > 0 && MediaQuery.of(context).orientation == Orientation.portrait)
+            if (!_isLoading &&
+                _totalPages > 0 &&
+                MediaQuery.of(context).orientation == Orientation.portrait)
               _BottomAskAIButton(
                 document: widget.document,
                 bottomOffset: _isDownloading ? 110 : 14,

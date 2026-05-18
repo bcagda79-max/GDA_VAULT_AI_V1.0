@@ -172,7 +172,12 @@ class AppRouter {
       GoRoute(
         path: '/dashboard/add/scanner',
         name: 'scanner',
-        builder: (context, state) => const ScannerScreen(),
+        builder: (context, state) {
+          if (ResponsiveHelper.isDesktop(context)) {
+            return const AddScreen();
+          }
+          return const ScannerScreen();
+        },
       ),
       GoRoute(
         path: '/dashboard/add/review',

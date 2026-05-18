@@ -1,7 +1,6 @@
 // lib/features/dashboard/widgets/home_app_bar.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';

@@ -413,11 +413,7 @@ class _CopyButton extends StatefulWidget {
   final String textToCopy;
   final bool isDark;
 
-  const _CopyButton({
-    super.key,
-    required this.textToCopy,
-    required this.isDark,
-  });
+  const _CopyButton({required this.textToCopy, required this.isDark});
 
   @override
   State<_CopyButton> createState() => _CopyButtonState();

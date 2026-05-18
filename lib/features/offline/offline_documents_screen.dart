@@ -409,60 +409,74 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'FOLDERS',
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                      .withValues(alpha: 0.5),
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Tap any category to open its documents',
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 12,
-                  color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                      .withValues(alpha: 0.55),
-                ),
-              ),
-            ],
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.gold.withValues(alpha: 0.15)
-                  : AppColors.navyDark.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.gold.withValues(alpha: 0.3)
-                    : AppColors.navyDark.withValues(alpha: 0.08),
-              ),
-            ),
-            child: Row(
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.auto_awesome_rounded,
-                  size: 12,
-                  color: isDark ? AppColors.gold : AppColors.navyDark,
-                ),
-                const SizedBox(width: 5),
                 Text(
-                  '$count found',
+                  'FOLDERS',
                   style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.gold : AppColors.navyDark,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                        .withValues(alpha: 0.5),
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Tap any category to open its documents',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.dmSans.copyWith(
+                    fontSize: 12,
+                    color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                        .withValues(alpha: 0.55),
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.gold.withValues(alpha: 0.15)
+                      : AppColors.navyDark.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.gold.withValues(alpha: 0.3)
+                        : AppColors.navyDark.withValues(alpha: 0.08),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 12,
+                      color: isDark ? AppColors.gold : AppColors.navyDark,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      '$count found',
+                      style: AppTextStyles.dmSans.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.gold : AppColors.navyDark,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -481,165 +495,160 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
     final isBoard = folder.key == 'board-authority';
 
     return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? [AppColors.darkCard, folder.color.withValues(alpha: 0.35)]
-                  : [folder.color, folder.color.withValues(alpha: 0.85)],
-            ),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: isDark
-                  ? folder.color.withValues(alpha: 0.3)
-                  : Colors.transparent,
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.2)
-                    : folder.color.withValues(alpha: 0.3),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [AppColors.darkCard, folder.color.withValues(alpha: 0.35)]
+              : [folder.color, folder.color.withValues(alpha: 0.85)],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark
+              ? folder.color.withValues(alpha: 0.3)
+              : Colors.transparent,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.2)
+                : folder.color.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(18),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(18),
-              splashColor: Colors.white.withValues(alpha: 0.08),
-              onTap: () => _navigateToFolder(context, folder),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          width: 0.5,
-                        ),
-                      ),
-                      child: Icon(folder.icon, size: 24, color: Colors.white),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          splashColor: Colors.white.withValues(alpha: 0.08),
+          onTap: () => _navigateToFolder(context, folder),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 0.5,
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                  child: Icon(folder.icon, size: 24, color: Colors.white),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  folder.title,
-                                  style: AppTextStyles.playfairDisplay.copyWith(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                          Expanded(
+                            child: Text(
+                              folder.title,
+                              style: AppTextStyles.playfairDisplay.copyWith(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
-                              if (isBoard)
-                                Container(
-                                  margin: const EdgeInsets.only(left: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.14),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Text(
-                                    '2 sub',
-                                    style: AppTextStyles.dmSans.copyWith(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                            ],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          const SizedBox(height: 5),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.date_range_rounded,
-                                size: 12,
-                                color: Colors.white.withValues(alpha: 0.68),
+                          if (isBoard)
+                            Container(
+                              margin: const EdgeInsets.only(left: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
                               ),
-                              const SizedBox(width: 5),
-                              Text(
-                                range,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                '2 sub',
                                 style: AppTextStyles.dmSans.copyWith(
-                                  fontSize: 11,
-                                  color: Colors.white.withValues(alpha: 0.78),
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
                                 ),
                               ),
-                              Container(
-                                width: 3,
-                                height: 3,
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.4),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              Text(
-                                '$count files',
-                                style: AppTextStyles.dmSans.copyWith(
-                                  fontSize: 11,
-                                  color: Colors.white.withValues(alpha: 0.78),
-                                ),
-                              ),
-                            ],
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 5,
+                        runSpacing: 2,
+                        children: [
+                          Icon(
+                            Icons.date_range_rounded,
+                            size: 12,
+                            color: Colors.white.withValues(alpha: 0.68),
                           ),
-                          const SizedBox(height: 10),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(999),
-                            child: LinearProgressIndicator(
-                              value: (count / 50.0).clamp(0.0, 1.0),
-                              backgroundColor: Colors.white.withValues(
-                                alpha: 0.14,
-                              ),
-                              valueColor: const AlwaysStoppedAnimation(
-                                AppColors.gdaGold,
-                              ),
-                              minHeight: 3,
+                          Text(
+                            range,
+                            style: AppTextStyles.dmSans.copyWith(
+                              fontSize: 11,
+                              color: Colors.white.withValues(alpha: 0.78),
+                            ),
+                          ),
+                          Container(
+                            width: 3,
+                            height: 3,
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.4),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          Text(
+                            '$count files',
+                            style: AppTextStyles.dmSans.copyWith(
+                              fontSize: 11,
+                              color: Colors.white.withValues(alpha: 0.78),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 14,
-                      color: Colors.white.withValues(alpha: 0.78),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: (count / 50.0).clamp(0.0, 1.0),
+                          backgroundColor: Colors.white.withValues(alpha: 0.14),
+                          valueColor: const AlwaysStoppedAnimation(
+                            AppColors.gdaGold,
+                          ),
+                          minHeight: 3,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 10),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: Colors.white.withValues(alpha: 0.78),
+                ),
+              ],
             ),
           ),
-        )
-        .animate(delay: Duration(milliseconds: index * 70))
-        .fadeIn(duration: 300.ms)
-        .slideX(begin: 0.03, end: 0, duration: 300.ms);
+        ),
+      ),
+    );
   }
 
   Widget _buildEmptyState(bool isDark) {
