@@ -6,7 +6,7 @@ import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/widgets/gda_input_field.dart';
 import 'package:gda_vault_ai/widgets/gda_primary_button.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:gda_vault_ai/core/services/auth_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -79,18 +79,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
       final email = _emailController.text.replaceAll(' ', '').trim().toLowerCase();
       final password = _passwordController.text;
 
-      await Supabase.instance.client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
+      final success = await AuthService.instance.login(email, password);
 
-      if (mounted) {
-        context.go('/dashboard');
+      if (success) {
+        if (mounted) {
+          context.go('/dashboard');
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'Invalid email or password';
+        });
       }
-    } on AuthException catch (e) {
-      setState(() {
-        _errorMessage = e.message;
-      });
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();

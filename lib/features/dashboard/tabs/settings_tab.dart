@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:gda_vault_ai/core/services/auth_service.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
@@ -121,8 +121,7 @@ class SettingsTab extends ConsumerWidget {
 
     final isAdmin = ref.watch(isAdminProvider);
     final profileAsync = ref.watch(profileProvider);
-    final user = Supabase.instance.client.auth.currentUser;
-    final email = user?.email ?? "";
+    final email = profileAsync.value?['email'] ?? "";
     
     String displayName = "User";
     if (profileAsync.value != null && profileAsync.value!['display_name'] != null) {
@@ -644,7 +643,7 @@ class SettingsTab extends ConsumerWidget {
             label: "Logout",
             trailing: const Icon(Icons.chevron_right, size: 16),
             onTap: () async {
-              await Supabase.instance.client.auth.signOut();
+              await AuthService.instance.logout();
               if (context.mounted) {
                 context.go('/login');
               }

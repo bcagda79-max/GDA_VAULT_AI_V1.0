@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/core/services/supabase_service.dart';
+import 'package:gda_vault_ai/core/services/api_service.dart';
 import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
 import 'package:shimmer/shimmer.dart';
@@ -34,7 +34,7 @@ class YearListScreen extends StatefulWidget {
 }
 
 class _YearListScreenState extends State<YearListScreen> {
-  final _supa = SupabaseService.instance;
+  final _api = ApiService.instance;
   bool _isLoading = true;
   bool _isDescending = true;
   bool _isDownloading = false;
@@ -57,7 +57,7 @@ class _YearListScreenState extends State<YearListScreen> {
     });
 
     try {
-      final rows = await _supa.getDocumentsByCategory(widget.categoryId);
+      final rows = await _api.getDocumentsByCategory(widget.categoryId);
       List<DocumentModel> docs = rows.map(DocumentModel.fromMap).toList();
 
       if (widget.subCategoryId != null &&

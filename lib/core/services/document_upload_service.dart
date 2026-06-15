@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-import 'package:gda_vault_ai/core/services/supabase_service.dart';
+import 'package:gda_vault_ai/core/services/api_service.dart';
 import 'package:gda_vault_ai/core/utils/pdf_utils.dart';
 
 /// Upload result model.
@@ -33,7 +33,7 @@ class DocumentUploadService {
   static const int maxPdfUploadSizeBytes = 200 * 1024 * 1024;
   static const String maxPdfUploadSizeLabel = '200 MB';
 
-  final _supa = SupabaseService.instance;
+  final _api = ApiService.instance;
 
   static String formatBytes(int bytes) {
     if (bytes < 1024) return '$bytes B';
@@ -65,7 +65,7 @@ class DocumentUploadService {
       } catch (_) {
         // ignore - we'll fall back to whatever was provided or 1 later
       }
-      final storagePath = _supa.buildStoragePath(
+      final storagePath = _api.buildStoragePath(
         categoryStoragePath: categoryStoragePath,
         year: year.toString(),
         fileName: fileName,
@@ -81,7 +81,7 @@ class DocumentUploadService {
               'PDF is ${formatBytes(fileSizeBytes)}. Maximum upload size is $maxPdfUploadSizeLabel.',
         );
       }
-      final uploaded = await _supa.uploadPdf(
+      final uploaded = await _api.uploadPdf(
         file: pdfFile,
         storagePath: storagePath,
         onProgress: (sent, total) {
@@ -109,7 +109,7 @@ class DocumentUploadService {
       onProgress?.call('Saving document record...', 0.8);
 
       // Phase 3: Insert DB record
-      final record = await _supa.insertDocument(
+      final record = await _api.insertDocument(
         category: category,
         subCategory: subCategory,
         year: year,
@@ -169,13 +169,13 @@ class DocumentUploadService {
 
       // Phase 2: Upload bytes to storage
       onProgress?.call('Uploading to GDA Vault...', 0.4);
-      final storagePath = _supa.buildStoragePath(
+      final storagePath = _api.buildStoragePath(
         categoryStoragePath: categoryStoragePath,
         year: year.toString(),
         fileName: fileName,
       );
 
-      final uploaded = await _supa.uploadPdfBytes(
+      final uploaded = await _api.uploadPdfBytes(
         bytes: pdfBytes,
         storagePath: storagePath,
         onProgress: (sent, total) {
@@ -202,7 +202,7 @@ class DocumentUploadService {
       onProgress?.call('Saving record...', 0.85);
 
       // Phase 3: DB record
-      final record = await _supa.insertDocument(
+      final record = await _api.insertDocument(
         category: category,
         subCategory: subCategory,
         year: year,

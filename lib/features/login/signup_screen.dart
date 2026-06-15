@@ -6,7 +6,7 @@ import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/widgets/gda_input_field.dart';
 import 'package:gda_vault_ai/widgets/gda_primary_button.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:gda_vault_ai/core/services/auth_service.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -80,46 +80,25 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
       final email = _emailController.text.replaceAll(' ', '').trim().toLowerCase();
       final password = _passwordController.text;
 
-      final res = await Supabase.instance.client.auth.signUp(
-        email: email,
-        password: password,
-      );
+      final success = await AuthService.instance.register(email, password);
 
-      if (res.user != null) {
-        await Supabase.instance.client.from('profiles').insert({
-          'id': res.user!.id,
-          'email': email,
-          'name': _nameController.text.trim().isEmpty ? 'GDA Officer' : _nameController.text.trim(),
-          'designation': _designationController.text.trim().isEmpty ? 'Technical Officer' : _designationController.text.trim(),
-          'role': 'officer',
-        });
-      }
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registration successful! Please sign in.'),
+              backgroundColor: AppTokens.lightStatusSuccess,
+            ),
+          );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration successful! Logging in...'),
-            backgroundColor: AppTokens.lightStatusSuccess,
-          ),
-        );
-
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) {
-            context.go('/dashboard');
-          }
-        });
-      }
-    } on PostgrestException catch (e) {
-      if (e.code == '23505') {
-        _showErrorPopup('An account with this email already exists. Please sign in instead.');
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) {
+              context.go('/login');
+            }
+          });
+        }
       } else {
-        _showErrorPopup(e.message);
-      }
-    } on AuthException catch (e) {
-      if (e.message.toLowerCase().contains('already registered')) {
-         _showErrorPopup('An account with this email already exists. Please sign in instead.');
-      } else {
-         _showErrorPopup(e.message);
+        _showErrorPopup('Registration failed. Please check if email is already in use.');
       }
     } catch (e) {
       _showErrorPopup('An unexpected error occurred. Please try again.');

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:gda_vault_ai/core/services/auth_service.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
@@ -21,14 +21,14 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 3000), () {
+    Future.delayed(const Duration(milliseconds: 3000), () async {
       if (!mounted) return;
       
-      final session = Supabase.instance.client.auth.currentSession;
-      if (session != null) {
-        context.go('/dashboard');
+      final isAuthenticated = await AuthService.instance.isAuthenticated();
+      if (isAuthenticated) {
+        if (mounted) context.go('/dashboard');
       } else {
-        context.go('/login');
+        if (mounted) context.go('/login');
       }
     });
   }

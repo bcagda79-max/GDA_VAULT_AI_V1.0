@@ -6,7 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../models/chat_state.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/supabase_constants.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/services/api_service.dart';
 import '../../../core/services/ai_chat_service.dart';
 import '../../../core/services/chat_history_service.dart';
 
@@ -99,7 +99,7 @@ class ChatNotifier extends Notifier<ChatState> {
 
   Future<void> syncCategories() async {
     try {
-      final rows = await SupabaseService.instance.getAllCategories();
+      final rows = await ApiService.instance.getAllCategories();
       if (rows.isEmpty) return;
 
       final updatedCategories = state.categories.map((cat) {

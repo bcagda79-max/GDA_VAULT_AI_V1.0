@@ -5,7 +5,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:gda_vault_ai/core/constants/supabase_constants.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:gda_vault_ai/core/services/supabase_service.dart';
+import 'package:gda_vault_ai/core/services/api_service.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
 
 class OfflineDocumentRecord {
@@ -466,7 +466,7 @@ class PdfViewerService {
 
     try {
       onProgress?.call(0.05, 'Preparing download...');
-      final signedUrl = await SupabaseService.instance.getSignedUrl(
+      final signedUrl = await ApiService.instance.getSignedUrl(
         document.storagePath,
       );
       if (signedUrl == null || signedUrl.isEmpty) {
@@ -597,7 +597,7 @@ class PdfViewerService {
   /// Get signed URL for network PDF viewer.
   /// Signed URLs should NOT be cached (they expire).
   Future<String?> getSignedUrl(String storagePath) async {
-    return SupabaseService.instance.getSignedUrl(storagePath);
+    return ApiService.instance.getSignedUrl(storagePath);
   }
 
   /// Clear in-memory cache.

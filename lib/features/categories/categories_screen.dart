@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/core/services/supabase_service.dart';
+import 'package:gda_vault_ai/core/services/api_service.dart';
 import 'package:gda_vault_ai/models/category_model.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -15,7 +15,7 @@ class CategoriesScreen extends StatefulWidget {
 }
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
-  final _supa = SupabaseService.instance;
+  final _api = ApiService.instance;
   bool _isLoading = true;
   List<CategoryModel> _topCategories = const [];
   final Map<String, int> _subCountByParent = {};
@@ -32,18 +32,15 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     });
 
     try {
-      final rows = await _supa.getAllCategories();
+      final rows = await _api.getAllCategories();
       final rawAll = rows.map(CategoryModel.fromMap).toList()
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
       // Override 0 counts by querying documents table counts dynamically
       final countsFutures = rawAll.map((cat) async {
         try {
-          final countRes = await _supa.client
-              .from('documents')
-              .select('id')
-              .or('category.eq.${cat.id},sub_category.eq.${cat.id}');
-          return cat.copyWith(docCount: (countRes as List).length);
+          final docs = await _api.getDocumentsByCategory(cat.id);
+          return cat.copyWith(docCount: docs.length);
         } catch (e) {
           return cat;
         }

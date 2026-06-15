@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../models/chat_state.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/services/api_service.dart';
 import '../../../models/document_model.dart';
 
 class SourceCitationCard extends ConsumerWidget {
@@ -227,7 +227,7 @@ class SourceCitationCard extends ConsumerWidget {
       // Use the robust name we've extracted
       final nameToSearch = citation.effectiveFileName;
 
-      docMap = await SupabaseService.instance.findDocumentByMetadata(
+      docMap = await ApiService.instance.findDocumentByMetadata(
         categoryName: citation.categoryName,
         fileName: nameToSearch,
         year: citation.yearLabel,
@@ -235,7 +235,7 @@ class SourceCitationCard extends ConsumerWidget {
 
       // 2. Fallback to direct path search if metadata search failed
       if (docMap == null && storagePath != null) {
-        docMap = await SupabaseService.instance.getDocumentByPath(storagePath);
+        docMap = await ApiService.instance.getDocumentByPath(storagePath);
       }
 
       // 3. Last ditch: search by just the category and year if we have them

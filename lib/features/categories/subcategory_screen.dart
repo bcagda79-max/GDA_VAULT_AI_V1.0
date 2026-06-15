@@ -5,7 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/core/services/supabase_service.dart';
+import 'package:gda_vault_ai/core/services/api_service.dart';
 import 'package:gda_vault_ai/models/category_model.dart';
 
 class SubcategoryScreen extends StatefulWidget {
@@ -25,7 +25,7 @@ class SubcategoryScreen extends StatefulWidget {
 }
 
 class _SubcategoryScreenState extends State<SubcategoryScreen> {
-  final _supa = SupabaseService.instance;
+  final _api = ApiService.instance;
   bool _isLoading = true;
   List<CategoryModel> _subCategories = const [];
 
@@ -38,17 +38,14 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
   Future<void> _loadSubCategories() async {
     setState(() => _isLoading = true);
     try {
-      final rows = await _supa.getSubCategories(widget.categoryId);
-      final rawSubCats = rows.map(CategoryModel.fromMap).toList()
+      final data = await _api.getSubCategories(widget.categoryId);
+      final rawSubCats = data.map(CategoryModel.fromMap).toList()
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
       final countsFutures = rawSubCats.map((cat) async {
         try {
-          final countRes = await _supa.client
-              .from('documents')
-              .select('id')
-              .eq('sub_category', cat.id);
-          return cat.copyWith(docCount: (countRes as List).length);
+          final docs = await _api.getDocumentsByCategory(cat.id);
+          return cat.copyWith(docCount: docs.length);
         } catch (e) {
           return cat;
         }

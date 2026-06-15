@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
-import 'package:gda_vault_ai/core/services/supabase_service.dart';
+import 'package:gda_vault_ai/core/services/api_service.dart';
 import 'package:gda_vault_ai/core/utils/responsive_helper.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
 import 'package:gda_vault_ai/features/dashboard/tabs/desktop_home_tab.dart';
@@ -55,7 +55,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
 
   Future<void> _loadStats() async {
     try {
-      final stats = await SupabaseService.instance.getDashboardStats();
+      final stats = await ApiService.instance.getDashboardStats();
       if (!mounted) return;
       setState(() {
         _stats = stats;

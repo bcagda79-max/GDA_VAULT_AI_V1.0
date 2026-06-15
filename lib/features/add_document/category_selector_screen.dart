@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/services/document_upload_service.dart';
-import 'package:gda_vault_ai/core/services/supabase_service.dart';
+import 'package:gda_vault_ai/core/services/api_service.dart';
 import 'package:gda_vault_ai/models/category_model.dart';
 
 class CategorySelectorScreen extends StatefulWidget {
@@ -31,7 +31,7 @@ class CategorySelectorScreen extends StatefulWidget {
 }
 
 class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
-  final _supa = SupabaseService.instance;
+  final _api = ApiService.instance;
   final TextEditingController _yearController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
 
@@ -71,7 +71,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     });
 
     try {
-      final rows = await _supa.getAllCategories();
+      final rows = await _api.getAllCategories();
       final categories = rows.map(CategoryModel.fromMap).toList()
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
@@ -382,7 +382,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                         
                         setState(() => _isLoading = true);
                         try {
-                          await _supa.createCategory(
+                          await _api.createCategory(
                             name: name,
                             storagePath: name.toLowerCase().replaceAll(' ', '_').replaceAll(RegExp(r'[^a-z0-9_]'), ''),
                             colorHex: '#1D5FD1', // Default brand primary
@@ -518,7 +518,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                         
                         setState(() => _isLoading = true);
                         try {
-                          await _supa.createSubCategory(
+                          await _api.createSubCategory(
                             name: name,
                             parentId: parent.id,
                             storagePath: '${parent.storagePath}/${name.toLowerCase().replaceAll(' ', '_')}',
