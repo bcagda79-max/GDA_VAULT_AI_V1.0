@@ -174,6 +174,10 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               subtitle: 'Import or scan new',
               icon: Icons.document_scanner_outlined,
               onTap: () {
+                if (!ref.read(isAdminProvider)) {
+                  context.go('/access-denied');
+                  return;
+                }
                 context.go('/dashboard/add');
               },
             ).animate().fadeIn(delay: 250.ms, duration: 400.ms),

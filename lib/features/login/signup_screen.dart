@@ -6,6 +6,7 @@ import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/widgets/gda_input_field.dart';
 import 'package:gda_vault_ai/widgets/gda_primary_button.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -23,7 +24,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
   final _confirmPasswordController = TextEditingController();
 
   bool _isLoading = false;
-  String? _errorMessage;
   String _passwordText = '';
 
   late AnimationController _entryController;
@@ -72,26 +72,28 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
 
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     try {
       await Future.delayed(const Duration(milliseconds: 600));
 
       final email = _emailController.text.replaceAll(' ', '').trim().toLowerCase();
-      final isAdmin = email.contains('admin');
+      final password = _passwordController.text;
 
-      ref.read(dummyProfileProvider.notifier).state = {
-        'id': 'dummy-id-signup',
-        'email': email,
-        'name': _nameController.text.trim().isEmpty
-            ? (isAdmin ? 'GDA Admin' : 'GDA Officer')
-            : _nameController.text.trim(),
-        'designation': _designationController.text.trim().isEmpty
-            ? (isAdmin ? 'System Administrator' : 'Technical Officer')
-            : _designationController.text.trim(),
-        'role': isAdmin ? 'admin' : 'user',
-      };
+      final res = await Supabase.instance.client.auth.signUp(
+        email: email,
+        password: password,
+      );
+
+      if (res.user != null) {
+        await Supabase.instance.client.from('profiles').insert({
+          'id': res.user!.id,
+          'email': email,
+          'name': _nameController.text.trim().isEmpty ? 'GDA Officer' : _nameController.text.trim(),
+          'designation': _designationController.text.trim().isEmpty ? 'Technical Officer' : _designationController.text.trim(),
+          'role': 'officer',
+        });
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -107,10 +109,20 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
           }
         });
       }
+    } on PostgrestException catch (e) {
+      if (e.code == '23505') {
+        _showErrorPopup('An account with this email already exists. Please sign in instead.');
+      } else {
+        _showErrorPopup(e.message);
+      }
+    } on AuthException catch (e) {
+      if (e.message.toLowerCase().contains('already registered')) {
+         _showErrorPopup('An account with this email already exists. Please sign in instead.');
+      } else {
+         _showErrorPopup(e.message);
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'An unexpected error occurred. Please try again.';
-      });
+      _showErrorPopup('An unexpected error occurred. Please try again.');
     } finally {
       if (mounted) {
         setState(() {
@@ -118,6 +130,30 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
         });
       }
     }
+  }
+
+  void _showErrorPopup(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTokens.lightBgSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTokens.radiusLg)),
+        title: Row(
+          children: [
+            const Icon(Icons.error_outline, color: AppTokens.lightStatusError),
+            const SizedBox(width: 8),
+            Text('Registration Failed', style: AppTextStyles.headingMd.copyWith(color: AppTokens.lightTextPrimary)),
+          ],
+        ),
+        content: Text(message, style: AppTextStyles.bodyLg.copyWith(color: AppTokens.lightTextSecondary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK', style: TextStyle(color: AppTokens.lightBrandPrimary, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   int _calculateStrength(String password) {
@@ -360,7 +396,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
             style: AppTextStyles.bodyMd.copyWith(color: AppTokens.lightTextSecondary),
           ),
           const SizedBox(height: 32),
-          if (_errorMessage != null) _buildErrorBanner(),
           if (isDesktop)
             Row(
               children: [
@@ -470,27 +505,4 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildErrorBanner() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEF3F2),
-        borderRadius: BorderRadius.circular(AppTokens.radiusMd),
-        border: Border.all(color: const Color(0xFFFECDCA)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.error_outline, color: AppTokens.lightStatusError, size: 16),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _errorMessage!,
-              style: AppTextStyles.bodySm.copyWith(color: AppTokens.lightStatusError),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 
 /// GDA Vault AI — Floating Bubble Notch Bottom Navigation
@@ -8,11 +10,13 @@ import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 class GdaBottomNav extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final bool isAdmin;
 
   const GdaBottomNav({
     super.key,
     required this.currentIndex,
     required this.onTap,
+    this.isAdmin = true,
   });
 
   @override
@@ -151,6 +155,10 @@ class _GdaBottomNavState extends State<GdaBottomNav>
 
   void _handleTap(int index) {
     if (index == widget.currentIndex) return;
+    if (index == 2 && !widget.isAdmin) {
+      context.go('/access-denied');
+      return;
+    }
     HapticFeedback.lightImpact();
     _tapCtrls[index].forward(from: 0);
     widget.onTap(index);

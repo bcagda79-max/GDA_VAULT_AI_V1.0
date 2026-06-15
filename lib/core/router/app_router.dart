@@ -22,11 +22,16 @@ import 'package:gda_vault_ai/features/offline/offline_browser_screen.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
 import 'package:gda_vault_ai/features/login/login_screen.dart';
 import 'package:gda_vault_ai/features/login/signup_screen.dart';
+import 'package:gda_vault_ai/features/dashboard/access_denied_screen.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: '/splash',
     routes: [
+      GoRoute(
+        path: '/',
+        redirect: (context, state) => '/splash',
+      ),
       GoRoute(
         path: '/splash',
         name: 'splash',
@@ -41,6 +46,11 @@ class AppRouter {
         path: '/signup',
         name: 'signup',
         builder: (context, state) => const SignupScreen(),
+      ),
+      GoRoute(
+        path: '/access-denied',
+        name: 'access-denied',
+        builder: (context, state) => const AccessDeniedScreen(),
       ),
 
       ShellRoute(

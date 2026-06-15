@@ -157,7 +157,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             : widget.child,
         bottomNavigationBar: isLargeScreen || hideBottomNav
             ? null
-            : GdaBottomNav(currentIndex: currentIndex, onTap: _onTabTapped),
+            : GdaBottomNav(
+                currentIndex: currentIndex, 
+                onTap: _onTabTapped,
+                isAdmin: ref.watch(isAdminProvider),
+              ),
       ),
     );
   }
@@ -256,9 +260,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   const SizedBox(height: 4),
                   GdaSidebarItem(
                     label: 'Add Document',
-                    icon: Icons.add_circle_outline_rounded,
+                    icon: ref.watch(isAdminProvider) ? Icons.add_circle_outline_rounded : Icons.lock_outline,
                     selected: currentIndex == 2,
-                    onTap: () => _onTabTapped(2),
+                    onTap: () {
+                      if (!ref.read(isAdminProvider)) {
+                        context.go('/access-denied');
+                        return;
+                      }
+                      _onTabTapped(2);
+                    },
                   ),
                   const SizedBox(height: 4),
                   GdaSidebarItem(

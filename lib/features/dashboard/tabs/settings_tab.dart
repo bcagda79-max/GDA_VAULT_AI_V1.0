@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
@@ -84,6 +85,8 @@ class SettingsTab extends ConsumerWidget {
                       _buildSupportSection(context, ref, isDark),
                       const SizedBox(height: 20),
                       _buildDangerZoneSection(context, ref, isDark),
+                      const SizedBox(height: 20),
+                      _buildAuthSection(context, isDark),
                       const SizedBox(height: 32),
                       _buildFooter(isDark),
                     ],
@@ -613,6 +616,39 @@ class SettingsTab extends ConsumerWidget {
             labelColor: statusError,
             trailing: Icon(Icons.chevron_right, size: 16, color: statusError),
             onTap: () => _showDeleteAllChatsDialog(context, ref),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAuthSection(BuildContext context, bool isDark) {
+    final bgSurface = isDark ? const Color(0xFF141414) : const Color(0xFFFFFFFF);
+    final borderLight = isDark ? const Color(0xFF272727) : const Color(0xFFE4E7EC);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionLabel("ACCOUNT"),
+        Container(
+          decoration: BoxDecoration(
+            color: bgSurface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderLight, width: 0.5),
+            boxShadow: isDark ? AppTokens.darkShadowXs : AppTokens.lightShadowSm,
+          ),
+          child: _SettingsRow(
+            isDark: isDark,
+            icon: Icons.logout,
+            iconColor: isDark ? const Color(0xFFEBEBEB) : const Color(0xFF101828),
+            label: "Logout",
+            trailing: const Icon(Icons.chevron_right, size: 16),
+            onTap: () async {
+              await Supabase.instance.client.auth.signOut();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            },
           ),
         ),
       ],

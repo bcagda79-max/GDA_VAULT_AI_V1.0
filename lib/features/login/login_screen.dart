@@ -6,6 +6,7 @@ import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/widgets/gda_input_field.dart';
 import 'package:gda_vault_ai/widgets/gda_primary_button.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -76,22 +77,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
       await Future.delayed(const Duration(milliseconds: 600));
 
       final email = _emailController.text.replaceAll(' ', '').trim().toLowerCase();
-      final isAdmin = email.contains('admin');
+      final password = _passwordController.text;
 
-      ref.read(dummyProfileProvider.notifier).state = {
-        'id': 'dummy-id-123',
-        'email': email,
-        'name': isAdmin ? 'GDA Admin' : 'GDA Officer',
-        'designation': isAdmin ? 'System Administrator' : 'Technical Officer',
-        'role': isAdmin ? 'admin' : 'user',
-      };
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
 
       if (mounted) {
         context.go('/dashboard');
       }
+    } on AuthException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
+      });
     } catch (e) {
       setState(() {
-        _errorMessage = 'An unexpected error occurred. Please try again.';
+        _errorMessage = e.toString();
       });
     } finally {
       if (mounted) {

@@ -279,6 +279,10 @@ class DesktopHomeTab extends ConsumerWidget {
                 subtitle: 'Import or scan new',
                 icon: Icons.document_scanner_outlined,
                 onTap: () {
+                  if (!ref.read(isAdminProvider)) {
+                    context.go('/access-denied');
+                    return;
+                  }
                   context.go('/dashboard/add');
                 },
               ),
