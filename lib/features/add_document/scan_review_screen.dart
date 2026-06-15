@@ -124,7 +124,6 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
     super.dispose();
   }
 
-  // ── Improved Filter Algorithms (C8) ──
   Future<String?> _generatePreview(String sourcePath, String filterId) async {
     try {
       final bytes = await File(sourcePath).readAsBytes();
@@ -155,7 +154,6 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
         return image;
 
       case 'magic':
-        // Magic Color: enhance document clarity + color
         image = img.adjustColor(
           image,
           contrast: 1.55,
@@ -169,7 +167,6 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
         return image;
 
       case 'bw':
-        // Professional B&W: grayscale + adaptive threshold
         image = img.grayscale(image);
         image = img.contrast(image, contrast: 190);
         image = img.adjustColor(image, brightness: 1.18);
@@ -180,13 +177,11 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
         return image;
 
       case 'gray':
-        // Soft grayscale — readable, less harsh than B&W
         image = img.grayscale(image);
         image = img.adjustColor(image, brightness: 1.08, contrast: 1.25);
         return image;
 
       case 'lighten':
-        // Lighten: bright background, clear text
         image = img.adjustColor(
           image,
           brightness: 1.45,
@@ -196,7 +191,6 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
         return image;
 
       case 'darken':
-        // Darken: high contrast, dramatic
         image = img.adjustColor(image, brightness: 0.72, contrast: 1.45);
         image = img.convolution(
           image,
@@ -365,7 +359,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
   void _goToPdfPreview() {
     final pages = ref.read(scannedPagesProvider);
     if (pages.isEmpty) return;
-    // ── C12: Navigate to PDF preview screen ──
+
     context.push(
       '/dashboard/add/pdf-preview',
       extra: {
@@ -377,9 +371,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
     );
   }
 
-  void _showRenameDialog() {
-    // Disabled rename per user request
-  }
+  void _showRenameDialog() {}
 
   @override
   Widget build(BuildContext context) {
@@ -392,23 +384,14 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
           ? Center(
               child: Text(
                 'No pages',
-                style: AppTextStyles.dmSans.copyWith(color: Colors.white54),
+                style: AppTextStyles.bodyMd.copyWith(color: Colors.white54),
               ),
             )
           : Column(
               children: [
-                // Page view
-
-                // Page view
                 Expanded(child: _buildPageView(pages)),
-
-                // Thumbnail strip (C10: only navigation method)
                 _buildThumbnailStrip(pages),
-
-                // Filter strip
                 _buildFilterStrip(pages),
-
-                // Action toolbar
                 _buildActionBar(pages),
               ],
             ),
@@ -417,7 +400,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
 
   AppBar _buildAppBar(List<ScannedPage> pages) {
     return AppBar(
-      backgroundColor: AppColors.navyDark,
+      backgroundColor: AppTokens.lightBrandPrimary,
       elevation: 0,
       leading: IconButton(
         icon: const Icon(
@@ -431,7 +414,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
         children: [
           Text(
             'Review & Edit',
-            style: AppTextStyles.playfairDisplay.copyWith(
+            style: AppTextStyles.headingMd.copyWith(
               fontSize: 17,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -440,9 +423,9 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
           Text(
             _fileName,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.dmSans.copyWith(
+            style: AppTextStyles.bodyMd.copyWith(
               fontSize: 9,
-              color: AppColors.gold,
+              color: AppTokens.lightBrandPrimary,
             ),
           ),
         ],
@@ -460,7 +443,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
         preferredSize: const Size.fromHeight(0.8),
         child: Container(
           height: 0.8,
-          color: AppColors.gold.withValues(alpha: 0.25),
+          color: AppTokens.lightBrandPrimary.withValues(alpha: 0.25),
         ),
       ),
     );
@@ -485,7 +468,6 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
         );
       }
 
-      // Try external storage, fall back to documents dir
       final dir =
           await getExternalStorageDirectory() ??
           await getApplicationDocumentsDirectory();
@@ -503,7 +485,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
                 Expanded(
                   child: Text(
                     'Saved to ${file.path}',
-                    style: AppTextStyles.dmSans.copyWith(
+                    style: AppTextStyles.bodyMd.copyWith(
                       fontSize: 11,
                       color: Colors.white,
                     ),
@@ -513,7 +495,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
                 ),
               ],
             ),
-            backgroundColor: AppColors.gdaGreen,
+            backgroundColor: AppTokens.lightBrandPrimary,
             duration: const Duration(seconds: 4),
           ),
         );
@@ -628,14 +610,14 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
                     width: 40,
                     height: 40,
                     child: CircularProgressIndicator(
-                      color: AppColors.gold,
+                      color: AppTokens.lightBrandPrimary,
                       strokeWidth: 2.5,
                     ),
                   ),
                   const SizedBox(height: 14),
                   Text(
                     _processingLabel,
-                    style: AppTextStyles.dmSans.copyWith(
+                    style: AppTextStyles.bodyMd.copyWith(
                       fontSize: 13,
                       color: Colors.white,
                     ),
@@ -671,7 +653,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
                 _DrawControlBtn(
                   icon: Icons.check_rounded,
                   label: 'Done',
-                  color: AppColors.gdaGreen,
+                  color: AppTokens.lightBrandPrimary,
                   onTap: () => setState(() => _isDrawingMode = false),
                 ),
               ],
@@ -701,7 +683,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
                   const SizedBox(width: 5),
                   Text(
                     'Markup Mode',
-                    style: AppTextStyles.dmSans.copyWith(
+                    style: AppTextStyles.bodyMd.copyWith(
                       fontSize: 10,
                       color: Colors.orange,
                     ),
@@ -753,14 +735,14 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
                         color: isActive
-                            ? AppColors.gold
+                            ? AppTokens.lightBrandPrimary
                             : Colors.white.withValues(alpha: 0.2),
                         width: isActive ? 2 : 0.8,
                       ),
                       boxShadow: isActive
                           ? [
                               BoxShadow(
-                                color: AppColors.gold.withValues(alpha: 0.35),
+                                color: AppTokens.lightBrandPrimary.withValues(alpha: 0.35),
                                 blurRadius: 8,
                               ),
                             ]
@@ -786,14 +768,14 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
                                 vertical: 1,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.navyDark.withValues(
+                                color: AppTokens.lightBrandPrimary.withValues(
                                   alpha: 0.85,
                                 ),
                                 borderRadius: BorderRadius.circular(3),
                               ),
                               child: Text(
                                 '${i + 1}',
-                                style: AppTextStyles.dmSans.copyWith(
+                                style: AppTextStyles.bodyMd.copyWith(
                                   fontSize: 7,
                                   color: Colors.white,
                                 ),
@@ -849,14 +831,14 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
                               color: isSelected
-                                  ? AppColors.gold
+                                  ? AppTokens.lightBrandPrimary
                                   : Colors.white.withValues(alpha: 0.2),
                               width: isSelected ? 2 : 0.8,
                             ),
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.gold.withValues(
+                                      color: AppTokens.lightBrandPrimary.withValues(
                                         alpha: 0.4,
                                       ),
                                       blurRadius: 8,
@@ -889,10 +871,10 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
                         const SizedBox(height: 5),
                         Text(
                           filter.label,
-                          style: AppTextStyles.dmSans.copyWith(
+                          style: AppTextStyles.bodyMd.copyWith(
                             fontSize: 9,
                             color: isSelected
-                                ? AppColors.gold
+                                ? AppTokens.lightBrandPrimary
                                 : Colors.white.withValues(alpha: 0.5),
                             fontWeight: isSelected
                                 ? FontWeight.bold
@@ -920,7 +902,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
         right: 8,
       ),
       decoration: const BoxDecoration(
-        color: AppColors.navyDark,
+        color: AppTokens.lightBrandPrimary,
         border: Border(top: BorderSide(color: Colors.white12, width: 0.8)),
       ),
       child: Row(
@@ -974,21 +956,21 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
                   builder: (ctx) => AlertDialog(
                     title: Text(
                       'Discard Scan',
-                      style: AppTextStyles.dmSans.copyWith(
+                      style: AppTextStyles.bodyMd.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     content: Text(
                       'Are you sure you want to discard this scan entirely?',
-                      style: AppTextStyles.dmSans,
+                      style: AppTextStyles.bodyMd,
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx),
                         child: Text(
                           'Cancel',
-                          style: AppTextStyles.dmSans.copyWith(
-                            color: AppColors.charcoal,
+                          style: AppTextStyles.bodyMd.copyWith(
+                            color: AppTokens.lightBrandPrimary,
                           ),
                         ),
                       ),
@@ -999,7 +981,7 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
                         },
                         child: Text(
                           'Discard',
-                          style: AppTextStyles.dmSans.copyWith(
+                          style: AppTextStyles.bodyMd.copyWith(
                             color: Colors.redAccent,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1017,12 +999,12 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [AppColors.gold, Color(0xFFDFB84A)],
+                  colors: [AppTokens.lightBrandPrimary, Color(0xFFDFB84A)],
                 ),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.gold.withValues(alpha: 0.35),
+                    color: AppTokens.lightBrandPrimary.withValues(alpha: 0.35),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -1033,16 +1015,16 @@ class _ScanReviewScreenState extends ConsumerState<ScanReviewScreen>
                 children: [
                   const Icon(
                     Icons.picture_as_pdf_rounded,
-                    color: AppColors.navyDark,
+                    color: AppTokens.lightBrandPrimary,
                     size: 22,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'Preview',
-                    style: AppTextStyles.dmSans.copyWith(
+                    style: AppTextStyles.bodyMd.copyWith(
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.navyDark,
+                      color: AppTokens.lightBrandPrimary,
                     ),
                   ),
                 ],
@@ -1100,7 +1082,7 @@ class _ActionBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? (isActive ? AppColors.gold : Colors.white);
+    final c = color ?? (isActive ? AppTokens.lightBrandPrimary : Colors.white);
     return GestureDetector(
       onTap: onTap,
       child: Opacity(
@@ -1112,7 +1094,7 @@ class _ActionBtn extends StatelessWidget {
             const SizedBox(height: 3),
             Text(
               label,
-              style: AppTextStyles.dmSans.copyWith(
+              style: AppTextStyles.bodyMd.copyWith(
                 fontSize: 8.5,
                 color: c.withValues(alpha: 0.8),
               ),
@@ -1144,7 +1126,7 @@ class _DrawControlBtn extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.navyDark.withValues(alpha: 0.9),
+          color: AppTokens.lightBrandPrimary.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color.withValues(alpha: 0.4)),
         ),
@@ -1155,7 +1137,7 @@ class _DrawControlBtn extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: AppTextStyles.dmSans.copyWith(fontSize: 8, color: color),
+              style: AppTextStyles.bodyMd.copyWith(fontSize: 8, color: color),
             ),
           ],
         ),
@@ -1259,7 +1241,7 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
               width: 16,
               height: 16,
               decoration: const BoxDecoration(
-                color: AppColors.gold,
+                color: AppTokens.lightBrandPrimary,
                 shape: BoxShape.circle,
                 boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 4)],
               ),
@@ -1287,7 +1269,7 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
               width: isVertical ? 4 : 24,
               height: isVertical ? 24 : 4,
               decoration: BoxDecoration(
-                color: AppColors.gold,
+                color: AppTokens.lightBrandPrimary,
                 borderRadius: BorderRadius.circular(2),
                 boxShadow: const [
                   BoxShadow(color: Colors.black54, blurRadius: 4),
@@ -1305,7 +1287,7 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
       context: context,
       barrierDismissible: false,
       builder: (_) =>
-          const Center(child: CircularProgressIndicator(color: AppColors.gold)),
+          const Center(child: CircularProgressIndicator(color: AppTokens.lightBrandPrimary)),
     );
 
     try {
@@ -1340,7 +1322,7 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: AppColors.navyDark,
+        backgroundColor: AppTokens.lightBrandPrimary,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close_rounded, color: Colors.white),
@@ -1348,7 +1330,7 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
         ),
         title: Text(
           'Crop Image',
-          style: AppTextStyles.dmSans.copyWith(
+          style: AppTextStyles.bodyMd.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 16,
@@ -1358,7 +1340,7 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
           IconButton(
             icon: const Icon(
               Icons.check_rounded,
-              color: AppColors.gold,
+              color: AppTokens.lightBrandPrimary,
               size: 26,
             ),
             onPressed: _crop,
@@ -1368,7 +1350,7 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
       ),
       body: _aspectRatio == null
           ? const Center(
-              child: CircularProgressIndicator(color: AppColors.gold),
+              child: CircularProgressIndicator(color: AppTokens.lightBrandPrimary),
             )
           : Center(
               child: Padding(
@@ -1435,7 +1417,7 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
                                   child: Container(
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                        color: AppColors.gold,
+                                        color: AppTokens.lightBrandPrimary,
                                         width: 2,
                                       ),
                                     ),
@@ -1520,3 +1502,4 @@ class _ManualCropScreenState extends State<_ManualCropScreen> {
     );
   }
 }
+

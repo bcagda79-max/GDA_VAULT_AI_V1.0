@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 import 'package:gda_vault_ai/core/services/supabase_service.dart';
 import 'package:gda_vault_ai/models/category_model.dart';
 import 'package:shimmer/shimmer.dart';
@@ -89,367 +88,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final totalDocs = _topCategories.fold<int>(
-      0,
-      (sum, item) => sum + item.docCount,
-    );
-
-    return PopScope(
-      canPop: true,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(
-            ResponsiveAppBar.isDesktop(context)
-                ? ResponsiveAppBar.desktopHeight
-                : ResponsiveAppBar.mobileHeight,
-          ),
-          child: AppBar(
-            automaticallyImplyLeading: false,
-            flexibleSpace: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [AppColors.darkSurface, AppColors.darkBg]
-                      : [AppColors.navyDark, AppColors.navyMid],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: ResponsiveAppBar.isDesktop(context)
-                      ? ResponsiveAppBar.desktopPadding
-                      : ResponsiveAppBar.mobilePadding,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Categories',
-                                style: AppTextStyles.playfairDisplay.copyWith(
-                                  fontSize: ResponsiveAppBar.isDesktop(context)
-                                      ? 20
-                                      : 16,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  letterSpacing: 0.4,
-                                ),
-                              ),
-                              Text(
-                                'All Library Files',
-                                style: AppTextStyles.dmSans.copyWith(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            elevation: 0,
-          ),
-        ),
-        body: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCard : Colors.white,
-                border: Border(
-                  bottom: BorderSide(color: AppColors.divider, width: 0.8),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.folder_copy_rounded,
-                        size: 14,
-                        color: AppColors.catBoard,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'All Files · ${_topCategories.length} Categories',
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 12,
-                          color:
-                              (isDark ? AppColors.darkText : AppColors.charcoal)
-                                  .withValues(alpha: 0.55),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.catBoard.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '$totalDocs Documents',
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.catBoard,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: _isLoading
-                  ? _CategoriesLoadingList(isDark: isDark)
-                  : _topCategories.isEmpty
-                  ? _CategoriesEmptyState(
-                      isDark: isDark,
-                      onRetry: _loadCategories,
-                    )
-                  : RefreshIndicator(
-                      color: AppColors.gold,
-                      onRefresh: _loadCategories,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 16,
-                        ),
-                        itemCount: _topCategories.length,
-                        itemBuilder: (context, index) {
-                          final category = _topCategories[index];
-                          return _buildCategoryItem(
-                            context,
-                            category,
-                            index,
-                            isDark,
-                            subCount: _subCountByParent[category.id] ?? 0,
-                          );
-                        },
-                      ),
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryItem(
-    BuildContext context,
-    CategoryModel category,
-    int index,
-    bool isDark, {
-    required int subCount,
-  }) {
-    return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                isDark ? AppColors.darkCard : AppColors.navyDark,
-                category.color.withValues(alpha: 0.78),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.gdaGold.withValues(alpha: 0.28),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.14),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              splashColor: Colors.white.withValues(alpha: 0.08),
-              onTap: () => _navigateToCategory(context, category),
-              child: IntrinsicHeight(
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 16,
-                      ),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.gdaGold.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          category.iconData,
-                          size: 22,
-                          color: AppColors.gdaGold,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 14, bottom: 14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    category.name,
-                                    style: AppTextStyles.dmSans.copyWith(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 14),
-                                  child: Row(
-                                    children: [
-                                      if (category.hasSubCategories)
-                                        Container(
-                                          margin: const EdgeInsets.only(
-                                            right: 8,
-                                          ),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 3,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.14,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            '$subCount sub',
-                                            style: AppTextStyles.dmSans
-                                                .copyWith(
-                                                  fontSize: 8,
-                                                  color: Colors.white,
-                                                ),
-                                          ),
-                                        ),
-                                      Icon(
-                                        Icons.arrow_forward_ios_rounded,
-                                        size: 13,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.75,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Text(
-                                  category.yearRange,
-                                  style: AppTextStyles.dmSans.copyWith(
-                                    fontSize: 11,
-                                    color: Colors.white.withValues(alpha: 0.78),
-                                  ),
-                                ),
-                                Container(
-                                  width: 3,
-                                  height: 3,
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.4),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                Text(
-                                  '${category.docCount} files',
-                                  style: AppTextStyles.dmSans.copyWith(
-                                    fontSize: 11,
-                                    color: Colors.white.withValues(alpha: 0.78),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 14),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(2),
-                                child: LinearProgressIndicator(
-                                  value: (category.docCount / 500.0).clamp(
-                                    0.0,
-                                    1.0,
-                                  ),
-                                  backgroundColor: Colors.white.withValues(
-                                    alpha: 0.16,
-                                  ),
-                                  valueColor: AlwaysStoppedAnimation(
-                                    AppColors.gdaGold.withValues(alpha: 0.9),
-                                  ),
-                                  minHeight: 2.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        )
-        .animate(delay: Duration(milliseconds: index * 70))
-        .fadeIn(duration: 300.ms)
-        .slideX(begin: 0.03, end: 0, duration: 300.ms);
-  }
-
   void _navigateToCategory(BuildContext context, CategoryModel cat) {
     if (cat.hasSubCategories) {
       context.push(
@@ -470,8 +108,406 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       },
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final totalDocs = _topCategories.fold<int>(
+      0,
+      (sum, item) => sum + item.docCount,
+    );
+
+    return PopScope(
+      canPop: true,
+      child: Scaffold(
+        backgroundColor: isDark ? AppTokens.darkBgPage : AppTokens.lightBgPage,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth >= 860;
+            final useGrid = constraints.maxWidth > 1100;
+
+            return Column(
+              children: [
+                // HEADER
+                if (!isDesktop) _buildMobileHeader(isDark, totalDocs),
+                if (isDesktop) _buildDesktopHeader(isDark),
+
+                // STATS ROW (mobile only)
+                if (!isDesktop) _buildStatsRow(isDark),
+
+                // CATEGORY LIST
+                Expanded(
+                  child: _isLoading
+                      ? _CategoriesLoadingList(isDark: isDark)
+                      : _topCategories.isEmpty
+                          ? _CategoriesEmptyState(
+                              isDark: isDark,
+                              onRetry: _loadCategories,
+                            )
+                          : RefreshIndicator(
+                              color: isDark
+                                  ? AppTokens.darkBrandPrimary
+                                  : AppTokens.lightBrandPrimary,
+                              onRefresh: _loadCategories,
+                              child: useGrid
+                                  ? _buildGridView(isDark)
+                                  : _buildListView(isDark, isDesktop),
+                            ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // ── MOBILE HEADER ──────────────────────────────────────
+  Widget _buildMobileHeader(bool isDark, int totalDocs) {
+    return Container(
+      height: 56,
+      color: isDark ? AppTokens.darkBgSurface : AppTokens.lightBgSurface,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          const SizedBox(width: 24),
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'CATEGORIES',
+                    style: AppTextStyles.labelSm.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
+                  Text(
+                    'All Library Files',
+                    style: AppTextStyles.labelSm.copyWith(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF8899B0),
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 24),
+        ],
+      ),
+    );
+  }
+
+  // ── DESKTOP HEADER ─────────────────────────────────────
+  Widget _buildDesktopHeader(bool isDark) {
+    final textTertiary =
+        isDark ? AppTokens.darkTextTertiary : AppTokens.lightTextTertiary;
+    final textPrimary =
+        isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary;
+    final textSecondary =
+        isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Breadcrumb
+          Row(
+            children: [
+              Icon(Icons.grid_view_outlined, size: 14, color: textTertiary),
+              const SizedBox(width: 6),
+              Text(
+                'Categories',
+                style: AppTextStyles.labelSm.copyWith(
+                  fontSize: 13,
+                  color: textTertiary,
+                  letterSpacing: 0,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Document Categories',
+            style: AppTextStyles.headingLg.copyWith(
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Browse all official GDA document archives',
+            style: AppTextStyles.bodyMd.copyWith(
+              fontSize: 13,
+              color: textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  // ── STATS ROW (mobile) ─────────────────────────────────
+  Widget _buildStatsRow(bool isDark) {
+    final bgSurface =
+        isDark ? AppTokens.darkBgSurface : AppTokens.lightBgSurface;
+    final borderLight =
+        isDark ? AppTokens.darkBorderLight : AppTokens.lightBorderLight;
+    final textSecondary =
+        isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+    final textTertiary =
+        isDark ? AppTokens.darkTextTertiary : AppTokens.lightTextTertiary;
+    final shadowXs = isDark ? AppTokens.darkShadowXs : AppTokens.lightShadowXs;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: bgSurface,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: borderLight, width: 1),
+                boxShadow: shadowXs,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.folder_outlined, size: 14, color: textTertiary),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${_topCategories.length} Categories',
+                    style: AppTextStyles.bodyMd.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: bgSurface,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: borderLight, width: 1),
+                boxShadow: shadowXs,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.description_outlined,
+                      size: 14, color: textTertiary),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${_topCategories.fold<int>(0, (s, c) => s + c.docCount)} Documents',
+                    style: AppTextStyles.bodyMd.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── LIST VIEW ──────────────────────────────────────────
+  Widget _buildListView(bool isDark, bool isDesktop) {
+    return ListView.builder(
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 32 : 16,
+        vertical: 8,
+      ),
+      itemCount: _topCategories.length,
+      itemBuilder: (context, index) {
+        final category = _topCategories[index];
+        final subCount = _subCountByParent[category.id] ?? 0;
+        return _buildCategoryRow(category, index, isDark, subCount)
+            .animate(delay: Duration(milliseconds: index * 80))
+            .fadeIn(duration: 250.ms)
+            .slideY(begin: 0.04, end: 0, curve: Curves.easeOut);
+      },
+    );
+  }
+
+  // ── GRID VIEW (Desktop > 1100px) ───────────────────────
+  Widget _buildGridView(bool isDark) {
+    return GridView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 12,
+        mainAxisExtent: 72,
+      ),
+      itemCount: _topCategories.length,
+      itemBuilder: (context, index) {
+        final category = _topCategories[index];
+        final subCount = _subCountByParent[category.id] ?? 0;
+        return _buildCategoryRow(category, index, isDark, subCount)
+            .animate(delay: Duration(milliseconds: index * 80))
+            .fadeIn(duration: 250.ms)
+            .slideY(begin: 0.04, end: 0, curve: Curves.easeOut);
+      },
+    );
+  }
+
+  // ── CATEGORY ROW ITEM ──────────────────────────────────
+  Widget _buildCategoryRow(
+      CategoryModel category, int index, bool isDark, int subCount) {
+    final bgSurface =
+        isDark ? AppTokens.darkBgSurface : AppTokens.lightBgSurface;
+    final borderLight =
+        isDark ? AppTokens.darkBorderLight : AppTokens.lightBorderLight;
+    final textPrimary =
+        isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary;
+    final textSecondary =
+        isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+    final textTertiary =
+        isDark ? AppTokens.darkTextTertiary : AppTokens.lightTextTertiary;
+    final brandPrimary =
+        isDark ? AppTokens.darkBrandPrimary : AppTokens.lightBrandPrimary;
+    final brandSurface =
+        isDark ? AppTokens.darkBrandSurface : AppTokens.lightBrandSurface;
+    final shadowXs = isDark ? AppTokens.darkShadowXs : AppTokens.lightShadowXs;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          onTap: () => _navigateToCategory(context, category),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: bgSurface,
+              borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+              border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
+              boxShadow: shadowXs,
+            ),
+            child: Row(
+              children: [
+                // Icon container
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: brandSurface,
+                    borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+                  ),
+                  child: Icon(
+                    Icons.folder_outlined,
+                    size: 18,
+                    color: brandPrimary,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                // Title + details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        category.name,
+                        style: AppTextStyles.headingSm.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Text(
+                            'All years',
+                            style: AppTextStyles.bodySm.copyWith(
+                              fontSize: 12,
+                              color: textSecondary,
+                            ),
+                          ),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              '•',
+                              style: AppTextStyles.bodySm.copyWith(
+                                fontSize: 12,
+                                color: textTertiary,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '${category.docCount} files',
+                            style: AppTextStyles.bodySm.copyWith(
+                              fontSize: 12,
+                              color: textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Sub count chip
+                if (subCount > 0) ...[
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: brandSurface,
+                      borderRadius:
+                          BorderRadius.circular(AppTokens.radiusSm),
+                      border: Border.all(color: borderLight, width: 1),
+                    ),
+                    child: Text(
+                      '$subCount sub',
+                      style: AppTextStyles.labelSm.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: brandPrimary,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Icon(Icons.chevron_right, size: 18, color: textTertiary),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
+// ── LOADING SHIMMER ────────────────────────────────────
 class _CategoriesLoadingList extends StatelessWidget {
   final bool isDark;
   const _CategoriesLoadingList({required this.isDark});
@@ -480,19 +516,23 @@ class _CategoriesLoadingList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
       baseColor: isDark
-          ? AppColors.darkCard.withValues(alpha: 0.9)
-          : AppColors.divider.withValues(alpha: 0.6),
-      highlightColor: isDark ? AppColors.darkSurface : Colors.white,
+          ? AppTokens.darkBorderLight
+          : AppTokens.lightBorderLight.withValues(alpha: 0.6),
+      highlightColor: isDark ? AppTokens.darkBgSurface : Colors.white,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         itemCount: 6,
         itemBuilder: (context, index) => Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          height: 92,
+          margin: const EdgeInsets.only(bottom: 8),
+          height: 66,
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkCard : Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.divider, width: 0.8),
+            color: isDark ? AppTokens.darkBgSurface : Colors.white,
+            borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+            border: Border.all(
+                color: isDark
+                    ? AppTokens.darkBorderLight
+                    : AppTokens.lightBorderLight,
+                width: 1),
           ),
         ),
       ),
@@ -500,6 +540,7 @@ class _CategoriesLoadingList extends StatelessWidget {
   }
 }
 
+// ── EMPTY STATE ────────────────────────────────────────
 class _CategoriesEmptyState extends StatelessWidget {
   final bool isDark;
   final Future<void> Function() onRetry;
@@ -508,35 +549,38 @@ class _CategoriesEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textSecondary =
+        isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+    final textTertiary =
+        isDark ? AppTokens.darkTextTertiary : AppTokens.lightTextTertiary;
+    final brandPrimary =
+        isDark ? AppTokens.darkBrandPrimary : AppTokens.lightBrandPrimary;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(48),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.wifi_off_rounded,
-              size: 64,
-              color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                  .withValues(alpha: 0.25),
+              Icons.folder_open_outlined,
+              size: 48,
+              color: textTertiary,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Text(
               'No categories available',
-              style: AppTextStyles.playfairDisplay.copyWith(
-                fontSize: 18,
-                color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                    .withValues(alpha: 0.75),
+              style: AppTextStyles.headingSm.copyWith(
+                color: textSecondary,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               'Check your internet connection and try again.',
               textAlign: TextAlign.center,
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 12,
-                color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                    .withValues(alpha: 0.45),
+              style: AppTextStyles.bodyMd.copyWith(
+                fontSize: 13,
+                color: textTertiary,
               ),
             ),
             const SizedBox(height: 14),
@@ -544,9 +588,9 @@ class _CategoriesEmptyState extends StatelessWidget {
               onPressed: onRetry,
               child: Text(
                 'Retry',
-                style: AppTextStyles.dmSans.copyWith(
+                style: AppTextStyles.bodyMd.copyWith(
                   fontSize: 13,
-                  color: AppColors.gold,
+                  color: brandPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),

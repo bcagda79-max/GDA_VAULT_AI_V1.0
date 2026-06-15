@@ -1,81 +1,96 @@
-// lib/core/constants/app_text_styles.dart
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'app_colors.dart';
 
-/// Defines the text styles for the GDA Vault AI application.
+/// Enterprise Typography System
+/// Font family: Inter (applied via GoogleFonts in ThemeData)
 class AppTextStyles {
-  static final TextStyle playfairDisplay = GoogleFonts.playfairDisplay();
-  static final TextStyle dmSans = GoogleFonts.dmSans();
-
-  static final TextStyle displayLarge = GoogleFonts.playfairDisplay(
-    fontSize: 32,
-    fontWeight: FontWeight.bold,
-    color: AppColors.charcoal,
+  static const TextStyle displayLg = TextStyle(
+    fontSize: 30,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.5,
+    height: 1.2,
   );
 
-  static final TextStyle headlineMedium = GoogleFonts.playfairDisplay(
+  static const TextStyle displayMd = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.w600,
+    letterSpacing: -0.3,
+    height: 1.3,
   );
 
-  static final TextStyle titleLarge = GoogleFonts.playfairDisplay(
-    fontSize: 18,
+  static const TextStyle displaySm = TextStyle(
+    fontSize: 20,
     fontWeight: FontWeight.w600,
+    letterSpacing: -0.2,
+    height: 1.4,
   );
 
-  static final TextStyle titleMedium = GoogleFonts.dmSans(
+  static const TextStyle headingLg = TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.2,
+    height: 1.4,
+  );
+
+  static const TextStyle headingMd = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w600,
+    letterSpacing: -0.1,
+    height: 1.5,
   );
 
-  static final TextStyle bodyLarge = GoogleFonts.dmSans(
+  static const TextStyle headingSm = TextStyle(
     fontSize: 14,
-    fontWeight: FontWeight.normal,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0,
+    height: 1.5,
   );
 
-  static final TextStyle bodySmall = GoogleFonts.dmSans(
-    fontSize: 12,
-    fontWeight: FontWeight.normal,
+  static const TextStyle bodyLg = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0,
+    height: 1.6,
   );
 
-  static final TextStyle labelSmall = GoogleFonts.dmSans(
-    fontSize: 10,
+  static const TextStyle bodyMd = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0,
+    height: 1.6,
+  );
+
+  static const TextStyle bodySm = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0,
+    height: 1.5,
+  );
+
+  static const TextStyle labelLg = TextStyle(
+    fontSize: 13,
     fontWeight: FontWeight.w500,
-    letterSpacing: 0.5,
+    letterSpacing: 0,
+    height: 1.4,
   );
 
-  // Special text style for dark theme
-  static final TextStyle displayLargeDark = displayLarge.copyWith(
-    color: AppColors.darkText,
+  static const TextStyle labelMd = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0,
+    height: 1.4,
   );
 
-  // Simple clean number style — Roboto for clarity
-  static TextStyle statNumber = GoogleFonts.roboto(
-    fontSize: 22,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.2,
-    color: AppColors.charcoal,
+  static const TextStyle labelSm = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.6,
+    height: 1.3, // Typically used with uppercase
   );
 
-  static TextStyle statNumberDark = GoogleFonts.roboto(
-    fontSize: 22,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.2,
-    color: AppColors.darkText,
+  static const TextStyle caption = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0,
+    height: 1.4,
   );
-
-  static TextStyle numberStyle({
-    double? fontSize,
-    FontWeight? fontWeight,
-    Color? color,
-    double? letterSpacing,
-  }) {
-    return GoogleFonts.dmSans(
-      fontSize: fontSize,
-      fontWeight: fontWeight ?? FontWeight.w500,
-      color: color,
-      letterSpacing: letterSpacing,
-    );
-  }
 }

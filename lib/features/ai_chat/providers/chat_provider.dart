@@ -31,7 +31,6 @@ class ChatNotifier extends Notifier<ChatState> {
     );
   }
 
-  // Load history from DB
   Future<void> loadRecentSessions() async {
     final sessions = await ChatHistoryService.instance.getAllSessions();
     state = state.copyWith(recentSessions: sessions);
@@ -43,7 +42,7 @@ class ChatNotifier extends Notifier<ChatState> {
         id: SupabaseConstants.idBoardOfAuthority,
         name: 'Board of Authority',
         shortName: 'BOARD',
-        color: AppColors.catBoard,
+        color: AppTokens.lightBrandPrimary,
         icon: Icons.gavel_rounded,
         isSelected: false,
         docCount: 0,
@@ -52,7 +51,7 @@ class ChatNotifier extends Notifier<ChatState> {
         id: SupabaseConstants.idBoardAuthorityMinutes,
         name: 'Board Authority Minutes',
         shortName: 'MINUTES',
-        color: AppColors.catBoard,
+        color: AppTokens.lightBrandPrimary,
         icon: Icons.history_edu_rounded,
         parentId: SupabaseConstants.idBoardOfAuthority,
         isSelected: false,
@@ -62,7 +61,7 @@ class ChatNotifier extends Notifier<ChatState> {
         id: SupabaseConstants.idTrustMinutes,
         name: 'Trust Minutes Archive',
         shortName: 'TRUST',
-        color: AppColors.catBoard,
+        color: AppTokens.lightBrandPrimary,
         icon: Icons.handshake_rounded,
         parentId: SupabaseConstants.idBoardOfAuthority,
         isSelected: false,
@@ -72,7 +71,7 @@ class ChatNotifier extends Notifier<ChatState> {
         id: SupabaseConstants.idTownPlots,
         name: 'Town (Plot) Files',
         shortName: 'TOWNS',
-        color: AppColors.catTown,
+        color: AppTokens.lightBrandPrimary,
         icon: Icons.location_city_rounded,
         isSelected: false,
         docCount: 0,
@@ -81,7 +80,7 @@ class ChatNotifier extends Notifier<ChatState> {
         id: SupabaseConstants.idAdministration,
         name: 'Administration',
         shortName: 'ADMIN',
-        color: AppColors.catAdmin,
+        color: AppTokens.lightStatusWarn,
         icon: Icons.admin_panel_settings_rounded,
         isSelected: false,
         docCount: 0,
@@ -90,7 +89,7 @@ class ChatNotifier extends Notifier<ChatState> {
         id: SupabaseConstants.idPrivateProperties,
         name: 'Private Properties',
         shortName: 'PRIVATE',
-        color: AppColors.catPrivate,
+        color: AppTokens.lightStatusError,
         icon: Icons.home_work_rounded,
         isSelected: false,
         docCount: 0,
@@ -284,12 +283,10 @@ class ChatNotifier extends Notifier<ChatState> {
     );
   }
 
-  // Disabled Select All as we now limit to 2
   void selectAllCategories() {
     debugPrint('Select All is disabled due to 2-category limit');
   }
 
-  // Clear all selections
   void clearAllCategories() {
     final updatedCategories = state.categories.map((cat) {
       return ChatCategory(
@@ -310,21 +307,18 @@ class ChatNotifier extends Notifier<ChatState> {
     );
   }
 
-  // Signal to open filter sheet
   void openFilterSheet() {
     state = state.copyWith(showFilterSheet: true);
-    // Immediately reset so it doesn't trigger again on next state update
+
     Future.microtask(() {
       state = state.copyWith(showFilterSheet: false);
     });
   }
 
-  // Update input text
   void updateInput(String text) {
     state = state.copyWith(inputText: text);
   }
 
-  // Update year range for filtering
   void updateYearRange(String? from, String? to) {
     state = state.copyWith(
       yearFrom: from,
@@ -334,7 +328,6 @@ class ChatNotifier extends Notifier<ChatState> {
     );
   }
 
-  // Start a fresh session
   void startNewChat() {
     state = state.copyWith(
       sessionId: _uuid.v4(),
@@ -353,7 +346,6 @@ class ChatNotifier extends Notifier<ChatState> {
     }
   }
 
-  // Load specific session
   Future<void> loadSession(String sessionId) async {
     final sessions = state.recentSessions;
     final currentSession = sessions.firstWhere((s) => s['id'] == sessionId);
@@ -378,7 +370,6 @@ class ChatNotifier extends Notifier<ChatState> {
       categoryIds = state.defaultCategoryIds;
     }
 
-    // Extract year_from and year_to from session
     final yearFrom = currentSession['year_from']?.toString();
     final yearTo = currentSession['year_to']?.toString();
 
@@ -399,7 +390,6 @@ class ChatNotifier extends Notifier<ChatState> {
     }
   }
 
-  // Delete session
   Future<void> deleteSession(String sessionId) async {
     await ChatHistoryService.instance.deleteSession(sessionId);
     await loadRecentSessions();
@@ -408,14 +398,13 @@ class ChatNotifier extends Notifier<ChatState> {
     }
   }
 
-  // Send message + get real AI response from n8n
   Future<void> sendMessage(String userText) async {
-    if (userText.trim().isEmpty || !state.categoriesSelected || state.isLoading) return;
+    if (userText.trim().isEmpty || !state.categoriesSelected || state.isLoading)
+      return;
 
-    // Use defaults if user hasn't selected years
     final currentYear = DateTime.now().year;
     final maxYear = currentYear > 2026 ? currentYear.toString() : '2026';
-    
+
     final effectiveYearFrom = state.yearFrom ?? '1996';
     final effectiveYearTo = state.yearTo ?? maxYear;
 
@@ -426,10 +415,10 @@ class ChatNotifier extends Notifier<ChatState> {
       timestamp: DateTime.now(),
     );
 
-    // Save/Update session first if it's the first message
     if (state.messages.isEmpty) {
-      final title =
-          userText.length > 30 ? "${userText.substring(0, 27)}..." : userText;
+      final title = userText.length > 30
+          ? "${userText.substring(0, 27)}..."
+          : userText;
 
       await ChatHistoryService.instance.saveSession(
         id: state.sessionId,
@@ -446,10 +435,8 @@ class ChatNotifier extends Notifier<ChatState> {
       );
     }
 
-    // Save user message
     await ChatHistoryService.instance.saveMessage(state.sessionId, userMsg);
 
-    // Add user message + typing indicator
     final typingMsg = ChatMessage(
       id: 'typing-${_uuid.v4()}',
       content: '',
@@ -465,12 +452,10 @@ class ChatNotifier extends Notifier<ChatState> {
     );
 
     try {
-      // Get selected category IDs
       final selected = state.selectedCategories;
       final mainId = selected.isNotEmpty ? selected.first.id : null;
       final subId = selected.length > 1 ? selected[1].id : null;
 
-      // Call n8n service
       final response = await AiChatService.sendMessage(
         message: userText,
         sessionId: state.sessionId,
@@ -486,13 +471,11 @@ class ChatNotifier extends Notifier<ChatState> {
       final citations = sourcesData.map((s) {
         final citation = SourceCitation.fromJson(s as Map<String, dynamic>);
 
-        // Use currently selected category if n8n didn't provide one
         String catName = citation.categoryName;
         if (catName == 'General' && selected.isNotEmpty) {
           catName = selected.first.name;
         }
 
-        // Map category color for UI consistency
         final cat = state.categories.firstWhere(
           (c) => c.name.toLowerCase().contains(catName.toLowerCase()),
           orElse: () =>
@@ -566,3 +549,4 @@ class ChatNotifier extends Notifier<ChatState> {
 final chatProvider = NotifierProvider<ChatNotifier, ChatState>(
   ChatNotifier.new,
 );
+

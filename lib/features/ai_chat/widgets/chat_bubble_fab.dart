@@ -25,7 +25,7 @@ class ChatBubbleFab extends StatelessWidget {
                 height: 62,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.gold.withValues(alpha: 0.1),
+                  color: AppTokens.lightBrandPrimary.withValues(alpha: 0.1),
                 ),
               )
               .animate(onPlay: (c) => c.repeat(reverse: true))
@@ -46,7 +46,7 @@ class ChatBubbleFab extends StatelessWidget {
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [AppColors.navyDark, AppColors.navyMid],
+                    colors: [AppTokens.lightBrandPrimary, AppTokens.lightBrandPrimary],
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -55,7 +55,7 @@ class ChatBubbleFab extends StatelessWidget {
                       offset: const Offset(0, 6),
                     ),
                     BoxShadow(
-                      color: AppColors.gold.withValues(alpha: 0.1),
+                      color: AppTokens.lightBrandPrimary.withValues(alpha: 0.1),
                       blurRadius: 4,
                       spreadRadius: 1,
                     ),
@@ -67,7 +67,7 @@ class ChatBubbleFab extends StatelessWidget {
                 ),
                 child: const Icon(
                   Icons.auto_awesome_rounded,
-                  color: AppColors.gold,
+                  color: AppTokens.lightBrandPrimary,
                   size: 24,
                 ),
               )
@@ -83,3 +83,4 @@ class ChatBubbleFab extends StatelessWidget {
     );
   }
 }
+

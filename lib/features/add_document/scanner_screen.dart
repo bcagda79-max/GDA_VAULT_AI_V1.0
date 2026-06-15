@@ -236,7 +236,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                 Expanded(
                   child: Text(
                     'Page $count captured! Tap again for more.',
-                    style: AppTextStyles.dmSans.copyWith(
+                    style: AppTextStyles.bodyMd.copyWith(
                       fontSize: 12,
                       color: Colors.white,
                     ),
@@ -244,7 +244,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                 ),
               ],
             ),
-            backgroundColor: AppColors.gdaGreen,
+            backgroundColor: AppTokens.lightBrandPrimary,
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -362,10 +362,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       preferredSize: Size.fromHeight(isDesktop ? 72 : 62),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.navyDark,
+          color: AppTokens.lightBrandPrimary,
           border: Border(
             bottom: BorderSide(
-              color: AppColors.gold.withValues(alpha: 0.25),
+              color: AppTokens.lightBrandPrimary.withValues(alpha: 0.25),
               width: 0.8,
             ),
           ),
@@ -423,7 +423,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                                 Center(
                                   child: Text(
                                     'GDA',
-                                    style: AppTextStyles.dmSans.copyWith(
+                                    style: AppTextStyles.bodyMd.copyWith(
                                       fontSize: 7,
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
@@ -440,7 +440,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                         children: [
                           Text(
                             'GDA Vault AI',
-                            style: AppTextStyles.dmSans.copyWith(
+                            style: AppTextStyles.bodyMd.copyWith(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -448,7 +448,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                           ),
                           Text(
                             'Scan Document',
-                            style: AppTextStyles.dmSans.copyWith(
+                            style: AppTextStyles.bodyMd.copyWith(
                               fontSize: 9,
                               color: Colors.white.withValues(alpha: 0.55),
                             ),
@@ -548,14 +548,14 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                 width: 36,
                 height: 36,
                 child: CircularProgressIndicator(
-                  color: AppColors.gold,
+                  color: AppTokens.lightBrandPrimary,
                   strokeWidth: 2.5,
                 ),
               ),
               const SizedBox(height: 14),
               Text(
                 'Initializing Camera...',
-                style: AppTextStyles.dmSans.copyWith(
+                style: AppTextStyles.bodyMd.copyWith(
                   fontSize: 13,
                   color: Colors.white70,
                 ),
@@ -571,7 +571,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
   // ── C5: Solid bottom panel ──
   Widget _buildBottomPanel(List<ScannedPage> pages) {
     return Container(
-      color: AppColors.navyDark,
+      color: AppTokens.lightBrandPrimary,
       padding: EdgeInsets.only(
         top: 16,
         bottom: MediaQuery.of(context).padding.bottom + 20,
@@ -614,7 +614,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                         color: Colors.white.withValues(alpha: 0.06),
                         border: Border.all(
                           color: pages.isNotEmpty
-                              ? AppColors.gold
+                              ? AppTokens.lightBrandPrimary
                               : Colors.white.withValues(alpha: 0.2),
                           width: pages.isNotEmpty ? 1.8 : 1,
                         ),
@@ -643,16 +643,16 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                           width: 20,
                           height: 20,
                           decoration: const BoxDecoration(
-                            color: AppColors.gold,
+                            color: AppTokens.lightBrandPrimary,
                             shape: BoxShape.circle,
                           ),
                           child: Center(
                             child: Text(
                               '${pages.length}',
-                              style: AppTextStyles.dmSans.copyWith(
+                              style: AppTextStyles.bodyMd.copyWith(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.navyDark,
+                                color: AppTokens.lightBrandPrimary,
                               ),
                             ),
                           ),
@@ -686,7 +686,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: _isCapturing
-                            ? AppColors.gold.withValues(alpha: 0.8)
+                            ? AppTokens.lightBrandPrimary.withValues(alpha: 0.8)
                             : Colors.white,
                         boxShadow: [
                           BoxShadow(
@@ -702,7 +702,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                                 width: 22,
                                 height: 22,
                                 child: CircularProgressIndicator(
-                                  color: AppColors.navyDark,
+                                  color: AppTokens.lightBrandPrimary,
                                   strokeWidth: 2.5,
                                 ),
                               ),
@@ -725,17 +725,17 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       color: pages.isNotEmpty
-                          ? AppColors.gdaGreen
+                          ? AppTokens.lightBrandPrimary
                           : Colors.white.withValues(alpha: 0.06),
                       border: Border.all(
                         color: pages.isNotEmpty
-                            ? AppColors.gdaGreen
+                            ? AppTokens.lightBrandPrimary
                             : Colors.white.withValues(alpha: 0.15),
                       ),
                       boxShadow: pages.isNotEmpty
                           ? [
                               BoxShadow(
-                                color: AppColors.gdaGreen.withValues(
+                                color: AppTokens.lightBrandPrimary.withValues(
                                   alpha: 0.35,
                                 ),
                                 blurRadius: 10,
@@ -755,7 +755,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                         const SizedBox(height: 2),
                         Text(
                           'Done',
-                          style: AppTextStyles.dmSans.copyWith(
+                          style: AppTextStyles.bodyMd.copyWith(
                             fontSize: 9,
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -774,7 +774,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
             const SizedBox(height: 12),
             Text(
               '${pages.length} page${pages.length > 1 ? 's' : ''} ready  ·  Tap Done to review',
-              style: AppTextStyles.dmSans.copyWith(
+              style: AppTextStyles.bodyMd.copyWith(
                 fontSize: 11,
                 color: Colors.white.withValues(alpha: 0.55),
               ),
@@ -801,7 +801,7 @@ class _StaticFramePainter extends CustomPainter {
     const cLen = 26.0;
 
     final paint = Paint()
-      ..color = AppColors.gold
+      ..color = AppTokens.lightBrandPrimary
       ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -823,7 +823,7 @@ class _StaticFramePainter extends CustomPainter {
     canvas.drawRect(
       Rect.fromLTRB(fL, fT, fR, fB),
       Paint()
-        ..color = AppColors.gold.withValues(alpha: 0.2)
+        ..color = AppTokens.lightBrandPrimary.withValues(alpha: 0.2)
         ..strokeWidth = 0.8
         ..style = PaintingStyle.stroke,
     );
@@ -871,7 +871,7 @@ class _CaptureScanPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [AppColors.gold.withValues(alpha: 0.35), Colors.transparent],
+        colors: [AppTokens.lightBrandPrimary.withValues(alpha: 0.35), Colors.transparent],
       ).createShader(Rect.fromLTWH(fL, y, lineW, 52));
     canvas.drawRect(Rect.fromLTWH(fL, y, lineW, 52), glowPaint);
 
@@ -879,9 +879,9 @@ class _CaptureScanPainter extends CustomPainter {
       ..shader = LinearGradient(
         colors: [
           Colors.transparent,
-          AppColors.gold.withValues(alpha: 0.9),
-          AppColors.gold,
-          AppColors.gold.withValues(alpha: 0.9),
+          AppTokens.lightBrandPrimary.withValues(alpha: 0.9),
+          AppTokens.lightBrandPrimary,
+          AppTokens.lightBrandPrimary.withValues(alpha: 0.9),
           Colors.transparent,
         ],
         stops: const [0, 0.2, 0.5, 0.8, 1.0],
@@ -949,11 +949,11 @@ class _AppBarIconBtn extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: isActive
-              ? AppColors.gold.withValues(alpha: 0.18)
+              ? AppTokens.lightBrandPrimary.withValues(alpha: 0.18)
               : Colors.white.withValues(alpha: 0.08),
           border: isActive
               ? Border.all(
-                  color: AppColors.gold.withValues(alpha: 0.5),
+                  color: AppTokens.lightBrandPrimary.withValues(alpha: 0.5),
                   width: 1.2,
                 )
               : null,
@@ -961,7 +961,7 @@ class _AppBarIconBtn extends StatelessWidget {
         child: Icon(
           icon,
           size: 17,
-          color: isActive ? AppColors.gold : Colors.white,
+          color: isActive ? AppTokens.lightBrandPrimary : Colors.white,
         ),
       ),
     );
@@ -996,7 +996,7 @@ class _ModePillState extends State<_ModePill> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: _selected
-              ? AppColors.gold
+              ? AppTokens.lightBrandPrimary
               : Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(20),
           border: _selected
@@ -1005,10 +1005,10 @@ class _ModePillState extends State<_ModePill> {
         ),
         child: Text(
           widget.mode,
-          style: AppTextStyles.dmSans.copyWith(
+          style: AppTextStyles.bodyMd.copyWith(
             fontSize: 11,
             fontWeight: _selected ? FontWeight.bold : FontWeight.normal,
-            color: _selected ? AppColors.navyDark : Colors.white,
+            color: _selected ? AppTokens.lightBrandPrimary : Colors.white,
           ),
         ),
       ),
@@ -1034,7 +1034,7 @@ class _ScannedPagesSheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
+        color: isDark ? AppTokens.lightBrandPrimary : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -1046,7 +1046,7 @@ class _ScannedPagesSheet extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: AppColors.charcoal.withValues(alpha: 0.15),
+                color: AppTokens.lightBrandPrimary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1056,7 +1056,7 @@ class _ScannedPagesSheet extends StatelessWidget {
             children: [
               Text(
                 'Scanned (${pages.length})',
-                style: AppTextStyles.playfairDisplay.copyWith(
+                style: AppTextStyles.headingMd.copyWith(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1065,7 +1065,7 @@ class _ScannedPagesSheet extends StatelessWidget {
                 onPressed: onDone,
                 child: Text(
                   'Review & Save →',
-                  style: AppTextStyles.dmSans.copyWith(color: AppColors.gold),
+                  style: AppTextStyles.bodyMd.copyWith(color: AppTokens.lightBrandPrimary),
                 ),
               ),
             ],
@@ -1086,7 +1086,7 @@ class _ScannedPagesSheet extends StatelessWidget {
                       margin: const EdgeInsets.only(right: 10),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.divider),
+                        border: Border.all(color: AppTokens.lightBorderLight),
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
@@ -1105,12 +1105,12 @@ class _ScannedPagesSheet extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.navyDark.withValues(alpha: 0.8),
+                          color: AppTokens.lightBrandPrimary.withValues(alpha: 0.8),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           'p.${i + 1}',
-                          style: AppTextStyles.dmSans.copyWith(
+                          style: AppTextStyles.bodyMd.copyWith(
                             fontSize: 8,
                             color: Colors.white,
                           ),
@@ -1151,8 +1151,8 @@ class _ScannedPagesSheet extends StatelessWidget {
                   icon: const Icon(Icons.add_a_photo, size: 16),
                   label: const Text('Add More'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.gold,
-                    side: const BorderSide(color: AppColors.gold),
+                    foregroundColor: AppTokens.lightBrandPrimary,
+                    side: const BorderSide(color: AppTokens.lightBrandPrimary),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -1167,17 +1167,17 @@ class _ScannedPagesSheet extends StatelessWidget {
                   icon: const Icon(
                     Icons.check_rounded,
                     size: 16,
-                    color: AppColors.navyDark,
+                    color: AppTokens.lightBrandPrimary,
                   ),
                   label: Text(
                     'Review',
-                    style: AppTextStyles.dmSans.copyWith(
+                    style: AppTextStyles.bodyMd.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.navyDark,
+                      color: AppTokens.lightBrandPrimary,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.gold,
+                    backgroundColor: AppTokens.lightBrandPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -1193,3 +1193,4 @@ class _ScannedPagesSheet extends StatelessWidget {
     );
   }
 }
+

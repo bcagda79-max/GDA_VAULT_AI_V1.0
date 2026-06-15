@@ -24,9 +24,14 @@ class CategorySelectorSheet extends ConsumerWidget {
         .map((c) => c.shortName)
         .join(', ');
 
+    final bgSurface = isDark ? const Color(0xFF1C1C1C) : AppTokens.lightBgSurface;
+    final bgPage = isDark ? const Color(0xFF0A0A0A) : AppTokens.lightBgPage;
+    final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
+    final textSecondary = isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF121A2E) : Colors.white,
+        color: bgSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
@@ -48,7 +53,7 @@ class CategorySelectorSheet extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.1)
-                    : AppColors.charcoal.withValues(alpha: 0.1),
+                    : isDark ? Colors.white : Colors.black.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -64,20 +69,20 @@ class CategorySelectorSheet extends ConsumerWidget {
                     children: [
                       Text(
                         "SEARCH ARCHIVES",
-                        style: AppTextStyles.dmSans.copyWith(
+                        style: AppTextStyles.bodyMd.copyWith(
                           fontSize: 10,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.gold,
+                          color: isDark ? Colors.white : Colors.black,
                           letterSpacing: 1.2,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         "Select Categories",
-                        style: AppTextStyles.playfairDisplay.copyWith(
+                        style: AppTextStyles.headingMd.copyWith(
                           fontSize: 24,
                           fontWeight: FontWeight.w900,
-                          color: isDark ? Colors.white : AppColors.navyDark,
+                          color: isDark ? Colors.white : AppTokens.lightTextPrimary,
                         ),
                       ),
                     ],
@@ -89,15 +94,13 @@ class CategorySelectorSheet extends ConsumerWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: isDark 
-                        ? Colors.white.withValues(alpha: 0.05) 
-                        : AppColors.navyDark.withValues(alpha: 0.05),
+                      color: borderLight,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.close_rounded,
                       size: 20,
-                      color: isDark ? Colors.white : AppColors.navyDark,
+                      color: isDark ? Colors.white : AppTokens.lightTextPrimary,
                     ),
                   ),
                 ),
@@ -110,9 +113,9 @@ class CategorySelectorSheet extends ConsumerWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.divider.withValues(alpha: 0),
-                  AppColors.divider.withValues(alpha: 0.8),
-                  AppColors.divider.withValues(alpha: 0),
+                  AppTokens.lightBorderLight.withValues(alpha: 0),
+                  AppTokens.lightBorderLight.withValues(alpha: 0.8),
+                  AppTokens.lightBorderLight.withValues(alpha: 0),
                 ],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
@@ -132,7 +135,7 @@ class CategorySelectorSheet extends ConsumerWidget {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.navyLight.withValues(alpha: 0.08),
+                    color: isDark ? Colors.white : Colors.black.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -141,22 +144,22 @@ class CategorySelectorSheet extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: AppColors.navyLight.withValues(alpha: 0.15),
+                          color: isDark ? Colors.white : Colors.black.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.calendar_month_rounded,
                           size: 13,
-                          color: AppColors.navyLight,
+                          color: isDark ? Colors.white : Colors.black,
                         ),
                       ),
                       const SizedBox(width: 10),
                       Text(
                         "Select Year",
-                        style: AppTextStyles.dmSans.copyWith(
+                        style: AppTextStyles.bodyMd.copyWith(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.navyLight,
+                          color: isDark ? Colors.white : Colors.black,
                           letterSpacing: 0.3,
                         ),
                       ),
@@ -206,10 +209,10 @@ class CategorySelectorSheet extends ConsumerWidget {
                           vertical: 7,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.navyLight.withValues(alpha: 0.12),
+                          color: isDark ? Colors.white : Colors.black.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: AppColors.navyLight.withValues(alpha: 0.25),
+                            color: isDark ? Colors.white : Colors.black.withValues(alpha: 0.25),
                             width: 0.8,
                           ),
                         ),
@@ -219,15 +222,15 @@ class CategorySelectorSheet extends ConsumerWidget {
                             Icon(
                               Icons.close_rounded,
                               size: 13,
-                              color: AppColors.navyLight.withValues(alpha: 0.8),
+                              color: isDark ? Colors.white : Colors.black.withValues(alpha: 0.8),
                             ),
                             const SizedBox(width: 6),
                             Text(
                               "Clear Year Filter",
-                              style: AppTextStyles.dmSans.copyWith(
+                              style: AppTextStyles.bodyMd.copyWith(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.navyLight.withValues(
+                                color: isDark ? Colors.white : Colors.black.withValues(
                                   alpha: 0.9,
                                 ),
                                 letterSpacing: 0.2,
@@ -248,9 +251,9 @@ class CategorySelectorSheet extends ConsumerWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.divider.withValues(alpha: 0),
-                  AppColors.divider.withValues(alpha: 0.8),
-                  AppColors.divider.withValues(alpha: 0),
+                  AppTokens.lightBorderLight.withValues(alpha: 0),
+                  AppTokens.lightBorderLight.withValues(alpha: 0.8),
+                  AppTokens.lightBorderLight.withValues(alpha: 0),
                 ],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
@@ -269,19 +272,19 @@ class CategorySelectorSheet extends ConsumerWidget {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.navyLight.withValues(alpha: 0.1),
+                    color: bgPage,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: AppColors.navyLight.withValues(alpha: 0.15),
+                      color: borderLight,
                       width: 0.8,
                     ),
                   ),
                   child: Text(
                     "$selectedCount of 5 selected",
-                    style: AppTextStyles.dmSans.copyWith(
+                    style: AppTextStyles.bodyMd.copyWith(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.navyLight,
+                      color: isDark ? Colors.white : AppTokens.lightTextPrimary,
                       letterSpacing: 0.2,
                     ),
                   ),
@@ -295,19 +298,19 @@ class CategorySelectorSheet extends ConsumerWidget {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.charcoal.withValues(alpha: 0.06),
+                      color: Colors.transparent,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: AppColors.charcoal.withValues(alpha: 0.1),
+                        color: borderLight,
                         width: 0.8,
                       ),
                     ),
                     child: Text(
                       "Clear All",
-                      style: AppTextStyles.dmSans.copyWith(
+                      style: AppTextStyles.bodyMd.copyWith(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.charcoal.withValues(alpha: 0.7),
+                        color: textSecondary,
                         letterSpacing: 0.2,
                       ),
                     ),
@@ -382,19 +385,15 @@ class CategorySelectorSheet extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkCard
-                              : AppColors.navyLight.withValues(alpha: 0.07),
+                          color: bgPage,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: AppColors.navyLight.withValues(alpha: 0.25),
+                            color: borderLight,
                             width: 1.1,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.navyLight.withValues(
-                                alpha: 0.08,
-                              ),
+                              color: Colors.black.withValues(alpha: 0.04),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -405,15 +404,13 @@ class CategorySelectorSheet extends ConsumerWidget {
                             Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: AppColors.navyLight.withValues(
-                                  alpha: 0.2,
-                                ),
+                                color: isDark ? const Color(0xFF141414) : const Color(0xFFF0F0F0),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(
                                 Icons.check_circle_rounded,
                                 size: 16,
-                                color: AppColors.navyLight,
+                                color: isDark ? Colors.white : Colors.black,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -423,24 +420,20 @@ class CategorySelectorSheet extends ConsumerWidget {
                                 children: [
                                   Text(
                                     "Search Scope",
-                                    style: AppTextStyles.dmSans.copyWith(
+                                    style: AppTextStyles.bodyMd.copyWith(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.navyLight,
+                                      color: isDark ? Colors.white : AppTokens.lightTextPrimary,
                                       letterSpacing: 0.3,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     "$selectedCount ${selectedCount == 1 ? 'category' : 'categories'}: $selectedCatNames",
-                                    style: AppTextStyles.dmSans.copyWith(
+                                    style: AppTextStyles.bodyMd.copyWith(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
-                                      color: isDark
-                                          ? Colors.white.withValues(alpha: 0.75)
-                                          : AppColors.charcoal.withValues(
-                                              alpha: 0.75,
-                                            ),
+                                      color: textSecondary,
                                       height: 1.3,
                                     ),
                                     maxLines: 3,
@@ -480,6 +473,9 @@ class CategorySelectorSheet extends ConsumerWidget {
       displayDocCount = children.fold(0, (sum, c) => sum + c.docCount);
     }
 
+    final bgSurface = isDark ? const Color(0xFF141414) : AppTokens.lightBgSurface;
+    final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
+
     return GestureDetector(
       onTap: () => ref.read(chatProvider.notifier).toggleCategory(cat.id),
       child: AnimatedContainer(
@@ -491,14 +487,12 @@ class CategorySelectorSheet extends ConsumerWidget {
         decoration: BoxDecoration(
           color: cat.isSelected
               ? cat.color.withValues(alpha: isDark ? 0.12 : 0.08)
-              : (isDark ? AppColors.darkCard : Colors.white),
+              : bgSurface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: cat.isSelected
                 ? cat.color.withValues(alpha: isDark ? 0.45 : 0.3)
-                : (isDark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : AppColors.divider),
+                : borderLight,
             width: cat.isSelected ? 1.3 : 0.9,
           ),
           boxShadow: cat.isSelected
@@ -548,28 +542,28 @@ class CategorySelectorSheet extends ConsumerWidget {
                 children: [
                   Text(
                     cat.name,
-                    style: AppTextStyles.dmSans.copyWith(
+                    style: AppTextStyles.bodyMd.copyWith(
                       fontSize: isSub ? 13 : 14,
                       fontWeight: cat.isSelected
                           ? FontWeight.w600
                           : FontWeight.w500,
                       color: cat.isSelected
-                          ? (isDark ? Colors.white : AppColors.charcoal)
+                          ? (isDark ? Colors.white : AppTokens.lightTextPrimary)
                           : (isDark
-                                ? Colors.white.withValues(alpha: 0.65)
-                                : AppColors.charcoal.withValues(alpha: 0.7)),
+                                ? const Color(0xFF8A8A8A)
+                                : AppTokens.lightTextSecondary),
                       letterSpacing: cat.isSelected ? 0.1 : 0,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    "${cat.shortName} · ${_formatCount(displayDocCount)} docs",
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w400,
+                    "${_formatCount(displayDocCount)} docs",
+                    style: AppTextStyles.bodyMd.copyWith(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                       color: isDark
-                          ? Colors.white.withValues(alpha: 0.4)
-                          : AppColors.charcoal.withValues(alpha: 0.5),
+                          ? const Color(0xFF555555)
+                          : AppTokens.lightTextTertiary,
                     ),
                   ),
                 ],
@@ -584,7 +578,7 @@ class CategorySelectorSheet extends ConsumerWidget {
                 shape: BoxShape.circle,
                 color: cat.isSelected ? cat.color : Colors.transparent,
                 border: Border.all(
-                  color: cat.isSelected ? cat.color : AppColors.divider,
+                  color: cat.isSelected ? cat.color : AppTokens.lightBorderLight,
                   width: cat.isSelected ? 2 : 1.5,
                 ),
               ),
@@ -624,12 +618,12 @@ class CategorySelectorSheet extends ConsumerWidget {
       children: [
         Text(
           label,
-          style: AppTextStyles.dmSans.copyWith(
+          style: AppTextStyles.bodyMd.copyWith(
             fontSize: 11,
             fontWeight: FontWeight.w700,
             color: isDark
                 ? Colors.white.withValues(alpha: 0.6)
-                : AppColors.charcoal.withValues(alpha: 0.6),
+                : isDark ? Colors.white : Colors.black.withValues(alpha: 0.6),
             letterSpacing: 0.3,
           ),
         ),
@@ -637,18 +631,16 @@ class CategorySelectorSheet extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkCard : Colors.white,
+            color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.12)
-                  : AppColors.divider,
+              color: isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight,
               width: 0.9,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.navyLight.withValues(
-                  alpha: isDark ? 0.05 : 0.06,
+                color: Colors.black.withValues(
+                  alpha: isDark ? 0.2 : 0.02,
                 ),
                 blurRadius: 4,
                 offset: const Offset(0, 1),
@@ -660,12 +652,12 @@ class CategorySelectorSheet extends ConsumerWidget {
               value: value,
               hint: Text(
                 "Select",
-                style: AppTextStyles.dmSans.copyWith(
+                style: AppTextStyles.bodyMd.copyWith(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.45)
-                      : AppColors.charcoal.withValues(alpha: 0.4),
+                      ? AppTokens.darkTextSecondary
+                      : AppTokens.lightTextSecondary,
                   letterSpacing: 0.2,
                 ),
               ),
@@ -674,18 +666,18 @@ class CategorySelectorSheet extends ConsumerWidget {
                 Icons.expand_more_rounded,
                 size: 18,
                 color: isDark
-                    ? AppColors.navyLight.withValues(alpha: 0.6)
-                    : AppColors.navyLight.withValues(alpha: 0.65),
+                    ? AppTokens.darkTextSecondary
+                    : AppTokens.lightTextSecondary,
               ),
-              style: AppTextStyles.dmSans.copyWith(
+              style: AppTextStyles.bodyMd.copyWith(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.95)
-                    : AppColors.charcoal,
+                    ? Colors.white
+                    : AppTokens.lightTextPrimary,
                 letterSpacing: 0.2,
               ),
-              dropdownColor: isDark ? AppColors.darkSurface : Colors.white,
+              dropdownColor: isDark ? const Color(0xFF1C1C1C) : Colors.white,
               borderRadius: BorderRadius.circular(12),
               items: years
                   .map(
@@ -693,12 +685,12 @@ class CategorySelectorSheet extends ConsumerWidget {
                       value: y,
                       child: Text(
                         y,
-                        style: AppTextStyles.dmSans.copyWith(
+                        style: AppTextStyles.bodyMd.copyWith(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: isDark
                               ? Colors.white.withValues(alpha: 0.95)
-                              : AppColors.charcoal,
+                              : isDark ? Colors.white : Colors.black,
                         ),
                       ),
                     ),
@@ -712,3 +704,4 @@ class CategorySelectorSheet extends ConsumerWidget {
     );
   }
 }
+

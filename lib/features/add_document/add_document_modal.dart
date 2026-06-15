@@ -8,7 +8,6 @@ import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/services/document_upload_service.dart';
 import 'package:gda_vault_ai/core/utils/pdf_utils.dart';
 
-/// Modal popup for adding new documents with 2 quick options
 class AddDocumentModal extends ConsumerWidget {
   const AddDocumentModal({super.key});
 
@@ -36,15 +35,12 @@ class AddDocumentModal extends ConsumerWidget {
           return;
         }
 
-        // Get actual page count
         final int actualPageCount = await PdfUtils.getPageCount(file.path!);
 
         if (!context.mounted) return;
 
-        // Close modal first
         Navigator.pop(context);
 
-        // Navigate to category selector with actual file data
         context.push(
           '/dashboard/add/select-category',
           extra: {
@@ -95,7 +91,7 @@ class AddDocumentModal extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.1)
-                    : AppColors.charcoal.withValues(alpha: 0.1),
+                    : AppTokens.lightBrandPrimary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -111,20 +107,20 @@ class AddDocumentModal extends ConsumerWidget {
                     children: [
                       Text(
                         "IMPORT OPTIONS",
-                        style: AppTextStyles.dmSans.copyWith(
+                        style: AppTextStyles.bodyMd.copyWith(
                           fontSize: 10,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.gold,
+                          color: AppTokens.lightBrandPrimary,
                           letterSpacing: 1.2,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         "Add Document",
-                        style: AppTextStyles.playfairDisplay.copyWith(
+                        style: AppTextStyles.headingMd.copyWith(
                           fontSize: 24,
                           fontWeight: FontWeight.w900,
-                          color: isDark ? Colors.white : AppColors.navyDark,
+                          color: isDark ? Colors.white : AppTokens.lightBrandPrimary,
                         ),
                       ),
                     ],
@@ -138,13 +134,13 @@ class AddDocumentModal extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.05)
-                          : AppColors.navyDark.withValues(alpha: 0.05),
+                          : AppTokens.lightBrandPrimary.withValues(alpha: 0.05),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.close_rounded,
                       size: 20,
-                      color: isDark ? Colors.white : AppColors.navyDark,
+                      color: isDark ? Colors.white : AppTokens.lightBrandPrimary,
                     ),
                   ),
                 ),
@@ -157,7 +153,7 @@ class AddDocumentModal extends ConsumerWidget {
             icon: Icons.camera_alt_rounded,
             title: "Scan Document",
             subtitle: "Use camera to scan physical files",
-            color: AppColors.navyLight,
+            color: AppTokens.lightBrandPrimary,
             onTap: () {
               ref.read(scanImagesProvider.notifier).clear();
               Navigator.pop(context);
@@ -170,7 +166,7 @@ class AddDocumentModal extends ConsumerWidget {
             icon: Icons.upload_file_rounded,
             title: "Import PDF",
             subtitle: "Select an existing PDF from device",
-            color: AppColors.gdaGreen,
+            color: AppTokens.lightBrandPrimary,
             onTap: () => _pickPDFFile(context),
             isDark: isDark,
           ),
@@ -240,21 +236,21 @@ class AddDocumentModal extends ConsumerWidget {
                     children: [
                       Text(
                         title,
-                        style: AppTextStyles.playfairDisplay.copyWith(
+                        style: AppTextStyles.headingMd.copyWith(
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
-                          color: isDark ? Colors.white : AppColors.navyDark,
+                          color: isDark ? Colors.white : AppTokens.lightBrandPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
-                        style: AppTextStyles.dmSans.copyWith(
+                        style: AppTextStyles.bodyMd.copyWith(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: isDark
                               ? Colors.white.withValues(alpha: 0.4)
-                              : AppColors.charcoal.withValues(alpha: 0.5),
+                              : AppTokens.lightBrandPrimary.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
@@ -264,7 +260,7 @@ class AddDocumentModal extends ConsumerWidget {
                   Icons.chevron_right_rounded,
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.2)
-                      : AppColors.charcoal.withValues(alpha: 0.2),
+                      : AppTokens.lightBrandPrimary.withValues(alpha: 0.2),
                 ),
               ],
             ),
@@ -274,3 +270,4 @@ class AddDocumentModal extends ConsumerWidget {
     );
   }
 }
+

@@ -179,7 +179,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
             children: [
               Text(
                 widget.document.fileName,
-                style: AppTextStyles.dmSans.copyWith(
+                style: AppTextStyles.bodyMd.copyWith(
                   fontSize: 13,
                   color: Colors.white,
                 ),
@@ -187,7 +187,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
               ),
               Text(
                 '${widget.document.pageCount ?? 0} pages · ${widget.document.yearLabel}',
-                style: AppTextStyles.dmSans.copyWith(
+                style: AppTextStyles.bodyMd.copyWith(
                   fontSize: 9,
                   color: Colors.white.withValues(alpha: 0.5),
                 ),
@@ -236,7 +236,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                   ),
                   icon: const Icon(
                     Icons.auto_awesome,
-                    color: AppColors.gdaGold,
+                    color: AppTokens.lightBrandPrimary,
                     size: 16,
                   ),
                   label: const Text(
@@ -292,7 +292,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
           children: [
             if (_isLoading)
               const Center(
-                child: CircularProgressIndicator(color: AppColors.gold),
+                child: CircularProgressIndicator(color: AppTokens.lightBrandPrimary),
               )
             else if (_localPdfPath != null)
               SfPdfViewer.file(
@@ -330,7 +330,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
               Center(
                 child: Text(
                   _errorMessage ?? 'Failed to load document',
-                  style: AppTextStyles.dmSans.copyWith(
+                  style: AppTextStyles.bodyMd.copyWith(
                     color: Colors.white.withValues(alpha: 0.7),
                   ),
                 ),
@@ -362,10 +362,10 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                       children: [
                         Text(
                           _downloadStatus,
-                          style: AppTextStyles.dmSans.copyWith(
+                          style: AppTextStyles.bodyMd.copyWith(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.charcoal,
+                            color: AppTokens.lightBrandPrimary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -374,18 +374,18 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                           child: LinearProgressIndicator(
                             value: _downloadProgress,
                             minHeight: 5,
-                            backgroundColor: AppColors.divider,
+                            backgroundColor: AppTokens.lightBorderLight,
                             valueColor: const AlwaysStoppedAnimation(
-                              AppColors.gold,
+                              AppTokens.lightBrandPrimary,
                             ),
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           '${(_downloadProgress * 100).clamp(0, 100).toStringAsFixed(0)}%',
-                          style: AppTextStyles.dmSans.copyWith(
+                          style: AppTextStyles.bodyMd.copyWith(
                             fontSize: 11,
-                            color: AppColors.charcoal.withValues(alpha: 0.6),
+                            color: AppTokens.lightBrandPrimary.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -429,19 +429,19 @@ class _BottomAskAIButton extends StatelessWidget {
             },
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.navyDark,
+            backgroundColor: AppTokens.lightBrandPrimary,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
-              side: BorderSide(color: AppColors.gdaGold.withValues(alpha: 0.5)),
+              side: BorderSide(color: AppTokens.lightBrandPrimary.withValues(alpha: 0.5)),
             ),
             elevation: 8,
-            shadowColor: AppColors.gdaGold.withValues(alpha: 0.25),
+            shadowColor: AppTokens.lightBrandPrimary.withValues(alpha: 0.25),
           ),
-          icon: const Icon(Icons.auto_awesome, color: AppColors.gdaGold),
+          icon: const Icon(Icons.auto_awesome, color: AppTokens.lightBrandPrimary),
           label: Text(
             'Ask AI',
-            style: AppTextStyles.dmSans.copyWith(
+            style: AppTextStyles.bodyMd.copyWith(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: Colors.white,
@@ -452,3 +452,4 @@ class _BottomAskAIButton extends StatelessWidget {
     );
   }
 }
+

@@ -18,23 +18,25 @@ class ScanTab extends StatelessWidget {
             Icons.document_scanner,
             size: 64,
             color: isDark
-                ? AppColors.darkText.withValues(alpha: 0.5)
-                : AppColors.navyDark.withValues(alpha: 0.7),
+                ? AppTokens.lightBrandPrimary.withValues(alpha: 0.5)
+                : AppTokens.lightBrandPrimary.withValues(alpha: 0.7),
           ),
           const SizedBox(height: 20),
           Text(
             "Scanner",
-            style: AppTextStyles.headlineMedium.copyWith(
-              color: isDark ? AppColors.darkText : AppColors.charcoal,
+            style: AppTextStyles.headingMd.copyWith(
+              color: isDark ? AppTokens.lightBrandPrimary : AppTokens.lightTextPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             "Coming in the next step",
-            style: AppTextStyles.bodyLarge.copyWith(color: Colors.grey),
+            style: AppTextStyles.bodyMd.copyWith(color: Colors.grey),
           ),
         ],
       ),
     );
   }
 }
+
+

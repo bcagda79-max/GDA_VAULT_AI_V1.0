@@ -100,9 +100,13 @@ class _DefaultCategorySelectorSheetState
       ];
     }).toList();
 
+    final bgSurface = isDark ? const Color(0xFF1C1C1C) : AppTokens.lightBgSurface;
+    final bgPage = isDark ? const Color(0xFF0A0A0A) : AppTokens.lightBgPage;
+    final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
+
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
+        color: bgSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: Column(
@@ -111,9 +115,15 @@ class _DefaultCategorySelectorSheetState
           // Standardized, Professional AppBar with proper SafeArea handling
           Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF161E35) : AppColors.navyDark,
+              color: bgPage,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
+              ),
+              border: Border(
+                bottom: BorderSide(
+                  color: borderLight,
+                  width: 1,
+                ),
               ),
             ),
             child: SafeArea(
@@ -126,9 +136,9 @@ class _DefaultCategorySelectorSheetState
                     children: [
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white,
+                          color: isDark ? Colors.white : AppTokens.lightTextPrimary,
                           size: 20,
                         ),
                       ),
@@ -136,10 +146,10 @@ class _DefaultCategorySelectorSheetState
                         child: Text(
                           "Default Chat Categories",
                           textAlign: TextAlign.center,
-                          style: AppTextStyles.dmSans.copyWith(
+                          style: AppTextStyles.bodyMd.copyWith(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            color: isDark ? Colors.white : AppTokens.lightTextPrimary,
                           ),
                         ),
                       ),
@@ -157,12 +167,10 @@ class _DefaultCategorySelectorSheetState
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkCard
-                    : AppColors.navyLight.withValues(alpha: 0.05),
+                color: bgPage,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.navyLight.withValues(alpha: 0.1),
+                  color: borderLight,
                 ),
               ),
               child: Row(
@@ -170,7 +178,7 @@ class _DefaultCategorySelectorSheetState
                   Icon(
                     Icons.info_outline_rounded,
                     size: 16,
-                    color: isDark ? Colors.white70 : AppColors.navyLight,
+                    color: isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -178,12 +186,12 @@ class _DefaultCategorySelectorSheetState
                       selectedNames.isEmpty
                           ? "Select up to 2 default categories for new chats."
                           : "New chats will open with: ${selectedNames.join(', ')}",
-                      style: AppTextStyles.dmSans.copyWith(
+                      style: AppTextStyles.bodyMd.copyWith(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: isDark
-                            ? Colors.white70
-                            : AppColors.charcoal.withValues(alpha: 0.8),
+                            ? AppTokens.darkTextSecondary
+                            : AppTokens.lightTextSecondary,
                       ),
                     ),
                   ),
@@ -280,12 +288,12 @@ class _DefaultCategorySelectorSheetState
                     ),
                     child: Text(
                       "Cancel",
-                      style: AppTextStyles.dmSans.copyWith(
+                      style: AppTextStyles.bodyMd.copyWith(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: isDark
                             ? Colors.white60
-                            : AppColors.charcoal.withValues(alpha: 0.6),
+                            : AppTokens.lightBrandPrimary.withValues(alpha: 0.6),
                       ),
                     ),
                   ),
@@ -296,19 +304,19 @@ class _DefaultCategorySelectorSheetState
                     onPressed: _selectedIds.isEmpty ? null : _save,
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size.fromHeight(52),
-                      backgroundColor: AppColors.navyDark,
+                      backgroundColor: AppTokens.lightBrandPrimary,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      disabledBackgroundColor: AppColors.navyDark.withOpacity(
+                      disabledBackgroundColor: AppTokens.lightBrandPrimary.withOpacity(
                         0.4,
                       ),
                     ),
                     child: Text(
                       "Save Defaults",
-                      style: AppTextStyles.dmSans.copyWith(
+                      style: AppTextStyles.bodyMd.copyWith(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
@@ -331,6 +339,9 @@ class _DefaultCategorySelectorSheetState
     bool isSubCategory = false,
     Widget? trailing,
   }) {
+    final bgSurface = isDark ? const Color(0xFF1C1C1C) : AppTokens.lightBgSurface;
+    final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -339,19 +350,19 @@ class _DefaultCategorySelectorSheetState
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isSelected
-              ? category.color.withOpacity(isDark ? 0.15 : 0.08)
-              : (isDark ? AppColors.darkCard : Colors.white),
+              ? category.color.withValues(alpha: isDark ? 0.15 : 0.08)
+              : bgSurface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? category.color.withOpacity(0.5)
-                : (isDark ? Colors.white10 : AppColors.divider),
+                ? category.color.withValues(alpha: 0.5)
+                : borderLight,
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: category.color.withOpacity(0.1),
+                    color: category.color.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -380,22 +391,22 @@ class _DefaultCategorySelectorSheetState
                 children: [
                   Text(
                     category.name,
-                    style: AppTextStyles.dmSans.copyWith(
+                    style: AppTextStyles.bodyMd.copyWith(
                       fontSize: isSubCategory ? 13 : 14,
                       fontWeight: isSelected
                           ? FontWeight.w700
                           : FontWeight.w600,
-                      color: isDark ? Colors.white : AppColors.charcoal,
+                      color: isDark ? Colors.white : AppTokens.lightTextPrimary,
                     ),
                   ),
                   if (!isSubCategory)
                     Text(
                       "${_formatCount(category.docCount)} documents",
-                      style: AppTextStyles.dmSans.copyWith(
+                      style: AppTextStyles.bodyMd.copyWith(
                         fontSize: 10,
                         color: isDark
                             ? Colors.white38
-                            : AppColors.charcoal.withOpacity(0.4),
+                            : AppTokens.lightBrandPrimary.withOpacity(0.4),
                       ),
                     ),
                 ],
@@ -410,7 +421,7 @@ class _DefaultCategorySelectorSheetState
                 shape: BoxShape.circle,
                 color: isSelected ? category.color : Colors.transparent,
                 border: Border.all(
-                  color: isSelected ? category.color : AppColors.divider,
+                  color: isSelected ? category.color : AppTokens.lightBorderLight,
                   width: 1.5,
                 ),
               ),
@@ -424,3 +435,4 @@ class _DefaultCategorySelectorSheetState
     );
   }
 }
+

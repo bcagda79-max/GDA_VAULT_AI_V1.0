@@ -40,7 +40,7 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
       '/categories/sub/${document.categoryId}/years/pdf',
       extra: {
         'document': document,
-        'categoryColor': document.categoryColor ?? AppColors.navyDark,
+        'categoryColor': document.categoryColor ?? AppTokens.lightBrandPrimary,
         'categoryName': document.categoryName ?? 'Recent Documents',
       },
     );
@@ -50,7 +50,7 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
+      backgroundColor: isDark ? AppTokens.darkBgPage : AppTokens.lightBgPage,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(
           ResponsiveAppBar.isDesktop(context)
@@ -65,8 +65,8 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: isDark
-                    ? [AppColors.darkSurface, AppColors.darkBg]
-                    : [AppColors.navyDark, AppColors.navyMid],
+                    ? [AppTokens.darkBgSurface, AppTokens.darkBgPage]
+                    : [AppTokens.lightBrandPrimary, AppTokens.lightBrandPrimary],
               ),
               boxShadow: [
                 BoxShadow(
@@ -102,7 +102,7 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
                           children: [
                             Text(
                               'Recent Documents',
-                              style: AppTextStyles.playfairDisplay.copyWith(
+                              style: AppTextStyles.headingMd.copyWith(
                                 fontSize: ResponsiveAppBar.isDesktop(context)
                                     ? 22
                                     : 20,
@@ -115,12 +115,12 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
                             ),
                             Text(
                               'RECENTLY OPENED',
-                              style: AppTextStyles.dmSans.copyWith(
+                              style: AppTextStyles.bodyMd.copyWith(
                                 fontSize: ResponsiveAppBar.isDesktop(context)
                                     ? 11
                                     : 10,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.gdaGold.withValues(alpha: 0.8),
+                                color: AppTokens.lightBrandPrimary.withValues(alpha: 0.8),
                                 letterSpacing: 1.5,
                               ),
                             ),
@@ -139,10 +139,10 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: AppColors.gold),
+              child: CircularProgressIndicator(color: AppTokens.lightBrandPrimary),
             )
           : RefreshIndicator(
-              color: AppColors.gold,
+              color: AppTokens.lightBrandPrimary,
               onRefresh: _loadDocuments,
               child: _documents.isEmpty
                   ? ListView(
@@ -158,16 +158,16 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
                                 Icon(
                                   Icons.history_rounded,
                                   size: 64,
-                                  color: AppColors.charcoal.withValues(
+                                  color: AppTokens.lightTextPrimary.withValues(
                                     alpha: 0.25,
                                   ),
                                 ),
                                 AppSpacing.vertical(16),
                                 Text(
                                   'No recent documents',
-                                  style: AppTextStyles.playfairDisplay.copyWith(
+                                  style: AppTextStyles.headingMd.copyWith(
                                     fontSize: 18,
-                                    color: AppColors.charcoal.withValues(
+                                    color: AppTokens.lightTextPrimary.withValues(
                                       alpha: 0.75,
                                     ),
                                   ),
@@ -176,9 +176,9 @@ class _RecentDocumentsScreenState extends State<RecentDocumentsScreen> {
                                 Text(
                                   'Open any PDF to see it here.',
                                   textAlign: TextAlign.center,
-                                  style: AppTextStyles.dmSans.copyWith(
+                                  style: AppTextStyles.bodyMd.copyWith(
                                     fontSize: 12,
-                                    color: AppColors.charcoal.withValues(
+                                    color: AppTokens.lightTextPrimary.withValues(
                                       alpha: 0.5,
                                     ),
                                   ),
@@ -220,7 +220,7 @@ class _RecentDocumentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final categoryColor = document.categoryColor ?? AppColors.navyDark;
+    final categoryColor = document.categoryColor ?? AppTokens.lightBrandPrimary;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -229,9 +229,9 @@ class _RecentDocumentTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkCard : Colors.white,
+            color: isDark ? AppTokens.darkBgSurface : Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.divider),
+            border: Border.all(color: AppTokens.lightBorderLight),
           ),
           child: Row(
             children: [
@@ -253,32 +253,32 @@ class _RecentDocumentTile extends StatelessWidget {
                       document.fileName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.dmSans.copyWith(
+                      style: AppTextStyles.bodyMd.copyWith(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? AppColors.darkText : AppColors.charcoal,
+                        color: isDark ? AppTokens.lightBrandPrimary : AppTokens.lightTextPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${document.categoryName ?? 'Document'} · ${document.yearLabel} · ${document.pageCount ?? 0} pages',
-                      style: AppTextStyles.dmSans.copyWith(
+                      style: AppTextStyles.bodyMd.copyWith(
                         fontSize: 11,
-                        color: AppColors.charcoal.withValues(alpha: 0.55),
+                        color: AppTokens.lightTextPrimary.withValues(alpha: 0.55),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Opened ${DateFormat('dd MMM yyyy, hh:mm a').format(document.uploadedAt)}',
-                      style: AppTextStyles.dmSans.copyWith(
+                      style: AppTextStyles.bodyMd.copyWith(
                         fontSize: 10,
-                        color: AppColors.charcoal.withValues(alpha: 0.4),
+                        color: AppTokens.lightTextPrimary.withValues(alpha: 0.4),
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.gold),
+              const Icon(Icons.chevron_right_rounded, color: AppTokens.lightBrandPrimary),
             ],
           ),
         ),
@@ -286,3 +286,5 @@ class _RecentDocumentTile extends StatelessWidget {
     );
   }
 }
+
+

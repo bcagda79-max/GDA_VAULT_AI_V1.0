@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
-import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 import 'package:gda_vault_ai/core/services/supabase_service.dart';
 import 'package:gda_vault_ai/core/services/pdf_viewer_service.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
@@ -61,7 +60,6 @@ class _YearListScreenState extends State<YearListScreen> {
       final rows = await _supa.getDocumentsByCategory(widget.categoryId);
       List<DocumentModel> docs = rows.map(DocumentModel.fromMap).toList();
 
-      // Filter by sub-category on the Dart side to be 100% sure we don't miss anything
       if (widget.subCategoryId != null &&
           widget.subCategoryId!.isNotEmpty &&
           widget.subCategoryId != widget.categoryId) {
@@ -164,253 +162,253 @@ class _YearListScreenState extends State<YearListScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isLandscape =
-        MediaQuery.of(context).orientation == Orientation.landscape;
 
     return PopScope(
       canPop: true,
       child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(
-            ResponsiveAppBar.isDesktop(context)
-                ? ResponsiveAppBar.desktopHeight
-                : ResponsiveAppBar.mobileHeight,
-          ),
-          child: AppBar(
-            automaticallyImplyLeading: false,
-            flexibleSpace: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [AppColors.darkSurface, AppColors.darkBg]
-                      : [AppColors.navyDark, AppColors.navyMid],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: ResponsiveAppBar.isDesktop(context)
-                      ? ResponsiveAppBar.desktopPadding
-                      : ResponsiveAppBar.mobilePadding,
-                  child: Row(
-                    children: [
-                      // Far left icon
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: const SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: Icon(
-                            Icons.arrow_back_rounded,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                      ),
-                      // Centered Title
-                      Expanded(
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Text(
-                              _getCleanTitle(),
-                              style: AppTextStyles.playfairDisplay.copyWith(
-                                fontSize: ResponsiveAppBar.isDesktop(context)
-                                    ? 20
-                                    : 16,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: 0.4,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Right-side spacer
-                      const SizedBox(width: 40),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            elevation: 0,
-          ),
-        ),
-        body: Stack(
-          children: [
-            Column(
+        backgroundColor: isDark ? AppTokens.darkBgPage : AppTokens.lightBgPage,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth >= 860;
+
+            return Stack(
               children: [
-                SizedBox(height: isLandscape ? 4 : 10),
-                _SortAndFilterBar(
-                  yearListLength: _availableYears.length,
-                  isDescending: _isDescending,
-                  onSortTap: () {
-                    setState(() => _isDescending = !_isDescending);
-                    _sortDocuments();
-                  },
-                ),
-                _YearFolderStrip(
-                  yearFolders: _yearFolders,
-                  selectedYear: _selectedYear,
-                  onSelected: (year) {
-                    setState(() => _selectedYear = year);
-                  },
-                ),
-                Expanded(
-                  child: _isLoading
-                      ? _YearListLoading(
-                          isDark:
-                              Theme.of(context).brightness == Brightness.dark,
-                        )
-                      : _yearFolders.isEmpty
-                      ? _EmptyState(onRetry: _loadDocuments)
-                      : _visibleDocuments.isEmpty
-                      ? _EmptyState(
-                          onRetry: _loadDocuments,
-                          message:
-                              'No documents in ${_selectedYear ?? widget.yearFrom} yet',
-                        )
-                      : RefreshIndicator(
-                          color: AppColors.gold,
-                          onRefresh: _loadDocuments,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                            itemCount: _visibleDocuments.length,
-                            itemBuilder: (context, index) {
-                              final document = _visibleDocuments[index];
-                              return _YearListItem(
-                                document: document,
-                                categoryColor: widget.categoryColor,
-                                categoryName: widget.categoryName,
-                                onDownload: () => _downloadDocument(document),
-                              );
-                            },
-                          ),
-                        ),
-                ),
-              ],
-            ),
-            if (_isDownloading)
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 16,
-                child: Material(
-                  elevation: 8,
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.divider),
+                Column(
+                  children: [
+                    // HEADER
+                    if (!isDesktop) _buildMobileHeader(context),
+                    if (isDesktop) _buildDesktopHeader(isDark),
+
+                    // YEAR FILTER ROW
+                    _buildYearFilterRow(isDark),
+
+                    // DOCUMENT LIST
+                    Expanded(
+                      child: _isLoading
+                          ? _YearListLoading(isDark: isDark)
+                          : _yearFolders.isEmpty
+                              ? _EmptyState(onRetry: _loadDocuments)
+                              : _visibleDocuments.isEmpty
+                                  ? _EmptyState(
+                                      onRetry: _loadDocuments,
+                                      message:
+                                          'No documents in ${_selectedYear ?? widget.yearFrom} yet',
+                                    )
+                                  : isDesktop
+                                      ? _buildDesktopTable(isDark)
+                                      : _buildMobileList(isDark),
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _downloadStatus,
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: _downloadProgress,
-                            minHeight: 5,
-                            backgroundColor: AppColors.divider,
-                            valueColor: const AlwaysStoppedAnimation(
-                              AppColors.gold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${(_downloadProgress * 100).clamp(0, 100).toStringAsFixed(0)}%',
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 11,
-                            color: AppColors.charcoal.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
-                    ),
+                  ],
+                ),
+
+                // Download overlay
+                if (_isDownloading)
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
+                    child: _buildDownloadOverlay(isDark),
                   ),
-                ),
-              ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
-}
 
-class _SortAndFilterBar extends StatelessWidget {
-  final int yearListLength;
-  final bool isDescending;
-  final VoidCallback onSortTap;
-
-  const _SortAndFilterBar({
-    required this.yearListLength,
-    required this.isDescending,
-    required this.onSortTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  // ── MOBILE HEADER ──────────────────────────────────────
+  Widget _buildMobileHeader(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isLandscape =
-        MediaQuery.of(context).orientation == Orientation.landscape;
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: isLandscape ? 8 : 12,
-      ),
+      height: 56,
+      color: isDark ? AppTokens.darkBgSurface : AppTokens.lightBgSurface,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            "YEARLY FOLDERS",
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: isLandscape ? 9 : 10,
-              fontWeight: FontWeight.w900,
-              color: AppColors.gold,
-              letterSpacing: 1.5,
+          GestureDetector(
+            onTap: () => context.pop(),
+            child: Icon(Icons.arrow_back, size: 20, color: isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary),
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                _getCleanTitle(),
+                style: AppTextStyles.headingSm.copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
+          const SizedBox(width: 40),
+        ],
+      ),
+    );
+  }
+
+  // ── DESKTOP HEADER ─────────────────────────────────────
+  Widget _buildDesktopHeader(bool isDark) {
+    final textTertiary =
+        isDark ? AppTokens.darkTextTertiary : AppTokens.lightTextTertiary;
+    final textPrimary =
+        isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Breadcrumb
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  // Pop twice to go back to categories
+                  context.pop();
+                  context.pop();
+                },
+                child: Text(
+                  'Categories',
+                  style: AppTextStyles.labelSm.copyWith(
+                    fontSize: 13,
+                    color: textTertiary,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Icon(Icons.chevron_right, size: 16, color: textTertiary),
+              ),
+              GestureDetector(
+                onTap: () => context.pop(),
+                child: Text(
+                  widget.categoryName,
+                  style: AppTextStyles.labelSm.copyWith(
+                    fontSize: 13,
+                    color: textTertiary,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+              if (widget.subCategoryName != null) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child:
+                      Icon(Icons.chevron_right, size: 16, color: textTertiary),
+                ),
+                Text(
+                  widget.subCategoryName!,
+                  style: AppTextStyles.labelSm.copyWith(
+                    fontSize: 13,
+                    color: isDark
+                        ? AppTokens.darkTextPrimary
+                        : AppTokens.lightTextPrimary,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _getCleanTitle(),
+            style: AppTextStyles.headingLg.copyWith(
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  // ── YEAR FILTER ROW ────────────────────────────────────
+  Widget _buildYearFilterRow(bool isDark) {
+    if (_yearFolders.isEmpty && !_isLoading) return const SizedBox.shrink();
+
+    final textSecondary =
+        isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+    final bgSurface =
+        isDark ? AppTokens.darkBgSurface : AppTokens.lightBgSurface;
+    final borderLight =
+        isDark ? AppTokens.darkBorderLight : AppTokens.lightBorderLight;
+    final brandPrimary =
+        isDark ? AppTokens.darkBrandPrimary : AppTokens.lightBrandPrimary;
+
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Text(
+            'YEARLY FOLDERS',
+            style: AppTextStyles.labelSm.copyWith(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: textSecondary,
+              letterSpacing: 1.0,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _yearFolders.map((year) {
+                  final isSelected = _selectedYear == year;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedYear = year),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isSelected ? brandPrimary : bgSurface,
+                          borderRadius: BorderRadius.circular(999),
+                          border: isSelected
+                              ? null
+                              : Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
+                        ),
+                        child: Text(
+                          '$year',
+                          style: AppTextStyles.labelSm.copyWith(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? (isDark ? const Color(0xFF141414) : Colors.white) : textSecondary,
+                            letterSpacing: 0,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : AppColors.navyDark.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(8),
+              color: bgSurface,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
             ),
             child: Text(
-              '$yearListLength Years',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: isLandscape ? 9 : 10,
-                fontWeight: FontWeight.w800,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.5)
-                    : AppColors.navyDark.withValues(alpha: 0.5),
+              '${_yearFolders.length} Years',
+              style: AppTextStyles.labelSm.copyWith(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: textSecondary,
+                letterSpacing: 0,
               ),
             ),
           ),
@@ -418,111 +416,185 @@ class _SortAndFilterBar extends StatelessWidget {
       ),
     );
   }
-}
 
-class _YearFolderStrip extends StatelessWidget {
-  final List<int> yearFolders;
-  final int? selectedYear;
-  final ValueChanged<int> onSelected;
-
-  const _YearFolderStrip({
-    required this.yearFolders,
-    required this.selectedYear,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (yearFolders.isEmpty) return const SizedBox.shrink();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isLandscape =
-        MediaQuery.of(context).orientation == Orientation.landscape;
-    final isDesktop = ResponsiveAppBar.isDesktop(context);
-    final stripHeight = isDesktop ? 112.0 : (isLandscape ? 72.0 : 96.0);
-    final chipWidth = isDesktop ? 96.0 : (isLandscape ? 66.0 : 78.0);
-    final chipPadding = isDesktop ? 12.0 : (isLandscape ? 8.0 : 10.0);
-    final chipRadius = isDesktop ? 20.0 : 16.0;
-    final yearFontSize = isDesktop ? 17.0 : (isLandscape ? 14.0 : 15.0);
-
-    return Container(
-      height: stripHeight,
-      padding: EdgeInsets.only(
-        left: 10,
-        right: 10,
-        bottom: isLandscape ? 8 : 12,
-      ),
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: yearFolders.length,
-        separatorBuilder: (_, _) => SizedBox(width: isLandscape ? 8 : 12),
+  // ── MOBILE LIST ────────────────────────────────────────
+  Widget _buildMobileList(bool isDark) {
+    return RefreshIndicator(
+      color: isDark ? AppTokens.darkBrandPrimary : AppTokens.lightBrandPrimary,
+      onRefresh: _loadDocuments,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _visibleDocuments.length,
         itemBuilder: (context, index) {
-          final year = yearFolders[index];
-          final isSelected = selectedYear == year;
-          return GestureDetector(
-            onTap: () => onSelected(year),
-            child: Container(
-              width: chipWidth,
-              padding: EdgeInsets.all(chipPadding),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isSelected
-                      ? [AppColors.navyDark, AppColors.navyMid]
-                      : [
-                          isDark ? const Color(0xFF1E2638) : Colors.white,
-                          isDark ? const Color(0xFF161E35) : Colors.white,
-                        ],
-                ),
-                borderRadius: BorderRadius.circular(chipRadius),
-                border: Border.all(
-                  color: isSelected
-                      ? AppColors.gold.withValues(alpha: 0.4)
-                      : (isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : AppColors.divider.withValues(alpha: 0.5)),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(
-                      alpha: isSelected ? 0.25 : 0.05,
+          final doc = _visibleDocuments[index];
+          return _DocumentRow(
+            document: doc,
+            categoryColor: widget.categoryColor,
+            categoryName: widget.categoryName,
+            onDownload: () => _downloadDocument(doc),
+          )
+              .animate(delay: Duration(milliseconds: index * 60))
+              .fadeIn(duration: 250.ms)
+              .slideY(begin: 0.04, end: 0, curve: Curves.easeOut);
+        },
+      ),
+    );
+  }
+
+  // ── DESKTOP TABLE ──────────────────────────────────────
+  Widget _buildDesktopTable(bool isDark) {
+    final borderLight =
+        isDark ? AppTokens.darkBorderLight : AppTokens.lightBorderLight;
+    final textTertiary =
+        isDark ? AppTokens.darkTextTertiary : AppTokens.lightTextTertiary;
+    final bgPage = isDark ? AppTokens.darkBgPage : AppTokens.lightBgPage;
+    final brandPrimary =
+        isDark ? AppTokens.darkBrandPrimary : AppTokens.lightBrandPrimary;
+
+    return RefreshIndicator(
+      color: brandPrimary,
+      onRefresh: _loadDocuments,
+      child: Column(
+        children: [
+          // Table header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
+            color: bgPage,
+            child: Row(
+              children: [
+                const SizedBox(width: 54), // Icon column
+                Expanded(
+                  flex: 5,
+                  child: Text(
+                    'FILE NAME',
+                    style: AppTextStyles.labelSm.copyWith(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: textTertiary,
+                      letterSpacing: 0.5,
                     ),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  '$year',
-                  style: AppTextStyles.numberStyle(
-                    fontSize: yearFontSize,
-                    fontWeight: FontWeight.w900,
-                    color: isSelected
-                        ? Colors.white
-                        : (isDark
-                              ? Colors.white.withValues(alpha: 0.8)
-                              : AppColors.navyDark),
-                    letterSpacing: 0.4,
                   ),
                 ),
+                SizedBox(
+                  width: 80,
+                  child: Text(
+                    'PAGES',
+                    style: AppTextStyles.labelSm.copyWith(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: textTertiary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 140,
+                  child: Text(
+                    'UPLOAD DATE',
+                    style: AppTextStyles.labelSm.copyWith(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: textTertiary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 80), // Actions column
+              ],
+            ),
+          ),
+          Container(height: 1, color: borderLight),
+
+          // Table rows
+          Expanded(
+            child: ListView.separated(
+              padding: EdgeInsets.zero,
+              itemCount: _visibleDocuments.length,
+              separatorBuilder: (_, __) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Container(height: 1, color: borderLight),
+              ),
+              itemBuilder: (context, index) {
+                final doc = _visibleDocuments[index];
+                return _DesktopDocumentRow(
+                  document: doc,
+                  categoryColor: widget.categoryColor,
+                  categoryName: widget.categoryName,
+                  onDownload: () => _downloadDocument(doc),
+                )
+                    .animate(delay: Duration(milliseconds: index * 60))
+                    .fadeIn(duration: 250.ms);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── DOWNLOAD OVERLAY ───────────────────────────────────
+  Widget _buildDownloadOverlay(bool isDark) {
+    final bgSurface =
+        isDark ? AppTokens.darkBgSurface : AppTokens.lightBgSurface;
+    final borderLight =
+        isDark ? AppTokens.darkBorderLight : AppTokens.lightBorderLight;
+    final brandPrimary =
+        isDark ? AppTokens.darkBrandPrimary : AppTokens.lightBrandPrimary;
+
+    return Material(
+      elevation: 8,
+      borderRadius: BorderRadius.circular(AppTokens.radiusLg),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: bgSurface,
+          borderRadius: BorderRadius.circular(AppTokens.radiusLg),
+          border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _downloadStatus,
+              style: AppTextStyles.bodyMd.copyWith(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          );
-        },
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: _downloadProgress,
+                minHeight: 5,
+                backgroundColor: borderLight,
+                valueColor: AlwaysStoppedAnimation(brandPrimary),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${(_downloadProgress * 100).clamp(0, 100).toStringAsFixed(0)}%',
+              style: AppTextStyles.bodyMd.copyWith(
+                fontSize: 11,
+                color: brandPrimary.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _YearListItem extends StatelessWidget {
+// ── MOBILE DOCUMENT ROW ──────────────────────────────────
+class _DocumentRow extends StatelessWidget {
   final DocumentModel document;
   final Color categoryColor;
   final String categoryName;
   final VoidCallback onDownload;
 
-  const _YearListItem({
+  const _DocumentRow({
     required this.document,
     required this.categoryColor,
     required this.categoryName,
@@ -532,29 +604,31 @@ class _YearListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2638) : Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : AppColors.divider.withValues(alpha: 0.5),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+    final bgSurface =
+        isDark ? AppTokens.darkBgSurface : AppTokens.lightBgSurface;
+    final borderLight =
+        isDark ? AppTokens.darkBorderLight : AppTokens.lightBorderLight;
+    final textPrimary =
+        isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary;
+    final textSecondary =
+        isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+    final textTertiary =
+        isDark ? AppTokens.darkTextTertiary : AppTokens.lightTextTertiary;
+    final brandPrimary =
+        isDark ? AppTokens.darkBrandPrimary : AppTokens.lightBrandPrimary;
+    final brandSurface =
+        isDark ? AppTokens.darkBrandSurface : AppTokens.lightBrandSurface;
+    final shadowXs = isDark ? AppTokens.darkShadowXs : AppTokens.lightShadowXs;
+
+    final pdfBg = isDark ? const Color(0xFF2D1B1B) : const Color(0xFFFEE4E2);
+    const pdfIcon = Color(0xFFF04438);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(AppTokens.radiusLg),
           onTap: () {
             context.push(
               '/categories/sub/${document.categoryId}/years/pdf',
@@ -565,287 +639,316 @@ class _YearListItem extends StatelessWidget {
               },
             );
           },
-          child: IntrinsicHeight(
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: bgSurface,
+              borderRadius: BorderRadius.circular(AppTokens.radiusLg),
+              border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
+              boxShadow: shadowXs,
+            ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                _LeftYearBand(
-                  yearStart: document.yearStart,
-                  categoryColor: categoryColor,
-                ),
-                _Content(document: document, categoryColor: categoryColor),
-                _RightPdfMenu(
-                  document: document,
-                  categoryColor: categoryColor,
-                  onDownload: onDownload,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LeftYearBand extends StatelessWidget {
-  final int yearStart;
-  final Color categoryColor;
-
-  const _LeftYearBand({required this.yearStart, required this.categoryColor});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: 80,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            categoryColor.withValues(alpha: 0.15),
-            categoryColor.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(22),
-          bottomLeft: Radius.circular(22),
-        ),
-        border: Border(
-          right: BorderSide(
-            color: categoryColor.withValues(alpha: 0.2),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "YEAR",
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 8,
-                fontWeight: FontWeight.w900,
-                color: categoryColor.withValues(alpha: 0.5),
-                letterSpacing: 1.0,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              yearStart.toString(),
-              style: AppTextStyles.numberStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: isDark ? Colors.white : categoryColor,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Content extends StatelessWidget {
-  final DocumentModel document;
-  final Color categoryColor;
-
-  const _Content({required this.document, required this.categoryColor});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              document.fileName,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: isDark ? Colors.white : AppColors.navyDark,
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.description_rounded,
-                      size: 12,
-                      color: AppColors.gold.withValues(alpha: 0.6),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${document.pageCount ?? 0} Pages',
-                      style: AppTextStyles.numberStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.4)
-                            : AppColors.charcoal.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.upload_rounded,
-                      size: 12,
-                      color: AppColors.gold.withValues(alpha: 0.6),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        DateFormat(
-                          'dd MMM yyyy, hh:mm a',
-                        ).format(document.uploadedAt),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.numberStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.4)
-                              : AppColors.charcoal.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Container(
-              height: 4,
-              width: 100,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : categoryColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(2),
-              ),
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: 0.7,
-                child: Container(
+                // PDF icon
+                Container(
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        categoryColor,
-                        categoryColor.withValues(alpha: 0.7),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(2),
+                    color: pdfBg,
+                    borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+                  ),
+                  child: const Icon(
+                    Icons.picture_as_pdf,
+                    size: 20,
+                    color: pdfIcon,
                   ),
                 ),
-              ),
+                const SizedBox(width: 12),
+
+                // File info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        document.fileName,
+                        style: AppTextStyles.headingSm.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.description_outlined,
+                              size: 12, color: textTertiary),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${document.pageCount ?? 0} Pages',
+                            style: AppTextStyles.labelSm.copyWith(
+                              fontSize: 11,
+                              color: textSecondary,
+                              letterSpacing: 0,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Icon(Icons.upload_outlined,
+                              size: 12, color: textTertiary),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              DateFormat('dd MMM yyyy')
+                                  .format(document.uploadedAt),
+                              style: AppTextStyles.labelSm.copyWith(
+                                fontSize: 11,
+                                color: textSecondary,
+                                letterSpacing: 0,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Actions
+                Column(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: brandSurface,
+                        borderRadius:
+                            BorderRadius.circular(AppTokens.radiusMd),
+                        border: Border.all(color: borderLight, width: 1),
+                      ),
+                      child: Icon(Icons.open_in_new,
+                          size: 16, color: brandPrimary),
+                    ),
+                    const SizedBox(height: 6),
+                    PopupMenuButton<String>(
+                      icon: Icon(Icons.more_vert, size: 18, color: textTertiary),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onSelected: (value) {
+                        if (value == 'open') {
+                          context.push(
+                            '/categories/sub/${document.categoryId}/years/pdf',
+                            extra: {
+                              'document': document,
+                              'categoryColor': categoryColor,
+                              'categoryName': categoryName,
+                            },
+                          );
+                        } else if (value == 'download') {
+                          onDownload();
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        const PopupMenuItem(
+                            value: 'open', child: Text('Open')),
+                        const PopupMenuItem(
+                            value: 'download', child: Text('Download')),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _RightPdfBadge extends StatelessWidget {
-  final Color categoryColor;
-  const _RightPdfBadge({required this.categoryColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 12.0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: categoryColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'PDF',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 8,
-                fontWeight: FontWeight.bold,
-                color: categoryColor,
-                letterSpacing: 0.5,
-              ),
-            ),
-            Icon(Icons.picture_as_pdf_rounded, size: 16, color: categoryColor),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RightPdfMenu extends StatelessWidget {
+// ── DESKTOP TABLE ROW ────────────────────────────────────
+class _DesktopDocumentRow extends StatefulWidget {
   final DocumentModel document;
   final Color categoryColor;
+  final String categoryName;
   final VoidCallback onDownload;
 
-  const _RightPdfMenu({
+  const _DesktopDocumentRow({
     required this.document,
     required this.categoryColor,
+    required this.categoryName,
     required this.onDownload,
   });
 
   @override
+  State<_DesktopDocumentRow> createState() => _DesktopDocumentRowState();
+}
+
+class _DesktopDocumentRowState extends State<_DesktopDocumentRow> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert_rounded, color: categoryColor),
-            onSelected: (value) {
-              if (value == 'open') {
-                context.push(
-                  '/categories/sub/${document.categoryId}/years/pdf',
-                  extra: {
-                    'document': document,
-                    'categoryColor': categoryColor,
-                    'categoryName': document.categoryName ?? 'Documents',
-                  },
-                );
-                return;
-              }
-              if (value == 'download') {
-                onDownload();
-              }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary;
+    final textSecondary =
+        isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+    final textTertiary =
+        isDark ? AppTokens.darkTextTertiary : AppTokens.lightTextTertiary;
+    final brandPrimary =
+        isDark ? AppTokens.darkBrandPrimary : AppTokens.lightBrandPrimary;
+    final brandSurface =
+        isDark ? AppTokens.darkBrandSurface : AppTokens.lightBrandSurface;
+    final borderLight =
+        isDark ? AppTokens.darkBorderLight : AppTokens.lightBorderLight;
+
+    final pdfBg = isDark ? const Color(0xFF2D1B1B) : const Color(0xFFFEE4E2);
+    const pdfIcon = Color(0xFFF04438);
+
+    final hoverBg = _isHovered
+        ? (isDark
+            ? Colors.white.withValues(alpha: 0.02)
+            : Colors.white.withValues(alpha: 0.03))
+        : Colors.transparent;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          context.push(
+            '/categories/sub/${widget.document.categoryId}/years/pdf',
+            extra: {
+              'document': widget.document,
+              'categoryColor': widget.categoryColor,
+              'categoryName': widget.categoryName,
             },
-            itemBuilder: (_) => [
-              const PopupMenuItem<String>(value: 'open', child: Text('Open')),
-              const PopupMenuItem<String>(
-                value: 'download',
-                child: Text('Download'),
+          );
+        },
+        child: Container(
+          height: 52,
+          color: hoverBg,
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Row(
+            children: [
+              // PDF icon
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: pdfBg,
+                  borderRadius: BorderRadius.circular(AppTokens.radiusSm),
+                ),
+                child: const Icon(
+                  Icons.picture_as_pdf,
+                  size: 16,
+                  color: pdfIcon,
+                ),
+              ),
+              const SizedBox(width: 22),
+
+              // File name
+              Expanded(
+                flex: 5,
+                child: Text(
+                  widget.document.fileName,
+                  style: AppTextStyles.bodyMd.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+
+              // Pages
+              SizedBox(
+                width: 80,
+                child: Text(
+                  '${widget.document.pageCount ?? 0}',
+                  style: AppTextStyles.bodyMd.copyWith(
+                    fontSize: 13,
+                    color: textSecondary,
+                  ),
+                ),
+              ),
+
+              // Upload date
+              SizedBox(
+                width: 140,
+                child: Text(
+                  DateFormat('dd MMM yyyy').format(widget.document.uploadedAt),
+                  style: AppTextStyles.bodyMd.copyWith(
+                    fontSize: 13,
+                    color: textSecondary,
+                  ),
+                ),
+              ),
+
+              // Actions
+              SizedBox(
+                width: 80,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: brandSurface,
+                        borderRadius:
+                            BorderRadius.circular(AppTokens.radiusSm),
+                        border: Border.all(color: borderLight, width: 1),
+                      ),
+                      child: Icon(Icons.open_in_new,
+                          size: 14, color: brandPrimary),
+                    ),
+                    const SizedBox(width: 8),
+                    PopupMenuButton<String>(
+                      icon: Icon(Icons.more_vert,
+                          size: 18, color: textTertiary),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onSelected: (value) {
+                        if (value == 'open') {
+                          context.push(
+                            '/categories/sub/${widget.document.categoryId}/years/pdf',
+                            extra: {
+                              'document': widget.document,
+                              'categoryColor': widget.categoryColor,
+                              'categoryName': widget.categoryName,
+                            },
+                          );
+                        } else if (value == 'download') {
+                          widget.onDownload();
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        const PopupMenuItem(
+                            value: 'open', child: Text('Open')),
+                        const PopupMenuItem(
+                            value: 'download', child: Text('Download')),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          _RightPdfBadge(categoryColor: categoryColor),
-        ],
+        ),
       ),
     );
   }
 }
 
+// ── LOADING SHIMMER ──────────────────────────────────────
 class _YearListLoading extends StatelessWidget {
   final bool isDark;
   const _YearListLoading({required this.isDark});
@@ -854,18 +957,23 @@ class _YearListLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
       baseColor: isDark
-          ? AppColors.darkCard.withValues(alpha: 0.9)
-          : AppColors.divider.withValues(alpha: 0.55),
-      highlightColor: isDark ? AppColors.darkSurface : Colors.white,
+          ? AppTokens.darkBorderLight
+          : AppTokens.lightBorderLight.withValues(alpha: 0.55),
+      highlightColor: isDark ? AppTokens.darkBgSurface : Colors.white,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         itemCount: 6,
         itemBuilder: (context, index) => Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          height: 94,
+          margin: const EdgeInsets.only(bottom: 8),
+          height: 72,
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkCard : Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            color: isDark ? AppTokens.darkBgSurface : Colors.white,
+            borderRadius: BorderRadius.circular(AppTokens.radiusLg),
+            border: Border.all(
+              color: isDark
+                  ? AppTokens.darkBorderLight
+                  : AppTokens.lightBorderLight,
+            ),
           ),
         ),
       ),
@@ -873,6 +981,7 @@ class _YearListLoading extends StatelessWidget {
   }
 }
 
+// ── EMPTY STATE ──────────────────────────────────────────
 class _EmptyState extends StatelessWidget {
   final Future<void> Function() onRetry;
   final String? message;
@@ -881,45 +990,57 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary =
+        isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+    final textTertiary =
+        isDark ? AppTokens.darkTextTertiary : AppTokens.lightTextTertiary;
+    final brandPrimary =
+        isDark ? AppTokens.darkBrandPrimary : AppTokens.lightBrandPrimary;
+
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.folder_open,
-            size: 64,
-            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.2),
-          ),
-          AppSpacing.vertical(16),
-          Text(
-            message ?? 'No documents yet',
-            style: AppTextStyles.playfairDisplay.copyWith(
-              fontSize: 18,
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
+      child: Padding(
+        padding: const EdgeInsets.all(48),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.folder_open_outlined,
+              size: 48,
+              color: textTertiary,
             ),
-          ),
-          Text(
-            'Documents added via Scan or Upload\nwill appear here',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 13,
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.35),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: onRetry,
-            child: Text(
-              'Retry',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 13,
-                color: AppColors.gold,
-                fontWeight: FontWeight.bold,
+            const SizedBox(height: 12),
+            Text(
+              message ?? 'No documents found',
+              style: AppTextStyles.headingSm.copyWith(
+                color: textSecondary,
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            SizedBox(
+              width: 240,
+              child: Text(
+                'Upload documents to this category to get started.',
+                style: AppTextStyles.bodyMd.copyWith(
+                  color: textTertiary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(
+                'Retry',
+                style: AppTextStyles.bodyMd.copyWith(
+                  fontSize: 13,
+                  color: brandPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

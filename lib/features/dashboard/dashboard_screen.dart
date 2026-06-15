@@ -1,4 +1,3 @@
-// ignore_for_file: unused_import, curly_braces_in_flow_control_structures
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,13 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/utils/responsive_helper.dart';
-import 'package:gda_vault_ai/features/dashboard/widgets/ai_chat_fab.dart';
-import 'package:gda_vault_ai/features/dashboard/widgets/floating_bubbles_overlay.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/gda_bottom_nav.dart';
 import 'package:gda_vault_ai/features/dashboard/widgets/home_app_bar.dart';
-import 'package:gda_vault_ai/features/dashboard/widgets/desktop_nav_item.dart';
+import 'package:gda_vault_ai/widgets/gda_sidebar_item.dart';
+import 'package:gda_vault_ai/providers/profile_provider.dart';
 
-/// The main screen shell with a persistent bottom navigation bar.
 class DashboardScreen extends ConsumerStatefulWidget {
   final Widget child;
   const DashboardScreen({super.key, required this.child});
@@ -26,8 +23,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/categories')) return 1;
     if (location.startsWith('/dashboard/add')) return 2;
-    if (location.startsWith('/dashboard/chat') || location.contains('/chat'))
-      return 3;
+    if (location.startsWith('/dashboard/chat') || location.contains('/chat')) return 3;
     if (location.startsWith('/dashboard/settings')) return 4;
     return 0;
   }
@@ -53,26 +49,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   void _showExitDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: isDark ? AppTokens.darkBgSurface : AppTokens.lightBgSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTokens.radiusLg)),
         title: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.exit_to_app_rounded,
-              color: AppColors.navyDark,
+              color: isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary,
               size: 20,
             ),
             const SizedBox(width: 10),
-            Text("Exit App", style: AppTextStyles.titleMedium),
+            Text("Exit App", style: AppTextStyles.headingMd.copyWith(
+              color: isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary,
+            )),
           ],
         ),
         content: Text(
           "Are you sure you want to exit GDA Vault AI?",
-          style: AppTextStyles.bodyLarge.copyWith(
-            color: AppColors.charcoal.withValues(alpha: 0.6),
+          style: AppTextStyles.bodyLg.copyWith(
+            color: isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary,
           ),
         ),
         actions: [
@@ -81,16 +80,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             child: Text(
               "Cancel",
               style: TextStyle(
-                color: AppColors.charcoal.withValues(alpha: 0.5),
+                color: isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary,
               ),
             ),
           ),
           TextButton(
             onPressed: () => SystemNavigator.pop(),
-            child: const Text(
+            child: Text(
               "Exit",
               style: TextStyle(
-                color: AppColors.catPrivate,
+                color: isDark ? AppTokens.darkStatusError : AppTokens.lightStatusError,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -102,7 +101,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   bool _shouldHideBottomNav(BuildContext context) {
     final location = GoRouterState.of(context).uri.path.toLowerCase();
-    // Strictly hide on scanner, review, category selection, PDF viewer flow, and AI Chat
     return location.contains('/scanner') ||
         location.contains('/review') ||
         location.contains('/select-category') ||
@@ -113,7 +111,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   bool _shouldHideAppBar(BuildContext context) {
     final location = GoRouterState.of(context).uri.path.toLowerCase();
-    // Hide dashboard app bar on sub-screens or when bottom nav is hidden
     return _shouldHideBottomNav(context) ||
         location.startsWith('/categories') ||
         location.contains('/settings') ||
@@ -124,14 +121,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentIndex = _getCurrentIndex(context);
     final hideBottomNav = _shouldHideBottomNav(context);
     final isLargeScreen = ResponsiveHelper.isDesktop(context);
     final hideAppBar = _shouldHideAppBar(context);
-    // Responsive FAB positioning: adjust for larger screens
-    final fabBottom = isLargeScreen ? 24.0 : 20.0;
-    final fabRight = isLargeScreen ? 32.0 : 16.0;
 
     return PopScope(
       canPop: false,
@@ -144,56 +137,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: hideAppBar
             ? null
             : HomeAppBar(
                 currentIndex: currentIndex,
                 isDesktop: isLargeScreen,
-                leftInset: isLargeScreen
-                    ? ResponsiveHelper.sidebarWidth(context)
-                    : 0,
+                leftInset: isLargeScreen ? 220.0 : 0,
               ),
-        // For large screens, show a permanent left navigation panel instead of bottom nav
         body: isLargeScreen
             ? Row(
                 children: [
-                  // Desktop navigation drawer (permanent)
-                  // nav width now 280
-                  _buildDesktopNav(currentIndex, isDark),
-                  // Main content
+                  _buildDesktopNav(currentIndex),
                   Expanded(
-                    child: Stack(
-                      children: [
-                        widget.child,
-                        if (!hideBottomNav &&
-                            currentIndex != 1 &&
-                            currentIndex != 3 &&
-                            currentIndex != 4)
-                          Positioned(
-                            bottom: fabBottom,
-                            right: fabRight,
-                            child: const AiChatFab(),
-                          ),
-                      ],
-                    ),
+                    child: widget.child,
                   ),
                 ],
               )
-            : Stack(
-                children: [
-                  widget.child,
-                  if (!hideBottomNav &&
-                      currentIndex != 1 && // Hide on Categories tab
-                      currentIndex != 3 && // Hide on Chat tab
-                      currentIndex != 4) // Hide on Settings tab
-                    Positioned(
-                      bottom: fabBottom,
-                      right: fabRight,
-                      child: const AiChatFab(),
-                    ),
-                ],
-              ),
+            : widget.child,
         bottomNavigationBar: isLargeScreen || hideBottomNav
             ? null
             : GdaBottomNav(currentIndex: currentIndex, onTap: _onTabTapped),
@@ -201,98 +162,139 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildDesktopNav(int currentIndex, bool isDark) {
+  Widget _buildDesktopNav(int currentIndex) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppTokens.darkBgSidebar : AppTokens.lightBgSidebar;
+    final dividerColor = isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1);
+    final navLabelColor = isDark ? AppTokens.darkTextSidebar : AppTokens.lightTextSidebar;
+
     return Container(
-      width: 260,
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
-            blurRadius: 24,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+      width: 220,
+      color: bgColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // App header
+          const SizedBox(height: 24),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
+            padding: const EdgeInsets.only(left: 20, right: 12),
+            child: SizedBox(
+              width: 44,
+              height: 44,
+              child: Image.asset(
+                'assets/images/gda_logo.png',
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.business,
+                  size: 24,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.only(left: 20, right: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.primaryBlue,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(6),
-                    child: Image.asset('assets/images/gda_logo.png'),
+                Text(
+                  'GDA VAULT AI',
+                  style: AppTextStyles.labelSm.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('GDA VAULT AI', style: AppTextStyles.titleMedium),
-                      Text(
-                        'Galiyat Development Authority',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.charcoal.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 4),
+                Text(
+                  'Galiyat Development Authority',
+                  style: AppTextStyles.labelSm.copyWith(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w400,
+                    color: AppTokens.lightTextSidebar,
+                    letterSpacing: 0,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 18),
-          // Navigation items
-          DesktopNavItem(
-            label: 'Home',
-            icon: Icons.home_rounded,
-            selected: currentIndex == 0,
-            onTap: () => _onTabTapped(0),
+          
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            height: 1,
+            color: dividerColor,
           ),
-          DesktopNavItem(
-            label: 'Categories',
-            icon: Icons.folder_open_rounded,
-            selected: currentIndex == 1,
-            onTap: () => _onTabTapped(1),
-          ),
-          DesktopNavItem(
-            label: 'Add',
-            icon: Icons.add_circle_outline_rounded,
-            selected: currentIndex == 2,
-            onTap: () => _onTabTapped(2),
-          ),
-          DesktopNavItem(
-            label: 'AI Chat',
-            icon: Icons.auto_awesome_rounded,
-            selected: currentIndex == 3,
-            onTap: () => _onTabTapped(3),
-          ),
-          DesktopNavItem(
-            label: 'Settings',
-            icon: Icons.settings_rounded,
-            selected: currentIndex == 4,
-            onTap: () => _onTabTapped(4),
-          ),
-          const Spacer(),
-          // Sign out / footer action placeholder
+          
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: TextButton.icon(
-              onPressed: () => _showExitDialog(context),
-              icon: const Icon(Icons.exit_to_app_rounded),
-              label: const Text('Exit'),
+            padding: const EdgeInsets.only(left: 20, bottom: 12),
+            child: Text(
+              'NAVIGATION',
+              style: AppTextStyles.labelSm.copyWith(
+                color: navLabelColor,
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  GdaSidebarItem(
+                    label: 'Home',
+                    icon: Icons.home_rounded,
+                    selected: currentIndex == 0,
+                    onTap: () => _onTabTapped(0),
+                  ),
+                  const SizedBox(height: 4),
+                  GdaSidebarItem(
+                    label: 'Categories',
+                    icon: Icons.folder_copy_rounded,
+                    selected: currentIndex == 1,
+                    onTap: () => _onTabTapped(1),
+                  ),
+                  const SizedBox(height: 4),
+                  GdaSidebarItem(
+                    label: 'Add Document',
+                    icon: Icons.add_circle_outline_rounded,
+                    selected: currentIndex == 2,
+                    onTap: () => _onTabTapped(2),
+                  ),
+                  const SizedBox(height: 4),
+                  GdaSidebarItem(
+                    label: 'AI Chat',
+                    icon: Icons.auto_awesome_rounded,
+                    selected: currentIndex == 3,
+                    onTap: () => _onTabTapped(3),
+                  ),
+                  const SizedBox(height: 4),
+                  GdaSidebarItem(
+                    label: 'Settings',
+                    icon: Icons.settings_rounded,
+                    selected: currentIndex == 4,
+                    onTap: () => _onTabTapped(4),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          Container(
+            height: 1,
+            color: dividerColor,
+          ),
+          
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const _HoverExitButton(),
+                Text(
+                  'v1.0.0',
+                  style: AppTextStyles.caption.copyWith(color: navLabelColor),
+                ),
+              ],
             ),
           ),
         ],
@@ -300,3 +302,63 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 }
+
+class _HoverExitButton extends StatefulWidget {
+  const _HoverExitButton();
+
+  @override
+  State<_HoverExitButton> createState() => _HoverExitButtonState();
+}
+
+class _HoverExitButtonState extends State<_HoverExitButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseColor = const Color(0xFFEF4444);
+    final hoverColor = const Color(0xFFF87171);
+    final currentColor = _isHovered ? hoverColor : baseColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          final parentState = context.findAncestorStateOfType<_DashboardScreenState>();
+          parentState?._showExitDialog(context);
+        },
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: _isHovered ? baseColor.withValues(alpha: 0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            children: [
+              AnimatedTheme(
+                data: Theme.of(context).copyWith(
+                  iconTheme: IconThemeData(color: currentColor),
+                ),
+                child: Icon(Icons.logout_rounded, size: 18, color: currentColor),
+              ),
+              const SizedBox(width: 8),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 150),
+                style: AppTextStyles.labelLg.copyWith(
+                  color: currentColor,
+                  fontWeight: FontWeight.w600,
+                ),
+                child: const Text('Exit'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

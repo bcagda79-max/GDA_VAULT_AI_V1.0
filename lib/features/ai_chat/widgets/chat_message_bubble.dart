@@ -68,10 +68,10 @@ class ChatMessageBubble extends ConsumerWidget {
           padding: const EdgeInsets.only(bottom: 8.0),
           child: Text(
             _formatTime(message.timestamp),
-            style: AppTextStyles.dmSans.copyWith(
+            style: AppTextStyles.bodyMd.copyWith(
               fontSize: 10,
-              color: (isDark ? Colors.white : AppColors.charcoal).withValues(
-                alpha: 0.3,
+              color: (isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary).withValues(
+                alpha: 0.7,
               ),
               fontWeight: FontWeight.w500,
             ),
@@ -85,33 +85,23 @@ class ChatMessageBubble extends ConsumerWidget {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF2B5876),
-                  Color(0xFF4E4376),
-                ], // Premium deep blue gradient
-              ),
+              color: isDark ? const Color(0xFF1C1C1C) : const Color(0xFFF3F4F6),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(6),
+                topLeft: Radius.circular(14),
+                topRight: Radius.circular(14),
+                bottomLeft: Radius.circular(14),
+                bottomRight: Radius.circular(4),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF2B5876).withValues(alpha: 0.2),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+              border: Border.all(
+                color: isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight,
+                width: 1,
+              ),
             ),
             child: SelectableText(
               message.content,
-              style: AppTextStyles.dmSans.copyWith(
+              style: AppTextStyles.bodyMd.copyWith(
                 fontSize: chatFontSize,
-                color: Colors.white,
+                color: isDark ? Colors.white : AppTokens.lightTextPrimary,
                 height: 1.5,
                 letterSpacing: 0.2,
               ),
@@ -124,24 +114,16 @@ class ChatMessageBubble extends ConsumerWidget {
           height: 32,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              colors: [AppColors.navyMid, AppColors.navyDark],
-            ),
+            color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE5E7EB),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: isDark ? const Color(0xFF333333) : const Color(0xFFD1D5DB),
               width: 1.5,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 5,
-              ),
-            ],
           ),
-          child: const Icon(
+          child: Icon(
             Icons.person_rounded,
             size: 16,
-            color: Colors.white,
+            color: isDark ? const Color(0xFFAAAAAA) : const Color(0xFF6B7280),
           ),
         ),
       ],
@@ -153,41 +135,29 @@ class ChatMessageBubble extends ConsumerWidget {
     bool isDark,
     double chatFontSize,
   ) {
+    final bgSurface = isDark ? const Color(0xFF1C1C1C) : AppTokens.lightBgSurface;
+    final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // AI Avatar
         Container(
-          width: 38,
-          height: 38,
+          width: 32,
+          height: 32,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-            border: Border.all(
-              color: AppColors.gold.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.gold.withValues(alpha: 0.1),
-                blurRadius: 10,
-                spreadRadius: 1,
-              ),
-            ],
+            color: bgSurface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: borderLight),
+            boxShadow: isDark ? AppTokens.darkShadowXs : AppTokens.lightShadowXs,
           ),
-          child: ClipOval(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
             child: Padding(
-              padding: const EdgeInsets.all(5),
+              padding: const EdgeInsets.all(6),
               child: Image.asset(
                 'assets/images/gda_logo.png',
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const Center(
-                  child: Icon(
-                    Icons.auto_awesome_rounded,
-                    size: 18,
-                    color: AppColors.gold,
-                  ),
-                ),
               ),
             ),
           ),
@@ -202,32 +172,21 @@ class ChatMessageBubble extends ConsumerWidget {
                 padding: const EdgeInsets.only(left: 4, bottom: 8),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.gold.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        "GDA VAULT AI",
-                        style: AppTextStyles.dmSans.copyWith(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.gold,
-                          letterSpacing: 1.0,
-                        ),
+                    Text(
+                      "GDA Vault AI",
+                      style: AppTextStyles.bodyMd.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : AppTokens.lightTextPrimary,
                       ),
                     ),
                     const SizedBox(width: 10),
                     Text(
                       _formatTime(message.timestamp),
-                      style: AppTextStyles.dmSans.copyWith(
+                      style: AppTextStyles.bodyMd.copyWith(
                         fontSize: 10,
-                        color: (isDark ? Colors.white : AppColors.charcoal)
-                            .withValues(alpha: 0.3),
+                        color: (isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary)
+                            .withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -261,37 +220,26 @@ class ChatMessageBubble extends ConsumerWidget {
                       // Styled Header for Citations
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: AppColors.gold.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.auto_stories_rounded,
-                              size: 14,
-                              color: AppColors.gold,
-                            ),
+                          Icon(
+                            Icons.auto_stories_rounded,
+                            size: 14,
+                            color: isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary,
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
                           Text(
-                            "REFERENCED SOURCES",
-                            style: AppTextStyles.dmSans.copyWith(
+                            "SOURCES",
+                            style: AppTextStyles.bodyMd.copyWith(
                               fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                              color:
-                                  (isDark ? Colors.white : AppColors.charcoal)
-                                      .withValues(alpha: 0.5),
-                              letterSpacing: 1.5,
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary,
+                              letterSpacing: 1.2,
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Container(
                               height: 1,
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.08)
-                                  : AppColors.divider.withValues(alpha: 0.5),
+                              color: borderLight,
                             ),
                           ),
                         ],
@@ -319,82 +267,82 @@ class ChatMessageBubble extends ConsumerWidget {
     required bool isDark,
     required double chatFontSize,
   }) {
-    final baseColor = isDark ? AppColors.darkText : AppColors.charcoal;
+    final baseColor = isDark ? Colors.white.withValues(alpha: 0.9) : AppTokens.lightTextPrimary;
     final headingBase = chatFontSize + 2;
 
     return MarkdownStyleSheet(
-      p: AppTextStyles.dmSans.copyWith(
+      p: AppTextStyles.bodyMd.copyWith(
         fontSize: chatFontSize,
         color: baseColor,
         height: 1.58,
         letterSpacing: 0.08,
       ),
-      strong: AppTextStyles.dmSans.copyWith(
+      strong: AppTextStyles.bodyMd.copyWith(
         fontSize: chatFontSize,
         fontWeight: FontWeight.w700,
         color: baseColor,
         height: 1.58,
         letterSpacing: 0.08,
       ),
-      em: AppTextStyles.dmSans.copyWith(
+      em: AppTextStyles.bodyMd.copyWith(
         fontSize: chatFontSize,
         color: baseColor,
         height: 1.58,
       ),
-      code: AppTextStyles.dmSans.copyWith(
+      code: AppTextStyles.bodyMd.copyWith(
         fontSize: chatFontSize - 1,
         color: baseColor,
         height: 1.45,
       ),
-      h1: AppTextStyles.playfairDisplay.copyWith(
+      h1: AppTextStyles.headingMd.copyWith(
         fontSize: headingBase + 4,
         fontWeight: FontWeight.w800,
         color: baseColor,
         height: 1.2,
       ),
-      h2: AppTextStyles.playfairDisplay.copyWith(
+      h2: AppTextStyles.headingMd.copyWith(
         fontSize: headingBase + 2,
         fontWeight: FontWeight.w800,
         color: baseColor,
         height: 1.25,
       ),
-      h3: AppTextStyles.dmSans.copyWith(
+      h3: AppTextStyles.bodyMd.copyWith(
         fontSize: headingBase + 1,
         fontWeight: FontWeight.w700,
         color: baseColor,
         height: 1.3,
       ),
-      h4: AppTextStyles.dmSans.copyWith(
+      h4: AppTextStyles.bodyMd.copyWith(
         fontSize: headingBase,
         fontWeight: FontWeight.w700,
         color: baseColor,
         height: 1.3,
       ),
-      h5: AppTextStyles.dmSans.copyWith(
+      h5: AppTextStyles.bodyMd.copyWith(
         fontSize: chatFontSize,
         fontWeight: FontWeight.w700,
         color: baseColor,
         height: 1.3,
       ),
-      h6: AppTextStyles.dmSans.copyWith(
+      h6: AppTextStyles.bodyMd.copyWith(
         fontSize: chatFontSize,
         fontWeight: FontWeight.w700,
         color: baseColor,
         height: 1.3,
       ),
-      tableHead: AppTextStyles.dmSans.copyWith(
+      tableHead: AppTextStyles.bodyMd.copyWith(
         fontSize: chatFontSize - 2,
         fontWeight: FontWeight.w800,
-        color: isDark ? Colors.white : AppColors.navyDark,
+        color: isDark ? Colors.white : AppTokens.lightBrandPrimary,
         height: 1.3,
       ),
-      tableBody: AppTextStyles.dmSans.copyWith(
+      tableBody: AppTextStyles.bodyMd.copyWith(
         fontSize: chatFontSize - 2,
         color: baseColor,
         height: 1.38,
       ),
       tableBorder: TableBorder.all(
-        color: AppColors.gold.withValues(alpha: 0.32),
+        color: AppTokens.lightBrandPrimary.withValues(alpha: 0.32),
         width: 0.5,
       ),
       tableColumnWidth: const IntrinsicColumnWidth(),
@@ -442,7 +390,7 @@ class _CopyButtonState extends State<_CopyButton> {
 
   @override
   Widget build(BuildContext context) {
-    final color = (widget.isDark ? Colors.white : AppColors.charcoal)
+    final color = (widget.isDark ? Colors.white : AppTokens.lightBrandPrimary)
         .withValues(alpha: 0.5);
 
     return InkWell(
@@ -472,7 +420,7 @@ class _CopyButtonState extends State<_CopyButton> {
             const SizedBox(width: 6),
             Text(
               _state == _CopyState.copied ? "Copied" : "Copy",
-              style: AppTextStyles.dmSans.copyWith(
+              style: AppTextStyles.bodyMd.copyWith(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: color,
@@ -484,3 +432,4 @@ class _CopyButtonState extends State<_CopyButton> {
     );
   }
 }
+

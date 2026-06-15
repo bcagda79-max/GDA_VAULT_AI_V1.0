@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
@@ -21,8 +22,13 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(milliseconds: 3000), () {
-      if (mounted) {
+      if (!mounted) return;
+      
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null) {
         context.go('/dashboard');
+      } else {
+        context.go('/login');
       }
     });
   }
@@ -39,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final taglineFontSize = isLargeScreen ? 13.0 : 11.0;
 
     return Scaffold(
-      backgroundColor: AppColors.navyDark,
+      backgroundColor: AppTokens.lightBrandPrimary,
       body: Stack(
         children: [
           Container(
@@ -86,7 +92,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   SizedBox(height: isLargeScreen ? 48 : 24),
                   Text(
                         "GDA Vault AI",
-                        style: AppTextStyles.displayLarge.copyWith(
+                        style: AppTextStyles.displayMd.copyWith(
                           fontSize: titleFontSize,
                           color: Colors.white,
                           letterSpacing: 1.2,
@@ -98,7 +104,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   SizedBox(height: isLargeScreen ? 12 : 8),
                   Text(
                         "GALIYAT DEVELOPMENT AUTHORITY",
-                        style: AppTextStyles.bodyLarge.copyWith(
+                        style: AppTextStyles.bodyMd.copyWith(
                           fontSize: subtitleFontSize,
                           color: Colors.white.withValues(alpha: 0.65),
                           letterSpacing: 2.5,
@@ -107,7 +113,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       .animate(target: animationsDisabled ? 0 : 1)
                       .fadeIn(delay: 700.ms, duration: 500.ms),
                   SizedBox(height: isLargeScreen ? 32 : 24),
-                  Container(width: 48, height: 1.5, color: AppColors.gold)
+                  Container(width: 48, height: 1.5, color: AppTokens.lightBrandPrimary)
                       .animate(target: animationsDisabled ? 0 : 1)
                       .custom(
                         delay: 900.ms,
@@ -115,13 +121,13 @@ class _SplashScreenState extends State<SplashScreen> {
                         builder: (context, value, child) => Container(
                           width: 48 * value,
                           height: 1.5,
-                          color: AppColors.gold,
+                          color: AppTokens.lightBrandPrimary,
                         ),
                       ),
                   SizedBox(height: isLargeScreen ? 16 : 12),
                   Text(
                         "Official Document Archive System",
-                        style: AppTextStyles.bodySmall.copyWith(
+                        style: AppTextStyles.bodySm.copyWith(
                           fontSize: taglineFontSize,
                           color: Colors.white.withValues(alpha: 0.45),
                           letterSpacing: 1.0,
@@ -147,7 +153,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       width: 6,
                       height: 6,
                       decoration: const BoxDecoration(
-                        color: AppColors.gold,
+                        color: AppTokens.lightBrandPrimary,
                         shape: BoxShape.circle,
                       ),
                     )
@@ -177,3 +183,5 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 }
+
+

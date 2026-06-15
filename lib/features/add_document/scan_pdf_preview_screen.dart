@@ -1,4 +1,3 @@
-// ignore_for_file: unused_field, unused_local_variable, unused_element, prefer_final_fields
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,19 +54,19 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.darkSurface,
+        backgroundColor: AppTokens.lightBrandPrimary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
             const Icon(
               Icons.drive_file_rename_outline_rounded,
-              color: AppColors.gold,
+              color: AppTokens.lightBrandPrimary,
               size: 20,
             ),
             const SizedBox(width: 8),
             Text(
               'Rename PDF',
-              style: AppTextStyles.dmSans.copyWith(
+              style: AppTextStyles.bodyMd.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
@@ -81,12 +80,12 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
           decoration: const InputDecoration(
             hintText: 'Enter file name',
             hintStyle: TextStyle(color: Colors.white38),
-            suffix: Text('.pdf', style: TextStyle(color: AppColors.gold)),
+            suffix: Text('.pdf', style: TextStyle(color: AppTokens.lightBrandPrimary)),
             enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: AppColors.gold),
+              borderSide: BorderSide(color: AppTokens.lightBrandPrimary),
             ),
             focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: AppColors.gold, width: 2),
+              borderSide: BorderSide(color: AppTokens.lightBrandPrimary, width: 2),
             ),
           ),
         ),
@@ -109,7 +108,7 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
             child: const Text(
               'Rename',
               style: TextStyle(
-                color: AppColors.gold,
+                color: AppTokens.lightBrandPrimary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -181,7 +180,7 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
                 Expanded(
                   child: Text(
                     'PDF saved to device',
-                    style: AppTextStyles.dmSans.copyWith(
+                    style: AppTextStyles.bodyMd.copyWith(
                       fontSize: 12,
                       color: Colors.white,
                     ),
@@ -189,7 +188,7 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
                 ),
               ],
             ),
-            backgroundColor: AppColors.gdaGreen,
+            backgroundColor: AppTokens.lightBrandPrimary,
             duration: const Duration(seconds: 3),
           ),
         );
@@ -248,7 +247,6 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
       appBar: _buildAppBar(),
       body: Column(
         children: [
-          // ── Continuous Vertical PDF Viewer ──
           Expanded(
             child: Container(
               color: const Color(0xFF333333),
@@ -267,9 +265,9 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
                         const SizedBox(height: 12),
                         Text(
                           'Galiyat Development Authority',
-                          style: AppTextStyles.playfairDisplay.copyWith(
+                          style: AppTextStyles.headingMd.copyWith(
                             fontSize: 18,
-                            color: AppColors.gold,
+                            color: AppTokens.lightBrandPrimary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -282,7 +280,7 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
                               Flexible(
                                 child: Text(
                                   _fileName,
-                                  style: AppTextStyles.dmSans.copyWith(
+                                  style: AppTextStyles.bodyMd.copyWith(
                                     color: Colors.white,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
@@ -293,7 +291,7 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
                               const SizedBox(width: 8),
                               const Icon(
                                 Icons.edit_rounded,
-                                color: AppColors.gold,
+                                color: AppTokens.lightBrandPrimary,
                                 size: 16,
                               ),
                             ],
@@ -336,9 +334,8 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
             ),
           ),
 
-          // ── Done button → Categories ──
           Container(
-            color: AppColors.navyDark,
+            color: AppTokens.lightBrandPrimary,
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
             child: Row(
               children: [
@@ -349,15 +346,15 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
                       height: 52,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [AppColors.navyDark, Color(0xFF1A3A6B)],
+                          colors: [AppTokens.lightBrandPrimary, Color(0xFF1A3A6B)],
                         ),
                         borderRadius: BorderRadius.circular(13),
                         border: Border.all(
-                          color: AppColors.gold.withValues(alpha: 0.3),
+                          color: AppTokens.lightBrandPrimary.withValues(alpha: 0.3),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.navyDark.withValues(alpha: 0.3),
+                            color: AppTokens.lightBrandPrimary.withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -369,13 +366,13 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
                           children: [
                             const Icon(
                               Icons.check_circle_rounded,
-                              color: AppColors.gold,
+                              color: AppTokens.lightBrandPrimary,
                               size: 19,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               'Done — Categorize',
-                              style: AppTextStyles.dmSans.copyWith(
+                              style: AppTextStyles.bodyMd.copyWith(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -397,7 +394,7 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
 
   AppBar _buildAppBar() {
     return AppBar(
-      backgroundColor: AppColors.navyDark,
+      backgroundColor: AppTokens.lightBrandPrimary,
       elevation: 0,
       leading: IconButton(
         icon: const Icon(
@@ -409,7 +406,7 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
       ),
       title: Text(
         'PDF Preview',
-        style: AppTextStyles.playfairDisplay.copyWith(
+        style: AppTextStyles.headingMd.copyWith(
           fontSize: 17,
           fontWeight: FontWeight.bold,
           color: Colors.white,
@@ -432,12 +429,12 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
             decoration: BoxDecoration(
               color: _isSaving
                   ? Colors.white.withValues(alpha: 0.05)
-                  : AppColors.gdaGreen.withValues(alpha: 0.15),
+                  : AppTokens.lightBrandPrimary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: _isSaving
                     ? Colors.white12
-                    : AppColors.gdaGreen.withValues(alpha: 0.4),
+                    : AppTokens.lightBrandPrimary.withValues(alpha: 0.4),
               ),
             ),
             child: _isSaving
@@ -445,7 +442,7 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
                     width: 14,
                     height: 14,
                     child: CircularProgressIndicator(
-                      color: AppColors.gdaGreen,
+                      color: AppTokens.lightBrandPrimary,
                       strokeWidth: 2,
                     ),
                   )
@@ -455,14 +452,14 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
                       const Icon(
                         Icons.save_alt_rounded,
                         size: 13,
-                        color: AppColors.gdaGreen,
+                        color: AppTokens.lightBrandPrimary,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         'Save',
-                        style: AppTextStyles.dmSans.copyWith(
+                        style: AppTextStyles.bodyMd.copyWith(
                           fontSize: 10,
-                          color: AppColors.gdaGreen,
+                          color: AppTokens.lightBrandPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -475,7 +472,7 @@ class _ScanPdfPreviewScreenState extends ConsumerState<ScanPdfPreviewScreen> {
         preferredSize: const Size.fromHeight(0.8),
         child: Container(
           height: 0.8,
-          color: AppColors.gold.withValues(alpha: 0.25),
+          color: AppTokens.lightBrandPrimary.withValues(alpha: 0.25),
         ),
       ),
     );
@@ -507,7 +504,7 @@ class _NavBtn extends StatelessWidget {
             Icon(icon, color: Colors.white, size: 28),
             Text(
               label,
-              style: AppTextStyles.dmSans.copyWith(
+              style: AppTextStyles.bodyMd.copyWith(
                 fontSize: 9,
                 color: Colors.white.withValues(alpha: 0.6),
               ),
@@ -518,3 +515,4 @@ class _NavBtn extends StatelessWidget {
     );
   }
 }
+

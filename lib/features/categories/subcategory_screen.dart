@@ -5,7 +5,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
-import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
 import 'package:gda_vault_ai/core/services/supabase_service.dart';
 import 'package:gda_vault_ai/models/category_model.dart';
 
@@ -69,165 +68,6 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return PopScope(
-      canPop: true,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(
-            ResponsiveAppBar.isDesktop(context)
-                ? ResponsiveAppBar.desktopHeight
-                : ResponsiveAppBar.mobileHeight,
-          ),
-          child: AppBar(
-            automaticallyImplyLeading: false,
-            flexibleSpace: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [AppColors.darkSurface, AppColors.darkBg]
-                      : [AppColors.navyDark, AppColors.navyMid],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: ResponsiveAppBar.isDesktop(context)
-                      ? ResponsiveAppBar.desktopPadding
-                      : ResponsiveAppBar.mobilePadding,
-                  child: Row(
-                    children: [
-                      // Far left icon
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: const SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: Icon(
-                            Icons.arrow_back_rounded,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                      ),
-                      // Centered Title
-                      Expanded(
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Text(
-                              widget.categoryName,
-                              style: AppTextStyles.playfairDisplay.copyWith(
-                                fontSize: ResponsiveAppBar.isDesktop(context)
-                                    ? 20
-                                    : 16,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: 0.4,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Right-side spacer
-                      const SizedBox(width: 40),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            elevation: 0,
-          ),
-        ),
-        body: RefreshIndicator(
-          color: AppColors.gold,
-          onRefresh: _loadSubCategories,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.only(
-                    left: 16.0,
-                    top: 8.0,
-                    bottom: 8.0,
-                  ),
-                  child: Text(
-                    "Select sub-category".toUpperCase(),
-                    style: AppTextStyles.dmSans.copyWith(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.gold,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                ),
-                if (_isLoading)
-                  const Padding(
-                    padding: EdgeInsets.all(40.0),
-                    child: Center(
-                      child: CircularProgressIndicator(color: AppColors.gold),
-                    ),
-                  )
-                else if (_subCategories.isEmpty)
-                  _buildEmptyState(isDark)
-                else
-                  ..._subCategories.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final sub = entry.value;
-                    return _SubCategoryCard(
-                          categoryColor: sub.color,
-                          docCount: sub.docCount,
-                          yearRange: sub.yearRange,
-                          firstYear: sub.yearFrom?.toString() ?? "N/A",
-                          lastYear: sub.yearTo?.toString() ?? "Now",
-                          yearCount: _calculateYearCount(sub),
-                          subCategoryFullName: sub.name,
-                          description: "Official documents for ${sub.name}",
-                          shortTag: sub.slug.toUpperCase(),
-                          onTap: () {
-                            context.push(
-                              '/categories/sub/${sub.id}/years',
-                              extra: {
-                                'categoryName': widget.categoryName,
-                                'subCategoryName': sub.name,
-                                'categoryColor': sub.color,
-                                'yearFrom': sub.yearFrom ?? 1961,
-                                'yearTo': sub.yearTo,
-                                'subCategoryId': sub.id,
-                              },
-                            );
-                          },
-                        )
-                        .animate(delay: (100 * index).ms)
-                        .fadeIn()
-                        .slideY(begin: 0.05);
-                  }),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   String _calculateYearCount(CategoryModel sub) {
     if (sub.yearFrom == null) return "Unknown";
     final to = sub.yearTo ?? DateTime.now().year;
@@ -235,27 +75,225 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
     return "$diff years";
   }
 
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return PopScope(
+      canPop: true,
+      child: Scaffold(
+        backgroundColor: isDark ? AppTokens.darkBgPage : AppTokens.lightBgPage,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth >= 860;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // HEADER
+                if (!isDesktop) _buildMobileHeader(context),
+                if (isDesktop) _buildDesktopHeader(isDark),
+
+                // SECTION LABEL
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                      isDesktop ? 32 : 16, 16, 16, 8),
+                  child: Text(
+                    'SELECT SUB-CATEGORY',
+                    style: AppTextStyles.labelSm.copyWith(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppTokens.darkTextSecondary
+                          : AppTokens.lightTextSecondary,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+
+                // LIST
+                Expanded(
+                  child: _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: AppTokens.lightBrandPrimary,
+                          ),
+                        )
+                      : _subCategories.isEmpty
+                          ? _buildEmptyState(isDark)
+                          : RefreshIndicator(
+                              color: isDark
+                                  ? AppTokens.darkBrandPrimary
+                                  : AppTokens.lightBrandPrimary,
+                              onRefresh: _loadSubCategories,
+                              child: ListView.builder(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 32 : 0,
+                                  vertical: 4,
+                                ),
+                                itemCount: _subCategories.length,
+                                itemBuilder: (context, index) {
+                                  final sub = _subCategories[index];
+                                  return _SubCategoryCard(
+                                    subCategoryName: sub.name,
+                                    description:
+                                        "Official documents for ${sub.name}",
+                                    docCount: sub.docCount,
+                                    yearCount: _calculateYearCount(sub),
+                                    firstYear:
+                                        sub.yearFrom?.toString() ?? "N/A",
+                                    lastYear:
+                                        sub.yearTo?.toString() ?? "Now",
+                                    onTap: () {
+                                      context.push(
+                                        '/categories/sub/${sub.id}/years',
+                                        extra: {
+                                          'categoryName':
+                                              widget.categoryName,
+                                          'subCategoryName': sub.name,
+                                          'categoryColor': sub.color,
+                                          'yearFrom': sub.yearFrom ?? 1961,
+                                          'yearTo': sub.yearTo,
+                                          'subCategoryId': sub.id,
+                                        },
+                                      );
+                                    },
+                                  )
+                                      .animate(
+                                          delay: (100 * index).ms)
+                                      .fadeIn(duration: 250.ms)
+                                      .slideY(
+                                          begin: 0.04,
+                                          end: 0,
+                                          curve: Curves.easeOut);
+                                },
+                              ),
+                            ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // ── MOBILE HEADER ──────────────────────────────────────
+  Widget _buildMobileHeader(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      height: 56,
+      color: isDark ? AppTokens.darkBgSurface : AppTokens.lightBgSurface,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => context.pop(),
+            child: Icon(
+              Icons.arrow_back,
+              size: 20,
+              color: isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary,
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                widget.categoryName,
+                style: AppTextStyles.headingSm.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          const SizedBox(width: 40), // Balance the back button
+        ],
+      ),
+    );
+  }
+
+  // ── DESKTOP HEADER ─────────────────────────────────────
+  Widget _buildDesktopHeader(bool isDark) {
+    final textTertiary =
+        isDark ? AppTokens.darkTextTertiary : AppTokens.lightTextTertiary;
+    final textPrimary =
+        isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Breadcrumb
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => context.pop(),
+                child: Text(
+                  'Categories',
+                  style: AppTextStyles.labelSm.copyWith(
+                    fontSize: 13,
+                    color: textTertiary,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Icon(Icons.chevron_right, size: 16, color: textTertiary),
+              ),
+              Text(
+                widget.categoryName,
+                style: AppTextStyles.labelSm.copyWith(
+                  fontSize: 13,
+                  color: isDark
+                      ? AppTokens.darkTextPrimary
+                      : AppTokens.lightTextPrimary,
+                  letterSpacing: 0,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            widget.categoryName,
+            style: AppTextStyles.headingLg.copyWith(
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
   Widget _buildEmptyState(bool isDark) {
+    final textSecondary =
+        isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+    final textTertiary =
+        isDark ? AppTokens.darkTextTertiary : AppTokens.lightTextTertiary;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 24),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.folder_open_rounded,
+              Icons.folder_open_outlined,
               size: 48,
-              color: (isDark ? Colors.white : AppColors.charcoal).withValues(
-                alpha: 0.2,
-              ),
+              color: textTertiary,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
-              "No sub-categories found",
-              style: AppTextStyles.playfairDisplay.copyWith(
-                fontSize: 18,
-                color: (isDark ? Colors.white : AppColors.charcoal).withValues(
-                  alpha: 0.6,
-                ),
+              'No sub-categories found',
+              style: AppTextStyles.headingSm.copyWith(
+                color: textSecondary,
               ),
             ),
           ],
@@ -265,255 +303,223 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
   }
 }
 
+// ── SUB-CATEGORY CARD ────────────────────────────────────
 class _SubCategoryCard extends StatelessWidget {
-  final Color categoryColor;
+  final String subCategoryName;
+  final String description;
   final int docCount;
-  final String yearRange;
+  final String yearCount;
   final String firstYear;
   final String lastYear;
-  final String yearCount;
-  final String subCategoryFullName;
-  final String description;
-  final String shortTag;
   final VoidCallback onTap;
 
   const _SubCategoryCard({
-    required this.categoryColor,
+    required this.subCategoryName,
+    required this.description,
     required this.docCount,
-    required this.yearRange,
+    required this.yearCount,
     required this.firstYear,
     required this.lastYear,
-    required this.yearCount,
-    required this.subCategoryFullName,
-    required this.description,
-    required this.shortTag,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgSurface =
+        isDark ? AppTokens.darkBgSurface : AppTokens.lightBgSurface;
+    final borderLight =
+        isDark ? AppTokens.darkBorderLight : AppTokens.lightBorderLight;
+    final textPrimary =
+        isDark ? AppTokens.darkTextPrimary : AppTokens.lightTextPrimary;
+    final textSecondary =
+        isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+    final textTertiary =
+        isDark ? AppTokens.darkTextTertiary : AppTokens.lightTextTertiary;
+    final brandPrimary =
+        isDark ? AppTokens.darkBrandPrimary : AppTokens.lightBrandPrimary;
+    final brandSurface =
+        isDark ? AppTokens.darkBrandSurface : AppTokens.lightBrandSurface;
+    final bgPage = isDark ? AppTokens.darkBgPage : AppTokens.lightBgPage;
+    final shadowXs = isDark ? AppTokens.darkShadowXs : AppTokens.lightShadowXs;
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2638) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark
-              ? categoryColor.withValues(alpha: 0.25)
-              : AppColors.divider.withValues(alpha: 0.5),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppTokens.radiusLg),
           onTap: onTap,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(22.0),
-                child: Row(
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: bgSurface,
+              borderRadius: BorderRadius.circular(AppTokens.radiusLg),
+              border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
+              boxShadow: shadowXs,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top row: title + arrow
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              _Tag(label: shortTag, color: categoryColor),
-                              _Tag(
-                                label: yearRange,
-                                color: AppColors.gold,
-                                isLight: true,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
                           Text(
-                            subCategoryFullName,
-                            style: AppTextStyles.playfairDisplay.copyWith(
-                              fontSize: 19,
-                              fontWeight: FontWeight.w900,
-                              color: isDark ? Colors.white : AppColors.navyDark,
+                            subCategoryName,
+                            style: AppTextStyles.headingSm.copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                              letterSpacing: -0.2,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
                           Text(
                             description,
-                            style: AppTextStyles.dmSans.copyWith(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w500,
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.4)
-                                  : AppColors.charcoal.withValues(alpha: 0.5),
-                              height: 1.5,
+                            style: AppTextStyles.bodyMd.copyWith(
+                              fontSize: 13,
+                              color: textSecondary,
                             ),
                             maxLines: 2,
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.description_rounded,
-                                size: 14,
-                                color: AppColors.gold.withValues(alpha: 0.7),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                "$docCount Documents",
-                                style: AppTextStyles.numberStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.6)
-                                      : AppColors.charcoal.withValues(
-                                          alpha: 0.7,
-                                        ),
-                                ),
-                              ),
-                              const SizedBox(width: 20),
-                              Icon(
-                                Icons.history_rounded,
-                                size: 14,
-                                color: AppColors.gold.withValues(alpha: 0.7),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                yearCount,
-                                style: AppTextStyles.numberStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.6)
-                                      : AppColors.charcoal.withValues(
-                                          alpha: 0.7,
-                                        ),
-                                ),
-                              ),
-                            ],
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 12),
                     Container(
-                      width: 48,
-                      height: 48,
+                      width: 32,
+                      height: 32,
                       decoration: BoxDecoration(
-                        color: categoryColor.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: categoryColor.withValues(alpha: 0.25),
-                          width: 1.2,
-                        ),
+                        color: brandSurface,
+                        borderRadius:
+                            BorderRadius.circular(AppTokens.radiusMd),
+                        border: Border.all(color: borderLight, width: 1),
                       ),
                       child: Icon(
-                        Icons.chevron_right_rounded,
-                        size: 28,
-                        color: categoryColor,
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: brandPrimary,
                       ),
                     ),
                   ],
                 ),
-              ),
-              Container(
-                margin: const EdgeInsets.fromLTRB(22, 0, 22, 22),
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.04)
-                      : categoryColor.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.06)
-                        : categoryColor.withValues(alpha: 0.12),
-                    width: 1,
+
+                const SizedBox(height: 14),
+                Divider(height: 1, color: borderLight),
+                const SizedBox(height: 12),
+
+                // Stats row
+                Row(
+                  children: [
+                    Icon(Icons.description_outlined,
+                        size: 14, color: textTertiary),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$docCount Documents',
+                      style: AppTextStyles.bodyMd.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Icon(Icons.schedule_outlined,
+                        size: 14, color: textTertiary),
+                    const SizedBox(width: 6),
+                    Text(
+                      yearCount,
+                      style: AppTextStyles.bodyMd.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Year range box
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: bgPage,
+                    borderRadius:
+                        BorderRadius.circular(AppTokens.radiusMd),
+                    border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'EARLIEST',
+                            style: AppTextStyles.labelSm.copyWith(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: textTertiary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            firstYear,
+                            style: AppTextStyles.headingSm.copyWith(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        width: 1,
+                        height: 24,
+                        color: borderLight,
+                      ),
+                      Icon(Icons.trending_flat,
+                          size: 16, color: textTertiary),
+                      Container(
+                        width: 1,
+                        height: 24,
+                        color: borderLight,
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'LATEST',
+                            style: AppTextStyles.labelSm.copyWith(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: textTertiary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            lastYear,
+                            style: AppTextStyles.headingSm.copyWith(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 18),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "EARLIEST: $firstYear",
-                      style: AppTextStyles.numberStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.4)
-                            : AppColors.charcoal.withValues(alpha: 0.5),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    Icon(
-                      Icons.timeline_rounded,
-                      size: 16,
-                      color: AppColors.gold.withValues(alpha: 0.5),
-                    ),
-                    Text(
-                      "LATEST: $lastYear",
-                      style: AppTextStyles.numberStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.4)
-                            : AppColors.charcoal.withValues(alpha: 0.5),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Tag extends StatelessWidget {
-  final String label;
-  final Color color;
-  final bool isLight;
-
-  const _Tag({required this.label, required this.color, this.isLight = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: isDark
-            ? color.withValues(alpha: 0.15)
-            : (isLight
-                  ? color.withValues(alpha: 0.1)
-                  : color.withValues(alpha: 0.12)),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.8),
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: AppTextStyles.numberStyle(
-          fontSize: 8.5,
-          fontWeight: FontWeight.w900,
-          color: isDark ? Colors.white : color,
-          letterSpacing: 0.8,
         ),
       ),
     );

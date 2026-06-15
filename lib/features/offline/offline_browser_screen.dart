@@ -158,7 +158,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
     final title = _getDisplayTitle();
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
+      backgroundColor: isDark ? AppTokens.lightBrandPrimary : AppTokens.lightBgPage,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(
           ResponsiveAppBar.isDesktop(context)
@@ -166,7 +166,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
               : ResponsiveAppBar.mobileHeight,
         ),
         child: AppBar(
-          backgroundColor: isDark ? AppColors.darkSurface : AppColors.navyDark,
+          backgroundColor: isDark ? AppTokens.lightBrandPrimary : AppTokens.lightBrandPrimary,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(
@@ -182,7 +182,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
             children: [
               Text(
                 title,
-                style: AppTextStyles.playfairDisplay.copyWith(
+                style: AppTextStyles.headingMd.copyWith(
                   fontSize: ResponsiveAppBar.isDesktop(context) ? 18 : 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -190,10 +190,10 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
               ),
               Text(
                 'OFFLINE ARCHIVE',
-                style: AppTextStyles.dmSans.copyWith(
+                style: AppTextStyles.bodyMd.copyWith(
                   fontSize: ResponsiveAppBar.isDesktop(context) ? 10 : 8,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.gdaGold.withValues(alpha: 0.8),
+                  color: AppTokens.lightBrandPrimary.withValues(alpha: 0.8),
                   letterSpacing: 0.8,
                 ),
               ),
@@ -210,7 +210,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
               Expanded(
                 child: _isLoading
                     ? const Center(
-                        child: CircularProgressIndicator(color: AppColors.gold),
+                        child: CircularProgressIndicator(color: AppTokens.lightBrandPrimary),
                       )
                     : _buildContent(isDark),
               ),
@@ -297,7 +297,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
+        color: isDark ? AppTokens.lightBrandPrimary : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: widget.categoryColor.withValues(alpha: isDark ? 0.2 : 0.1),
@@ -339,18 +339,18 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                     children: [
                       Text(
                         name,
-                        style: AppTextStyles.playfairDisplay.copyWith(
+                        style: AppTextStyles.headingMd.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : AppColors.navyDark,
+                          color: isDark ? Colors.white : AppTokens.lightBrandPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         "$count offline documents",
-                        style: AppTextStyles.dmSans.copyWith(
+                        style: AppTextStyles.bodyMd.copyWith(
                           fontSize: 12,
-                          color: (isDark ? Colors.white : AppColors.navyDark)
+                          color: (isDark ? Colors.white : AppTokens.lightBrandPrimary)
                               .withValues(alpha: 0.5),
                         ),
                       ),
@@ -360,7 +360,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 14,
-                  color: AppColors.gold.withValues(alpha: 0.5),
+                  color: AppTokens.lightBrandPrimary.withValues(alpha: 0.5),
                 ),
               ],
             ),
@@ -388,10 +388,10 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
             children: [
               Text(
                 "YEARLY FOLDERS",
-                style: AppTextStyles.dmSans.copyWith(
+                style: AppTextStyles.bodyMd.copyWith(
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
-                  color: AppColors.gold,
+                  color: AppTokens.lightBrandPrimary,
                   letterSpacing: 1.5,
                 ),
               ),
@@ -407,7 +407,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                   decoration: BoxDecoration(
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.05)
-                        : AppColors.navyDark.withValues(alpha: 0.05),
+                        : AppTokens.lightBrandPrimary.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -419,17 +419,17 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                         size: 12,
                         color: isDark
                             ? Colors.white.withValues(alpha: 0.5)
-                            : AppColors.navyDark.withValues(alpha: 0.5),
+                            : AppTokens.lightBrandPrimary.withValues(alpha: 0.5),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         '${sortedYears.length} Years',
-                        style: AppTextStyles.dmSans.copyWith(
+                        style: AppTextStyles.bodyMd.copyWith(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                           color: isDark
                               ? Colors.white.withValues(alpha: 0.5)
-                              : AppColors.navyDark.withValues(alpha: 0.5),
+                              : AppTokens.lightBrandPrimary.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
@@ -459,7 +459,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: isSelected
-                          ? [AppColors.navyDark, AppColors.navyMid]
+                          ? [AppTokens.lightBrandPrimary, AppTokens.lightBrandPrimary]
                           : [
                               isDark ? const Color(0xFF1E2638) : Colors.white,
                               isDark ? const Color(0xFF161E35) : Colors.white,
@@ -468,10 +468,10 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                     borderRadius: BorderRadius.circular(22),
                     border: Border.all(
                       color: isSelected
-                          ? AppColors.gold.withValues(alpha: 0.4)
+                          ? AppTokens.lightBrandPrimary.withValues(alpha: 0.4)
                           : (isDark
                                 ? Colors.white.withValues(alpha: 0.08)
-                                : AppColors.divider.withValues(alpha: 0.5)),
+                                : AppTokens.lightBorderLight.withValues(alpha: 0.5)),
                       width: 1,
                     ),
                     boxShadow: [
@@ -493,26 +493,26 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? Colors.white.withValues(alpha: 0.1)
-                              : AppColors.gold.withValues(alpha: 0.1),
+                              : AppTokens.lightBrandPrimary.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.folder_rounded,
-                          color: isSelected ? Colors.white : AppColors.gold,
+                          color: isSelected ? (isDark ? const Color(0xFF141414) : Colors.white) : AppTokens.lightBrandPrimary,
                           size: 20,
                         ),
                       ),
                       const SizedBox(height: 10),
                       Text(
                         '$year',
-                        style: AppTextStyles.numberStyle(
+                        style: AppTextStyles.bodyMd.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                           color: isSelected
                               ? Colors.white
                               : (isDark
                                     ? Colors.white.withValues(alpha: 0.8)
-                                    : AppColors.navyDark),
+                                    : AppTokens.lightBrandPrimary),
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -555,7 +555,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.08)
-              : AppColors.divider.withValues(alpha: 0.5),
+              : AppTokens.lightBorderLight.withValues(alpha: 0.5),
           width: 1,
         ),
         boxShadow: [
@@ -603,7 +603,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                       children: [
                         Text(
                           "YEAR",
-                          style: AppTextStyles.dmSans.copyWith(
+                          style: AppTextStyles.bodyMd.copyWith(
                             fontSize: 8,
                             fontWeight: FontWeight.w900,
                             color: widget.categoryColor.withValues(alpha: 0.5),
@@ -613,7 +613,7 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                         const SizedBox(height: 2),
                         Text(
                           document.yearStart.toString(),
-                          style: AppTextStyles.numberStyle(
+                          style: AppTextStyles.bodyMd.copyWith(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: isDark ? Colors.white : widget.categoryColor,
@@ -634,10 +634,10 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                           document.fileName,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.dmSans.copyWith(
+                          style: AppTextStyles.bodyMd.copyWith(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : AppColors.navyDark,
+                            color: isDark ? Colors.white : AppTokens.lightBrandPrimary,
                             height: 1.3,
                           ),
                         ),
@@ -650,17 +650,17 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                                 Icon(
                                   Icons.description_rounded,
                                   size: 12,
-                                  color: AppColors.gold.withValues(alpha: 0.6),
+                                  color: AppTokens.lightBrandPrimary.withValues(alpha: 0.6),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${document.pageCount ?? 0} Pages',
-                                  style: AppTextStyles.numberStyle(
+                                  style: AppTextStyles.bodyMd.copyWith(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                     color: isDark
                                         ? Colors.white.withValues(alpha: 0.4)
-                                        : AppColors.charcoal.withValues(
+                                        : AppTokens.lightBrandPrimary.withValues(
                                             alpha: 0.5,
                                           ),
                                   ),
@@ -673,17 +673,17 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
                                 Icon(
                                   Icons.offline_pin_rounded,
                                   size: 12,
-                                  color: AppColors.gold.withValues(alpha: 0.6),
+                                  color: AppTokens.lightBrandPrimary.withValues(alpha: 0.6),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Offline',
-                                  style: AppTextStyles.numberStyle(
+                                  style: AppTextStyles.bodyMd.copyWith(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                     color: isDark
                                         ? Colors.white.withValues(alpha: 0.4)
-                                        : AppColors.charcoal.withValues(
+                                        : AppTokens.lightBrandPrimary.withValues(
                                             alpha: 0.5,
                                           ),
                                   ),
@@ -796,14 +796,14 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
           Icon(
             Icons.folder_open_rounded,
             size: 64,
-            color: AppColors.divider.withValues(alpha: 0.3),
+            color: AppTokens.lightBorderLight.withValues(alpha: 0.3),
           ),
           const SizedBox(height: 16),
           Text(
             "No offline files found here",
-            style: AppTextStyles.dmSans.copyWith(
+            style: AppTextStyles.bodyMd.copyWith(
               fontSize: 16,
-              color: (isDark ? Colors.white : AppColors.navyDark).withValues(
+              color: (isDark ? Colors.white : AppTokens.lightBrandPrimary).withValues(
                 alpha: 0.5,
               ),
             ),
@@ -836,3 +836,5 @@ class _OfflineBrowserScreenState extends State<OfflineBrowserScreen> {
     );
   }
 }
+
+

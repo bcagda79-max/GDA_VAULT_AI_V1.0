@@ -1,0 +1,90 @@
+﻿Created At: 2026-06-15T07:01:14Z
+Completed At: 2026-06-15T07:01:14Z
+File Path: `file:///d:/All%20Projects/GDA%20Vault%20AI/lib/features/ai_chat/chat_screen.dart`
+Total Lines: 523
+Total Bytes: 19124
+Showing lines 1 to 250
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1: import 'package:flutter/material.dart';
+2: import 'package:flutter_riverpod/flutter_riverpod.dart';
+3: import 'package:flutter_animate/flutter_animate.dart';
+4: import 'package:go_router/go_router.dart';
+5: import 'providers/chat_provider.dart';
+6: import 'package:gda_vault_ai/features/ai_chat/models/chat_state.dart';
+7: import 'widgets/chat_message_bubble.dart';
+8: import 'widgets/category_selector_sheet.dart';
+9: import 'widgets/ai_chat_drawer.dart';
+10: import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
+11: import '../../core/constants/app_colors.dart';
+12: import '../../core/constants/app_text_styles.dart';
+13: import 'widgets/suggested_questions.dart';
+14: 
+15: class ChatScreen extends ConsumerStatefulWidget {
+16:   final String? initialDocumentId;
+17:   final String? initialCategoryId;
+18:   final String? initialSubCategoryId;
+19:   final String? initialYear;
+20: 
+21:   const ChatScreen({
+22:     super.key,
+23:     this.initialDocumentId,
+24:     this.initialCategoryId,
+25:     this.initialSubCategoryId,
+26:     this.initialYear,
+27:   });
+28: 
+29:   @override
+30:   ConsumerState<ChatScreen> createState() => _ChatScreenState();
+31: }
+32: 
+33: class _ChatScreenState extends ConsumerState<ChatScreen> {
+34:   final TextEditingController _inputController = TextEditingController();
+35:   final ScrollController _scrollController = ScrollController();
+36:   final FocusNode _focusNode = FocusNode();
+37:   bool _inputFocused = false;
+38: 
+39:   @override
+40:   void initState() {
+41:     super.initState();
+42:     _focusNode.addListener(_onFocus
+<truncated 6584 bytes>
+con(
+214:                           Icons.menu_outlined,
+215:                           color: isDark ? Colors.white : AppTokens.lightTextPrimary,
+216:                           size: 24,
+217:                         ),
+218:                         onPressed: () => Scaffold.of(context).openDrawer(),
+219:                       ),
+220:                     ),
+221:                     Expanded(
+222:                       child: Column(
+223:                         mainAxisAlignment: MainAxisAlignment.center,
+224:                         children: [
+225:                           Text(
+226:                             "AI CHAT",
+227:                             style: AppTextStyles.headingMd.copyWith(
+228:                               fontSize: 13,
+229:                               fontWeight: FontWeight.w600,
+230:                               color: isDark ? Colors.white : AppTokens.lightTextPrimary,
+231:                               letterSpacing: 0.5,
+232:                             ),
+233:                           ),
+234:                           const SizedBox(height: 2),
+235:                           Text(
+236:                             "GDA Vault Intelligence",
+237:                             style: AppTextStyles.bodyMd.copyWith(
+238:                               fontSize: 10,
+239:                               color: isDark ? const Color(0xFF8899B0) : AppTokens.lightTextSecondary,
+240:                             ),
+241:                           ),
+242:                         ],
+243:                       ),
+244:                     ),
+245:                     IconButton(
+246:                       icon: Icon(
+247:                         Icons.home_outlined,
+248:                         color: isDark ? Colors.white : AppTokens.lightTextPrimary,
+249:                         size: 24,
+250:                       ),
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+

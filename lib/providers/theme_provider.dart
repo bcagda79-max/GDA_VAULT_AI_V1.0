@@ -1,4 +1,3 @@
-// lib/providers/theme_provider.dart
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -8,7 +7,7 @@ part 'theme_provider.g.dart';
 class ThemeNotifier extends _$ThemeNotifier {
   @override
   ThemeMode build() {
-    return ThemeMode.light; // Default theme
+    return ThemeMode.light;
   }
 
   bool get isDark => state == ThemeMode.dark;

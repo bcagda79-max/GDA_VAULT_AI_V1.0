@@ -21,7 +21,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
       key: 'board-authority',
       title: 'Board of Authority',
       fallbackRange: '1961 – Ongoing',
-      color: AppColors.catBoard,
+      color: AppTokens.lightBrandPrimary,
       icon: Icons.gavel_rounded,
       routeType: _OfflineFolderRouteType.boardSubcategories,
       categoryId: SupabaseConstants.idBoardOfAuthority,
@@ -36,7 +36,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
       key: 'town-plots',
       title: 'Town (Plots) Files',
       fallbackRange: '1999 – 2026',
-      color: AppColors.catBoard,
+      color: AppTokens.lightBrandPrimary,
       icon: Icons.location_city_rounded,
       routeType: _OfflineFolderRouteType.yearBrowser,
       categoryId: SupabaseConstants.idTownPlots,
@@ -54,7 +54,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
       key: 'administration',
       title: 'Administration Files',
       fallbackRange: '1999 – 2026',
-      color: AppColors.catBoard,
+      color: AppTokens.lightBrandPrimary,
       icon: Icons.admin_panel_settings_rounded,
       routeType: _OfflineFolderRouteType.yearBrowser,
       categoryId: SupabaseConstants.idAdministration,
@@ -72,7 +72,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
       key: 'private-properties',
       title: 'Private Properties Files',
       fallbackRange: '1999 – 2026',
-      color: AppColors.catBoard,
+      color: AppTokens.lightBrandPrimary,
       icon: Icons.home_work_rounded,
       routeType: _OfflineFolderRouteType.yearBrowser,
       categoryId: SupabaseConstants.idPrivateProperties,
@@ -241,7 +241,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
         .toList();
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
+      backgroundColor: isDark ? AppTokens.lightBrandPrimary : AppTokens.lightBgPage,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(
           ResponsiveAppBar.isDesktop(context)
@@ -256,8 +256,8 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: isDark
-                    ? [AppColors.darkSurface, AppColors.darkBg]
-                    : [AppColors.navyDark, AppColors.navyMid],
+                    ? [AppTokens.lightBrandPrimary, AppTokens.lightBrandPrimary]
+                    : [AppTokens.lightBrandPrimary, AppTokens.lightBrandPrimary],
               ),
               boxShadow: [
                 BoxShadow(
@@ -284,7 +284,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                           children: [
                             Text(
                               'Offline Files',
-                              style: AppTextStyles.playfairDisplay.copyWith(
+                              style: AppTextStyles.headingMd.copyWith(
                                 fontSize: ResponsiveAppBar.isDesktop(context)
                                     ? 20
                                     : 16,
@@ -295,7 +295,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                             ),
                             Text(
                               'Locally cached documents',
-                              style: AppTextStyles.dmSans.copyWith(
+                              style: AppTextStyles.bodyMd.copyWith(
                                 fontSize: ResponsiveAppBar.isDesktop(context)
                                     ? 10
                                     : 10,
@@ -331,7 +331,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.gold.withValues(alpha: isDark ? 0.16 : 0.09),
+                      AppTokens.lightBrandPrimary.withValues(alpha: isDark ? 0.16 : 0.09),
                       Colors.transparent,
                     ],
                   ),
@@ -350,7 +350,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.navyLight.withValues(
+                      AppTokens.lightBrandPrimary.withValues(
                         alpha: isDark ? 0.12 : 0.06,
                       ),
                       Colors.transparent,
@@ -366,12 +366,12 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
               Expanded(
                 child: _isLoading
                     ? const Center(
-                        child: CircularProgressIndicator(color: AppColors.gold),
+                        child: CircularProgressIndicator(color: AppTokens.lightBrandPrimary),
                       )
                     : activeFolders.isEmpty
                     ? _buildEmptyState(isDark)
                     : RefreshIndicator(
-                        color: AppColors.gold,
+                        color: AppTokens.lightBrandPrimary,
                         onRefresh: _loadRecords,
                         child: ListView(
                           padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
@@ -415,10 +415,10 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
               children: [
                 Text(
                   'FOLDERS',
-                  style: AppTextStyles.dmSans.copyWith(
+                  style: AppTextStyles.bodyMd.copyWith(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                    color: (isDark ? AppTokens.lightBrandPrimary : AppTokens.lightBrandPrimary)
                         .withValues(alpha: 0.5),
                     letterSpacing: 1.2,
                   ),
@@ -428,9 +428,9 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                   'Tap any category to open its documents',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.dmSans.copyWith(
+                  style: AppTextStyles.bodyMd.copyWith(
                     fontSize: 12,
-                    color: (isDark ? AppColors.darkText : AppColors.charcoal)
+                    color: (isDark ? AppTokens.lightBrandPrimary : AppTokens.lightBrandPrimary)
                         .withValues(alpha: 0.55),
                   ),
                 ),
@@ -449,13 +449,13 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                 ),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? AppColors.gold.withValues(alpha: 0.15)
-                      : AppColors.navyDark.withValues(alpha: 0.07),
+                      ? AppTokens.lightBrandPrimary.withValues(alpha: 0.15)
+                      : AppTokens.lightBrandPrimary.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isDark
-                        ? AppColors.gold.withValues(alpha: 0.3)
-                        : AppColors.navyDark.withValues(alpha: 0.08),
+                        ? AppTokens.lightBrandPrimary.withValues(alpha: 0.3)
+                        : AppTokens.lightBrandPrimary.withValues(alpha: 0.08),
                   ),
                 ),
                 child: Row(
@@ -463,15 +463,15 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                     Icon(
                       Icons.auto_awesome_rounded,
                       size: 12,
-                      color: isDark ? AppColors.gold : AppColors.navyDark,
+                      color: isDark ? AppTokens.lightBrandPrimary : AppTokens.lightBrandPrimary,
                     ),
                     const SizedBox(width: 5),
                     Text(
                       '$count found',
-                      style: AppTextStyles.dmSans.copyWith(
+                      style: AppTextStyles.bodyMd.copyWith(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.gold : AppColors.navyDark,
+                        color: isDark ? AppTokens.lightBrandPrimary : AppTokens.lightBrandPrimary,
                       ),
                     ),
                   ],
@@ -501,7 +501,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [AppColors.darkCard, folder.color.withValues(alpha: 0.35)]
+              ? [AppTokens.lightBrandPrimary, folder.color.withValues(alpha: 0.35)]
               : [folder.color, folder.color.withValues(alpha: 0.85)],
         ),
         borderRadius: BorderRadius.circular(18),
@@ -555,7 +555,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                           Expanded(
                             child: Text(
                               folder.title,
-                              style: AppTextStyles.playfairDisplay.copyWith(
+                              style: AppTextStyles.headingMd.copyWith(
                                 fontSize: 17,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -577,7 +577,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                               ),
                               child: Text(
                                 '2 sub',
-                                style: AppTextStyles.dmSans.copyWith(
+                                style: AppTextStyles.bodyMd.copyWith(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white,
@@ -599,7 +599,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                           ),
                           Text(
                             range,
-                            style: AppTextStyles.dmSans.copyWith(
+                            style: AppTextStyles.bodyMd.copyWith(
                               fontSize: 11,
                               color: Colors.white.withValues(alpha: 0.78),
                             ),
@@ -615,7 +615,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                           ),
                           Text(
                             '$count files',
-                            style: AppTextStyles.dmSans.copyWith(
+                            style: AppTextStyles.bodyMd.copyWith(
                               fontSize: 11,
                               color: Colors.white.withValues(alpha: 0.78),
                             ),
@@ -629,7 +629,7 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
                           value: (count / 50.0).clamp(0.0, 1.0),
                           backgroundColor: Colors.white.withValues(alpha: 0.14),
                           valueColor: const AlwaysStoppedAnimation(
-                            AppColors.gdaGold,
+                            AppTokens.lightBrandPrimary,
                           ),
                           minHeight: 3,
                         ),
@@ -661,34 +661,34 @@ class _OfflineDocumentsScreenState extends State<OfflineDocumentsScreen> {
             height: 80,
             decoration: BoxDecoration(
               color: isDark
-                  ? AppColors.darkCard
-                  : AppColors.navyDark.withValues(alpha: 0.05),
+                  ? AppTokens.lightBrandPrimary
+                  : AppTokens.lightBrandPrimary.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Icon(
                 Icons.cloud_off_rounded,
                 size: 40,
-                color: AppColors.gold.withValues(alpha: 0.5),
+                color: AppTokens.lightBrandPrimary.withValues(alpha: 0.5),
               ),
             ),
           ),
           const SizedBox(height: 24),
           Text(
             'No offline files yet',
-            style: AppTextStyles.playfairDisplay.copyWith(
+            style: AppTextStyles.headingMd.copyWith(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.darkText : AppColors.charcoal,
+              color: isDark ? AppTokens.lightBrandPrimary : AppTokens.lightBrandPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Documents you save for offline access\nwill appear here for instant viewing.',
             textAlign: TextAlign.center,
-            style: AppTextStyles.dmSans.copyWith(
+            style: AppTextStyles.bodyMd.copyWith(
               fontSize: 13,
-              color: (isDark ? Colors.white : AppColors.charcoal).withValues(
+              color: (isDark ? Colors.white : AppTokens.lightBrandPrimary).withValues(
                 alpha: 0.5,
               ),
             ),
@@ -728,3 +728,4 @@ class _OfflineFolderMeta {
     this.aliases = const [],
   });
 }
+

@@ -90,6 +90,40 @@ class SupabaseService {
     }
   }
 
+  Future<void> createSubCategory({
+    required String name,
+    required String parentId,
+    required String storagePath,
+    required String colorHex,
+    required String iconName,
+  }) async {
+    final slug = name.toLowerCase().replaceAll(' ', '-').replaceAll(RegExp(r'[^a-z0-9\-]'), '');
+    await client.from('categories').insert({
+      'name': name,
+      'parent_id': parentId,
+      'storage_path': storagePath,
+      'color_hex': colorHex,
+      'icon_name': iconName,
+      'slug': slug,
+    });
+  }
+
+  Future<void> createCategory({
+    required String name,
+    required String storagePath,
+    required String colorHex,
+    required String iconName,
+  }) async {
+    final slug = name.toLowerCase().replaceAll(' ', '-').replaceAll(RegExp(r'[^a-z0-9\-]'), '');
+    await client.from('categories').insert({
+      'name': name,
+      'storage_path': storagePath,
+      'color_hex': colorHex,
+      'icon_name': iconName,
+      'slug': slug,
+    });
+  }
+
   // ══════════════════════════════════════════════
   // DOCUMENT OPERATIONS
   // ══════════════════════════════════════════════

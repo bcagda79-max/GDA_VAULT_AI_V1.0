@@ -73,7 +73,7 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
       '/categories/sub/scan/years/pdf',
       extra: {
         'document': doc,
-        'categoryColor': AppColors.navyDark,
+        'categoryColor': AppTokens.lightBrandPrimary,
         'categoryName': 'Recent Scans',
       },
     );
@@ -104,16 +104,16 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
     final asyncFiles = ref.watch(recentScansProvider);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : const Color(0xFFF4F6FA),
+      backgroundColor: isDark ? AppTokens.lightBrandPrimary : const Color(0xFFF4F6FA),
       appBar: _buildAppBar(isDark),
       body: asyncFiles.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.navyDark),
+          child: CircularProgressIndicator(color: AppTokens.lightBrandPrimary),
         ),
         error: (e, _) => Center(
           child: Text(
             'Error loading scans: $e',
-            style: AppTextStyles.dmSans.copyWith(color: Colors.red),
+            style: AppTextStyles.bodyMd.copyWith(color: Colors.red),
           ),
         ),
         data: (files) => _buildBody(context, isDark, files),
@@ -124,7 +124,7 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
   PreferredSizeWidget _buildAppBar(bool isDark) {
     final isDesktop = ResponsiveAppBar.isDesktop(context);
     return AppBar(
-      backgroundColor: AppColors.navyDark,
+      backgroundColor: AppTokens.lightBrandPrimary,
       elevation: 0,
       leading: const BackButton(color: Colors.white),
       title: Column(
@@ -132,7 +132,7 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
         children: [
           Text(
             'Recent Scans',
-            style: AppTextStyles.dmSans.copyWith(
+            style: AppTextStyles.bodyMd.copyWith(
               fontSize: isDesktop ? 18 : 16,
               fontWeight: FontWeight.w700,
               color: Colors.white,
@@ -140,7 +140,7 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
           ),
           Text(
             'Galiyat Development Authority',
-            style: AppTextStyles.dmSans.copyWith(
+            style: AppTextStyles.bodyMd.copyWith(
               fontSize: isDesktop ? 10 : 9,
               color: Colors.white.withValues(alpha: 0.55),
               letterSpacing: 0.5,
@@ -170,17 +170,17 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
       padding: isDesktop
           ? const EdgeInsets.symmetric(horizontal: 20, vertical: 12)
           : const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: AppColors.navyDark,
+      color: AppTokens.lightBrandPrimary,
       child: TextField(
         controller: _searchCtrl,
         onChanged: (v) => setState(() => _query = v),
-        style: AppTextStyles.dmSans.copyWith(
+        style: AppTextStyles.bodyMd.copyWith(
           fontSize: isDesktop ? 15 : 14,
           color: Colors.white,
         ),
         decoration: InputDecoration(
           hintText: 'Search scans…',
-          hintStyle: AppTextStyles.dmSans.copyWith(
+          hintStyle: AppTextStyles.bodyMd.copyWith(
             fontSize: isDesktop ? 15 : 14,
             color: Colors.white.withValues(alpha: 0.4),
           ),
@@ -225,23 +225,23 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          color: isDark ? AppColors.darkCard : Colors.white,
+          color: isDark ? AppTokens.lightBrandPrimary : Colors.white,
           child: Row(
             children: [
               Icon(
                 Icons.folder_copy_rounded,
                 size: 14,
-                color: AppColors.navyDark.withValues(alpha: 0.5),
+                color: AppTokens.lightBrandPrimary.withValues(alpha: 0.5),
               ),
               const SizedBox(width: 6),
               Text(
                 '${files.length} document${files.length == 1 ? '' : 's'}'
                 '${_query.isNotEmpty ? ' found' : ' scanned locally'}',
-                style: AppTextStyles.dmSans.copyWith(
+                style: AppTextStyles.bodyMd.copyWith(
                   fontSize: 12,
                   color: isDark
-                      ? AppColors.darkText.withValues(alpha: 0.65)
-                      : AppColors.charcoal.withValues(alpha: 0.55),
+                      ? AppTokens.lightBrandPrimary.withValues(alpha: 0.65)
+                      : AppTokens.lightBrandPrimary.withValues(alpha: 0.55),
                 ),
               ),
             ],
@@ -279,15 +279,15 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
                 ? Icons.document_scanner_outlined
                 : Icons.search_off_rounded,
             size: 64,
-            color: AppColors.navyDark.withValues(alpha: 0.2),
+            color: AppTokens.lightBrandPrimary.withValues(alpha: 0.2),
           ),
           const SizedBox(height: 16),
           Text(
             noFilesAtAll ? 'No scans yet' : 'No results for "$_query"',
-            style: AppTextStyles.dmSans.copyWith(
+            style: AppTextStyles.bodyMd.copyWith(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.darkText : AppColors.charcoal,
+              color: isDark ? AppTokens.lightBrandPrimary : AppTokens.lightBrandPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -296,9 +296,9 @@ class _RecentScansListScreenState extends ConsumerState<RecentScansListScreen> {
                 ? 'Tap "Add New File" on the home screen\nto scan your first document.'
                 : 'Try a different search term.',
             textAlign: TextAlign.center,
-            style: AppTextStyles.dmSans.copyWith(
+            style: AppTextStyles.bodyMd.copyWith(
               fontSize: 13,
-              color: AppColors.charcoal.withValues(alpha: 0.45),
+              color: AppTokens.lightBrandPrimary.withValues(alpha: 0.45),
             ),
           ),
         ],
@@ -339,12 +339,12 @@ class _ScanListItem extends StatelessWidget {
           Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCard : Colors.white,
+                  color: isDark ? AppTokens.lightBrandPrimary : Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.divider, width: 0.8),
+                  border: Border.all(color: AppTokens.lightBorderLight, width: 0.8),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.navyDark.withValues(alpha: 0.05),
+                      color: AppTokens.lightBrandPrimary.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -358,8 +358,8 @@ class _ScanListItem extends StatelessWidget {
                       height: 52,
                       decoration: BoxDecoration(
                         color: isPdf
-                            ? AppColors.navyDark.withValues(alpha: 0.08)
-                            : AppColors.gdaGreen.withValues(alpha: 0.08),
+                            ? AppTokens.lightBrandPrimary.withValues(alpha: 0.08)
+                            : AppTokens.lightBrandPrimary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Icon(
@@ -367,7 +367,7 @@ class _ScanListItem extends StatelessWidget {
                             ? Icons.picture_as_pdf_rounded
                             : Icons.image_rounded,
                         size: 26,
-                        color: isPdf ? AppColors.navyDark : AppColors.gdaGreen,
+                        color: isPdf ? AppTokens.lightBrandPrimary : AppTokens.lightBrandPrimary,
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -378,12 +378,12 @@ class _ScanListItem extends StatelessWidget {
                         children: [
                           Text(
                             name,
-                            style: AppTextStyles.dmSans.copyWith(
+                            style: AppTextStyles.bodyMd.copyWith(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: isDark
-                                  ? AppColors.darkText
-                                  : AppColors.charcoal,
+                                  ? AppTokens.lightBrandPrimary
+                                  : AppTokens.lightBrandPrimary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -394,7 +394,7 @@ class _ScanListItem extends StatelessWidget {
                               Icon(
                                 Icons.access_time_rounded,
                                 size: 11,
-                                color: AppColors.charcoal.withValues(
+                                color: AppTokens.lightBrandPrimary.withValues(
                                   alpha: 0.4,
                                 ),
                               ),
@@ -404,9 +404,9 @@ class _ScanListItem extends StatelessWidget {
                                   formatDate(stat.modified),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: AppTextStyles.dmSans.copyWith(
+                                  style: AppTextStyles.bodyMd.copyWith(
                                     fontSize: 10,
-                                    color: AppColors.charcoal.withValues(
+                                    color: AppTokens.lightBrandPrimary.withValues(
                                       alpha: 0.45,
                                     ),
                                   ),
@@ -420,16 +420,16 @@ class _ScanListItem extends StatelessWidget {
                               Icon(
                                 Icons.storage_rounded,
                                 size: 11,
-                                color: AppColors.charcoal.withValues(
+                                color: AppTokens.lightBrandPrimary.withValues(
                                   alpha: 0.4,
                                 ),
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 formatSize(stat.size),
-                                style: AppTextStyles.dmSans.copyWith(
+                                style: AppTextStyles.bodyMd.copyWith(
                                   fontSize: 10,
-                                  color: AppColors.charcoal.withValues(
+                                  color: AppTokens.lightBrandPrimary.withValues(
                                     alpha: 0.45,
                                   ),
                                 ),
@@ -446,14 +446,14 @@ class _ScanListItem extends StatelessWidget {
                         _ActionChip(
                           icon: Icons.open_in_new_rounded,
                           label: 'Open',
-                          color: AppColors.navyDark,
+                          color: AppTokens.lightBrandPrimary,
                           onTap: onOpen,
                         ),
                         const SizedBox(height: 6),
                         _ActionChip(
                           icon: Icons.edit_rounded,
                           label: 'Edit',
-                          color: AppColors.gold,
+                          color: AppTokens.lightBrandPrimary,
                           onTap: onEdit,
                         ),
                       ],
@@ -499,7 +499,7 @@ class _ActionChip extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               label,
-              style: AppTextStyles.dmSans.copyWith(
+              style: AppTextStyles.bodyMd.copyWith(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: color,
@@ -511,3 +511,4 @@ class _ActionChip extends StatelessWidget {
     );
   }
 }
+

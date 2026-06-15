@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
-import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/services/document_upload_service.dart';
 import 'package:gda_vault_ai/core/services/supabase_service.dart';
 import 'package:gda_vault_ai/models/category_model.dart';
 
-/// A 3-step flow for categorizing, dating, and uploading a document.
 class CategorySelectorScreen extends StatefulWidget {
   final String source;
   final int pageCount;
@@ -35,13 +33,13 @@ class CategorySelectorScreen extends StatefulWidget {
 class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
   final _supa = SupabaseService.instance;
   final TextEditingController _yearController = TextEditingController();
-  final TextEditingController _fromYearController = TextEditingController();
-  final TextEditingController _toYearController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
 
   int _currentStep = 0;
   String? _selectedCategoryId;
   String? _selectedSubId;
-  final String _yearInputType = 'single';
+  bool _isYearMode = true;
+
   bool _isLoading = true;
   bool _isUploading = false;
   double _uploadProgress = 0.0;
@@ -55,14 +53,14 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
   @override
   void initState() {
     super.initState();
+    _nameController.text = widget.fileName;
     _loadCategories();
   }
 
   @override
   void dispose() {
     _yearController.dispose();
-    _fromYearController.dispose();
-    _toYearController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -122,11 +120,15 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
   }
 
   String get _finalYearLabel {
-    if (_yearInputType == 'single') return _yearController.text.trim();
-    if (_yearInputType == 'range') {
-      return '${_fromYearController.text.trim()}–${_toYearController.text.trim()}';
+    if (_isYearMode) return _yearController.text.trim();
+    return 'N/A';
+  }
+
+  String get _finalDocumentName {
+    if (!_isYearMode && _nameController.text.trim().isNotEmpty) {
+      return _nameController.text.trim();
     }
-    return '${_fromYearController.text.trim()}–Ongoing';
+    return widget.fileName;
   }
 
   Future<void> _uploadDocument() async {
@@ -144,11 +146,10 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
 
     try {
       final yearStart =
-          int.tryParse(_fromYearController.text.trim()) ??
-          int.tryParse(_yearController.text.trim()) ??
-          DateTime.now().year;
+          _isYearMode ? (int.tryParse(_yearController.text.trim()) ?? DateTime.now().year) : DateTime.now().year;
       final mainCategoryId = category.parentId ?? category.id;
       final subCategoryId = category.parentId != null ? category.id : null;
+      final docName = _finalDocumentName;
 
       UploadResult result;
       if (widget.source == 'scanner') {
@@ -158,18 +159,13 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           subCategory: subCategoryId,
           categoryStoragePath: category.storagePath,
           year: yearStart,
-          fileName: widget.fileName,
+          fileName: docName,
           onProgress: (phase, progress, {bytesSent, totalBytes}) {
             if (!mounted) return;
             setState(() {
               _uploadStatus = phase;
               _bytesSent = bytesSent;
               _totalBytes = totalBytes;
-
-              // When we're in the uploading phase, the service now reports
-              // the raw byte fraction (0.0..1.0). Store that separately
-              // so the UI can display a real percent, while the visual
-              // progress bar still maps to overall flow progress.
               if (phase.toLowerCase().contains('upload')) {
                 _rawUploadFraction = progress;
                 _uploadProgress = 0.3 + (progress * 0.45);
@@ -192,7 +188,7 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           subCategory: subCategoryId,
           categoryStoragePath: category.storagePath,
           year: yearStart,
-          fileName: widget.fileName,
+          fileName: docName,
           pageCount: widget.pageCount,
           onProgress: (phase, progress, {bytesSent, totalBytes}) {
             if (!mounted) return;
@@ -248,17 +244,14 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => _SuccessBottomSheet(
         categoryName: _selectedCategory?.name ?? '',
-        categoryColor: _selectedCategory?.color ?? AppColors.gold,
+        categoryColor: _selectedCategory?.color ?? AppTokens.lightBrandPrimary,
         finalYearLabel: _finalYearLabel,
         pageCount: pageCount,
         onView: () async {
-          Navigator.pop(ctx); // Close success sheet
-
-          // Slight delay to allow the sheet to dismiss fully before navigation
+          Navigator.pop(ctx);
           await Future.delayed(const Duration(milliseconds: 300));
           if (!mounted) return;
 
-          // Find the main category for the route path
           final mainCategory = _selectedCategory?.parentId != null
               ? _categories.firstWhere(
                   (c) => c.id == _selectedCategory!.parentId,
@@ -266,7 +259,6 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
                 )
               : _selectedCategory!;
 
-          // Use context.go to navigate directly and reset the upload stack
           context.go(
             '/categories/sub/${mainCategory.id}/years',
             extra: {
@@ -289,94 +281,322 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  void _showAddMainCategoryDialog() {
+    final TextEditingController newCatCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final bgSurface = isDark ? const Color(0xFF1C1C1C) : AppTokens.lightBgSurface;
+        final bgPage = isDark ? const Color(0xFF0A0A0A) : AppTokens.lightBgPage;
+        final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
+        final textPrimary = isDark ? Colors.white : AppTokens.lightTextPrimary;
+        final textSecondary = isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+        final brandPrimary = isDark ? Colors.white : const Color(0xFF141414);
 
-    return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : AppColors.paper,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? [const Color(0xFF161E35), const Color(0xFF0A0F1E)]
-                  : [AppColors.navyDark, AppColors.navyMid],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+        return AlertDialog(
+          backgroundColor: bgSurface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          contentPadding: const EdgeInsets.all(20),
+          titlePadding: EdgeInsets.zero,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Add Main Category",
+                style: AppTextStyles.bodyMd.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
               ),
-            ],
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
+              const SizedBox(height: 4),
+              Text(
+                "Create a new top-level category",
+                style: AppTextStyles.bodyMd.copyWith(
+                  fontSize: 12,
+                  color: textSecondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "NAME",
+                style: AppTextStyles.bodyMd.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.0,
+                  color: textSecondary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: newCatCtrl,
+                style: AppTextStyles.bodyMd.copyWith(
+                  fontSize: 14,
+                  color: textPrimary,
+                ),
+                decoration: InputDecoration(
+                  hintText: "e.g. Finance & Accounting",
+                  hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.5)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: borderLight, width: isDark ? 0.5 : 1.0),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: borderLight, width: isDark ? 0.5 : 1.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: brandPrimary),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                  filled: true,
+                  fillColor: bgPage,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: textSecondary,
+                        side: BorderSide(color: borderLight, width: isDark ? 0.5 : 1.0),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        minimumSize: const Size(0, 42),
+                        textStyle: AppTextStyles.bodyMd.copyWith(fontSize: 13),
                       ),
-                      child: const Icon(
-                        Icons.arrow_back_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
+                      child: const Text("Cancel"),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 10),
                   Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Save Document',
-                          style: AppTextStyles.playfairDisplay.copyWith(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          'Step ${_currentStep + 1} of 3',
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withValues(alpha: 0.6),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final name = newCatCtrl.text.trim();
+                        if (name.isEmpty) return;
+                        Navigator.pop(ctx);
+                        
+                        setState(() => _isLoading = true);
+                        try {
+                          await _supa.createCategory(
+                            name: name,
+                            storagePath: name.toLowerCase().replaceAll(' ', '_').replaceAll(RegExp(r'[^a-z0-9_]'), ''),
+                            colorHex: '#1D5FD1', // Default brand primary
+                            iconName: 'folder_rounded',
+                          );
+                          await _loadCategories();
+                        } catch (e) {
+                          setState(() => _isLoading = false);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to add main category: $e')),
+                            );
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: brandPrimary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        minimumSize: const Size(0, 42),
+                        textStyle: AppTextStyles.bodyMd.copyWith(fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                      child: const Text("Add"),
                     ),
                   ),
                 ],
               ),
-            ),
+            ],
           ),
-        ),
-        elevation: 0,
-      ),
+        );
+      },
+    );
+  }
+
+  void _showAddSubCategoryDialog(CategoryModel parent) {
+    final TextEditingController newSubCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final bgSurface = isDark ? const Color(0xFF1C1C1C) : AppTokens.lightBgSurface;
+        final bgPage = isDark ? const Color(0xFF0A0A0A) : AppTokens.lightBgPage;
+        final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
+        final textPrimary = isDark ? Colors.white : AppTokens.lightTextPrimary;
+        final textSecondary = isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+        final brandPrimary = isDark ? Colors.white : const Color(0xFF141414);
+
+        return AlertDialog(
+          backgroundColor: bgSurface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          contentPadding: const EdgeInsets.all(20),
+          titlePadding: EdgeInsets.zero,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Add Sub-Category",
+                style: AppTextStyles.bodyMd.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "Create a new sub-category under ${parent.name}",
+                style: AppTextStyles.bodyMd.copyWith(
+                  fontSize: 12,
+                  color: textSecondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "NAME",
+                style: AppTextStyles.bodyMd.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.0,
+                  color: textSecondary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: newSubCtrl,
+                style: AppTextStyles.bodyMd.copyWith(
+                  fontSize: 14,
+                  color: textPrimary,
+                ),
+                decoration: InputDecoration(
+                  hintText: "e.g. Board Minutes 2000-2010",
+                  hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.5)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: borderLight, width: isDark ? 0.5 : 1.0),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: borderLight, width: isDark ? 0.5 : 1.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: brandPrimary),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                  filled: true,
+                  fillColor: bgPage,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: textSecondary,
+                        side: BorderSide(color: borderLight, width: isDark ? 0.5 : 1.0),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        minimumSize: const Size(0, 42),
+                        textStyle: AppTextStyles.bodyMd.copyWith(fontSize: 13),
+                      ),
+                      child: const Text("Cancel"),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final name = newSubCtrl.text.trim();
+                        if (name.isEmpty) return;
+                        Navigator.pop(ctx);
+                        
+                        setState(() => _isLoading = true);
+                        try {
+                          await _supa.createSubCategory(
+                            name: name,
+                            parentId: parent.id,
+                            storagePath: '${parent.storagePath}/${name.toLowerCase().replaceAll(' ', '_')}',
+                            colorHex: '#${parent.color.value.toRadixString(16).padLeft(8, '0').substring(2)}',
+                            iconName: 'folder_rounded',
+                          );
+                          await _loadCategories();
+                        } catch (e) {
+                          setState(() => _isLoading = false);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to add sub-category: $e')),
+                            );
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: brandPrimary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        minimumSize: const Size(0, 42),
+                        textStyle: AppTextStyles.bodyMd.copyWith(fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                      child: const Text("Add"),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgPage = isDark ? const Color(0xFF0A0A0A) : AppTokens.lightBgPage;
+
+    return Scaffold(
+      backgroundColor: bgPage,
+      appBar: _buildSharedHeader(),
       body: Column(
         children: [
-          _buildStepperIndicator(),
+          _buildStepProgressBar(),
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _buildCurrentStep(isDark),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isDesktop = constraints.maxWidth >= 860;
+                final content = AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: _buildCurrentStep(isDark),
+                );
+
+                if (isDesktop) {
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 600),
+                      child: Card(
+                        margin: const EdgeInsets.symmetric(vertical: 24),
+                        color: isDark ? const Color(0xFF141414) : AppTokens.lightBgSurface,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(
+                            color: isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight,
+                            width: isDark ? 0.5 : 1.0,
+                          ),
+                        ),
+                        elevation: isDark ? 0 : 2,
+                        child: content,
+                      ),
+                    ),
+                  );
+                }
+
+                return content;
+              },
             ),
           ),
         ],
@@ -384,80 +604,167 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
     );
   }
 
-  Widget _buildStepperIndicator() {
-    return Container(
-      color: AppColors.navyDark,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: List.generate(3, (index) {
-          final isActive = index == _currentStep;
-          final isDone = index < _currentStep;
-          return Expanded(
+  PreferredSizeWidget _buildSharedHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF141414) : Colors.white;
+    final textColor = isDark ? Colors.white : AppTokens.lightTextPrimary;
+    final subtextColor = isDark ? const Color(0xFF8A8A8A) : AppTokens.lightTextSecondary;
+    final iconColor = isDark ? Colors.white : AppTokens.lightTextPrimary;
+
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(56),
+      child: AppBar(
+        backgroundColor: bgColor,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        flexibleSpace: SafeArea(
+          child: Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isDone
-                        ? AppColors.gdaGreen
-                        : (isActive
-                              ? AppColors.gold
-                              : Colors.white.withValues(alpha: 0.15)),
-                    border: isActive
-                        ? Border.all(
-                            color: AppColors.gold.withValues(alpha: 0.4),
-                            width: 2,
-                          )
-                        : null,
-                  ),
-                  child: Center(
-                    child: isDone
-                        ? const Icon(
-                            Icons.check_rounded,
-                            size: 14,
-                            color: Colors.white,
-                          )
-                        : Text(
-                            '${index + 1}',
-                            style: AppTextStyles.dmSans.copyWith(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: isActive
-                                  ? AppColors.navyDark
-                                  : Colors.white.withValues(alpha: 0.5),
-                            ),
-                          ),
+                IconButton(
+                  icon: Icon(Icons.arrow_back, size: 20, color: iconColor),
+                  onPressed: () => context.pop(),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Save Document",
+                        style: AppTextStyles.bodyMd.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
+                      ),
+                      Text(
+                        "Step ${_currentStep + 1} of 3",
+                        style: AppTextStyles.bodyMd.copyWith(
+                          fontSize: 10,
+                          color: subtextColor,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                AppSpacing.horizontal(6),
-                Text(
-                  ['Category', 'Year', 'Upload'][index],
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 10,
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    color: isActive
-                        ? AppColors.gold
-                        : (isDone
-                              ? Colors.white.withValues(alpha: 0.7)
-                              : Colors.white.withValues(alpha: 0.3)),
-                  ),
-                ),
-                if (index < 2)
-                  Expanded(
-                    child: Container(
-                      height: 1.5,
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                      color: isDone
-                          ? AppColors.gdaGreen.withValues(alpha: 0.5)
-                          : Colors.white.withValues(alpha: 0.15),
-                    ),
-                  ),
+                const SizedBox(width: 40),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepProgressBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF141414) : Colors.white;
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        color: bgColor,
+        border: const Border(bottom: BorderSide(color: Color(0xFF111111), width: 0.5)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: List.generate(3, (index) {
+          final isCompleted = index < _currentStep;
+          final isCurrent = index == _currentStep;
+          final label = ['Category', 'Year', 'Upload'][index];
+
+          Widget iconWidget;
+          if (isCompleted) {
+            iconWidget: Container(
+              width: 20, height: 20,
+              decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
+              child: const Icon(Icons.check, size: 11, color: Colors.white),
+            );
+          } else if (isCurrent) {
+            iconWidget: Container(
+              width: 20, height: 20,
+              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+              child: Center(
+                child: Text('${index + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black)),
+              ),
+            );
+          } else {
+            iconWidget: Container(
+              width: 20, height: 20,
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFF3D5070)),
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+              ),
+              child: Center(
+                child: Text('${index + 1}', style: const TextStyle(fontSize: 11, color: Color(0xFF3D5070))),
+              ),
+            );
+          }
+
+          final stepWidget = Row(
+            children: [
+              if (isCompleted)
+                Container(
+                  width: 20, height: 20,
+                  decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
+                  child: const Icon(Icons.check, size: 11, color: Colors.white),
+                )
+              else if (isCurrent)
+                Container(
+                  width: 20, height: 20,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: Center(
+                    child: Text('${index + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black)),
+                  ),
+                )
+              else
+                Container(
+                  width: 20, height: 20,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFF3D5070)),
+                    shape: BoxShape.circle,
+                    color: Colors.transparent,
+                  ),
+                  child: Center(
+                    child: Text('${index + 1}', style: const TextStyle(fontSize: 11, color: Color(0xFF3D5070))),
+                  ),
+                ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: AppTextStyles.bodyMd.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: isCompleted || isCurrent ? Colors.white : const Color(0xFF3D5070),
+                ),
+              ),
+            ],
           );
+
+          if (index < 2) {
+            return Expanded(
+              child: Row(
+                children: [
+                  stepWidget,
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      margin: const EdgeInsets.symmetric(horizontal: 12),
+                      color: isCompleted ? const Color(0xFF10B981) : const Color(0xFF111111),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+          return stepWidget;
         }),
       ),
     );
@@ -465,101 +772,410 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
 
   Widget _buildCurrentStep(bool isDark) {
     switch (_currentStep) {
-      case 0:
-        return _buildStep1(isDark);
-      case 1:
-        return _buildStep2(isDark);
-      case 2:
-        return _buildStep3(isDark);
-      default:
-        return const SizedBox.shrink();
+      case 0: return _buildStep1(isDark);
+      case 1: return _buildStep2(isDark);
+      case 2: return _buildStep3(isDark);
+      default: return const SizedBox.shrink();
     }
   }
 
   Widget _buildStep1(bool isDark) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.gold),
-      );
+      return const Center(child: CircularProgressIndicator(color: AppTokens.lightBrandPrimary));
     }
 
-    if (_error != null && _categories.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.wifi_off_rounded,
-                size: 48,
-                color: AppColors.gold,
+    final bgSurface = isDark ? const Color(0xFF1C1C1C) : AppTokens.lightBgSurface;
+    final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
+    final textPrimary = isDark ? Colors.white : AppTokens.lightTextPrimary;
+    final textSecondary = isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+
+    final sizeStr = widget.fileSize != null
+        ? '${(widget.fileSize! / 1048576).toStringAsFixed(1)} MB'
+        : '${widget.pageCount} pages';
+
+    final categorySelected = _selectedCategory != null &&
+        (!_selectedCategoryHasChildren || _selectedSubId != null);
+
+    return Column(
+      key: const ValueKey('step1'),
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: bgSurface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE4E2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.picture_as_pdf, size: 16, color: Color(0xFFDC2626)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.fileName,
+                              style: AppTextStyles.bodyMd.copyWith(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(sizeStr, style: AppTextStyles.bodyMd.copyWith(fontSize: 11, color: textSecondary)),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: const Color(0xFFD1FAE5)),
+                        ),
+                        child: const Text("Ready", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF059669))),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  "MAIN CATEGORIES",
+                  style: AppTextStyles.bodyMd.copyWith(
+                    fontSize: 11, fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0, color: textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _topCategories.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) => _buildCategoryItem(_topCategories[index], isDark),
+                ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: _showAddMainCategoryDialog,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppTokens.lightBrandPrimary.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_circle_outline, size: 18, color: AppTokens.lightBrandPrimary),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Add Main Category",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppTokens.lightBrandPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(16),
+          color: bgSurface,
+          child: InkWell(
+            onTap: categorySelected ? () => setState(() => _currentStep = 1) : null,
+            borderRadius: BorderRadius.circular(10),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              height: 48,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: categorySelected ? AppTokens.lightBrandPrimary : borderLight,
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(height: 12),
-              Text(
-                'Failed to load categories',
-                style: AppTextStyles.playfairDisplay.copyWith(
-                  color: isDark ? AppColors.darkText : AppColors.charcoal,
+              child: Center(
+                child: Text(
+                  "Continue",
+                  style: AppTextStyles.bodyMd.copyWith(
+                    fontSize: 14, fontWeight: FontWeight.w600,
+                    color: categorySelected ? Colors.white : textSecondary.withValues(alpha: 0.5),
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: _loadCategories,
-                child: const Text('Retry'),
-              ),
-            ],
+            ),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryItem(CategoryModel category, bool isDark) {
+    final isSelected = _selectedCategoryId == category.id;
+    final children = _childrenOf(category.id);
+    final hasSubCategories = children.isNotEmpty;
+
+    final bgSurface = isDark ? const Color(0xFF1C1C1C) : AppTokens.lightBgSurface;
+    final bgPage = isDark ? const Color(0xFF0A0A0A) : AppTokens.lightBgPage;
+    final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
+    final brandPrimary = isDark ? Colors.white : const Color(0xFF141414);
+    final brandSurface = brandPrimary.withValues(alpha: 0.08);
+    final textPrimary = isDark ? Colors.white : AppTokens.lightTextPrimary;
+    final textSecondary = isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+
+    return Column(
+      children: [
+        InkWell(
+          onTap: () => setState(() {
+            _selectedCategoryId = category.id;
+            _selectedSubId = null;
+          }),
+          borderRadius: BorderRadius.circular(10),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected ? brandSurface : bgSurface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isSelected ? brandPrimary : borderLight,
+                width: isSelected ? 1.5 : 1.0,
+              ),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2)),
+              ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 36, height: 36,
+                  decoration: BoxDecoration(
+                    color: isSelected ? brandSurface : bgPage,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: isSelected ? brandPrimary : borderLight),
+                  ),
+                  child: Center(
+                    child: Icon(category.iconData, size: 16, color: isSelected ? brandPrimary : textSecondary),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            category.name,
+                            style: AppTextStyles.bodyMd.copyWith(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
+                          ),
+                          if (hasSubCategories)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: bgPage,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
+                              ),
+                              child: Text(
+                                "${children.length} sub",
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: textSecondary),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        "${category.docCount} docs · All years",
+                        style: AppTextStyles.bodyMd.copyWith(fontSize: 11, color: textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                AnimatedRotation(
+                  turns: isSelected ? 0.25 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(Icons.chevron_right, size: 18, color: isSelected ? brandPrimary : textSecondary.withValues(alpha: 0.5)),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (isSelected)
+          ClipRect(
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              child: _buildSubCategoryExpansion(category, children, isDark),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSubCategoryExpansion(CategoryModel parent, List<CategoryModel> children, bool isDark) {
+    final hasSubCategories = children.isNotEmpty;
+    final bgSurface = isDark ? const Color(0xFF1C1C1C) : AppTokens.lightBgSurface;
+    final bgPage = isDark ? const Color(0xFF0A0A0A) : AppTokens.lightBgPage;
+    final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
+    final borderMedium = isDark ? const Color(0xFF3D5070) : AppTokens.lightBorderLight;
+    final brandPrimary = isDark ? Colors.white : const Color(0xFF141414);
+    final brandSurface = brandPrimary.withValues(alpha: 0.08);
+    final textPrimary = isDark ? Colors.white : AppTokens.lightTextPrimary;
+    final textSecondary = isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+
+    if (!hasSubCategories) {
+      return Container(
+        margin: const EdgeInsets.only(top: 6, left: 48),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: bgPage,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.info_outline, size: 13, color: textSecondary.withValues(alpha: 0.6)),
+                const SizedBox(width: 8),
+                Text(
+                  "No sub-categories. File will be saved directly.",
+                  style: TextStyle(fontSize: 11, color: textSecondary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () => _showAddSubCategoryDialog(parent),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, size: 13, color: brandPrimary),
+                  const SizedBox(width: 6),
+                  Text("Add sub-category", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: brandPrimary)),
+                ],
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    return SingleChildScrollView(
-      key: const ValueKey('step1'),
-      padding: const EdgeInsets.all(20),
+    return Container(
+      margin: const EdgeInsets.only(top: 6, left: 48),
+      decoration: BoxDecoration(
+        border: Border(left: BorderSide(color: brandPrimary, width: 2)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Choose Category',
-            style: AppTextStyles.playfairDisplay.copyWith(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.darkText : AppColors.charcoal,
+          Padding(
+            padding: const EdgeInsets.only(left: 12, bottom: 6),
+            child: Text(
+              "SUB-CATEGORIES",
+              style: TextStyle(
+                fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 0.8,
+                color: const Color(0xFF3D5070),
+              ),
             ),
           ),
-          AppSpacing.vertical(4),
-          Text(
-            'Where should this document be filed?',
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 13,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.7)
-                  : AppColors.charcoal.withValues(alpha: 0.5),
+          ...children.map((sub) {
+            final isSelectedSub = _selectedSubId == sub.id;
+            return InkWell(
+              onTap: () => setState(() => _selectedSubId = sub.id),
+              child: Container(
+                margin: const EdgeInsets.only(left: 12, bottom: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelectedSub ? brandSurface : bgSurface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: isSelectedSub ? brandPrimary : borderLight),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28, height: 28,
+                      decoration: BoxDecoration(
+                        color: isSelectedSub ? brandSurface : bgPage,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: isSelectedSub ? brandPrimary : borderLight),
+                      ),
+                      child: Center(
+                        child: Icon(sub.iconData, size: 13, color: isSelectedSub ? brandPrimary : textSecondary),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(sub.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textPrimary)),
+                          Text("${sub.docCount} docs", style: TextStyle(fontSize: 10, color: textSecondary.withValues(alpha: 0.6))),
+                        ],
+                      ),
+                    ),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      width: 20, height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelectedSub ? brandPrimary : Colors.transparent,
+                        border: Border.all(color: isSelectedSub ? brandPrimary : borderMedium),
+                      ),
+                      child: isSelectedSub ? const Center(child: Icon(Icons.check, size: 10, color: Colors.white)) : null,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 4),
+          InkWell(
+            onTap: () => _showAddSubCategoryDialog(parent),
+            child: Container(
+              margin: const EdgeInsets.only(left: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, size: 14, color: brandPrimary),
+                  const SizedBox(width: 8),
+                  Text("Add new sub-category", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: brandPrimary)),
+                ],
+              ),
             ),
-          ),
-          AppSpacing.vertical(20),
-          _buildSourceFileInfo(isDark),
-          AppSpacing.vertical(20),
-          Text(
-            'Main Categories',
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.6)
-                  : AppColors.charcoal.withValues(alpha: 0.45),
-              letterSpacing: 0.8,
-            ),
-          ),
-          AppSpacing.vertical(10),
-          ..._topCategories.map((cat) => _buildCategoryTile(cat, isDark)),
-          AppSpacing.vertical(24),
-          _buildPrimaryButton(
-            'Continue',
-            enabled:
-                _selectedCategory != null &&
-                (!_selectedCategoryHasChildren || _selectedSubId != null),
-            onTap: () => setState(() => _currentStep = 1),
           ),
         ],
       ),
@@ -567,905 +1183,348 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
   }
 
   Widget _buildStep2(bool isDark) {
+    final bgPage = isDark ? const Color(0xFF0A0A0A) : AppTokens.lightBgPage;
+    final bgSurface = isDark ? const Color(0xFF1C1C1C) : AppTokens.lightBgSurface;
+    final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
+    final textPrimary = isDark ? Colors.white : AppTokens.lightTextPrimary;
+    final textSecondary = isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+    final textTertiary = textSecondary.withValues(alpha: 0.6);
+    final brandPrimary = isDark ? Colors.white : const Color(0xFF141414);
+
+    final category = _selectedCategory;
+    final inputFilled = _isYearMode 
+        ? _yearController.text.trim().length == 4 
+        : _nameController.text.trim().isNotEmpty;
+
     return SingleChildScrollView(
       key: const ValueKey('step2'),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (category != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: bgSurface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 2)),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(category.iconData, size: 16, color: brandPrimary),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_selectedSubId != null)
+                            Text(
+                              _categories.firstWhere((c) => c.id == _selectedCategoryId, orElse: () => category).name,
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: textSecondary),
+                            ),
+                          Text(
+                            _selectedSubId != null ? category.name : category.name,
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  TextButton(
+                    onPressed: () => setState(() => _currentStep = 0),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 0),
+                      foregroundColor: brandPrimary,
+                      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                    child: const Text("Change"),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 20),
           Text(
-            'Document Year',
-            style: AppTextStyles.playfairDisplay.copyWith(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.darkText : AppColors.charcoal,
+            "IDENTIFICATION METHOD",
+            style: AppTextStyles.bodyMd.copyWith(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.0, color: textSecondary),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            height: 42,
+            decoration: BoxDecoration(
+              color: bgSurface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
+            ),
+            child: Row(
+              children: [
+                Expanded(child: _buildToggleOption("By Year", Icons.calendar_today_outlined, _isYearMode, () => setState(() => _isYearMode = true), isDark)),
+                Expanded(child: _buildToggleOption("By File Name", Icons.title_outlined, !_isYearMode, () => setState(() => _isYearMode = false), isDark)),
+              ],
             ),
           ),
-          AppSpacing.vertical(4),
-          Text(
-            'When was this document created?',
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 13,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.7)
-                  : AppColors.charcoal.withValues(alpha: 0.5),
+          const SizedBox(height: 14),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: _isYearMode ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+            firstChild: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("DOCUMENT YEAR", style: AppTextStyles.bodyMd.copyWith(fontSize: 11, fontWeight: FontWeight.w600, color: textSecondary)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _yearController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 4,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  onChanged: (_) => setState(() {}),
+                  style: TextStyle(fontSize: 14, color: textPrimary),
+                  decoration: InputDecoration(
+                    hintText: "e.g. 2006",
+                    hintStyle: TextStyle(color: textTertiary),
+                    prefixIcon: Icon(Icons.calendar_today_outlined, size: 18, color: textTertiary),
+                    counterText: "",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: borderLight, width: isDark ? 0.5 : 1.0)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: borderLight, width: isDark ? 0.5 : 1.0)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: brandPrimary)),
+                    filled: true, fillColor: bgSurface,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text("Enter the year this document was created (4 digits)", style: TextStyle(fontSize: 11, color: textTertiary)),
+              ],
+            ),
+            secondChild: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("DOCUMENT NAME", style: AppTextStyles.bodyMd.copyWith(fontSize: 11, fontWeight: FontWeight.w600, color: textSecondary)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _nameController,
+                  onChanged: (_) => setState(() {}),
+                  style: TextStyle(fontSize: 14, color: textPrimary),
+                  decoration: InputDecoration(
+                    hintText: "e.g. BOA Minutes January 2006",
+                    hintStyle: TextStyle(color: textTertiary),
+                    prefixIcon: Icon(Icons.title_outlined, size: 18, color: textTertiary),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: borderLight, width: isDark ? 0.5 : 1.0)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: borderLight, width: isDark ? 0.5 : 1.0)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: brandPrimary)),
+                    filled: true, fillColor: bgSurface,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text("Enter a descriptive name for this document", style: TextStyle(fontSize: 11, color: textTertiary)),
+              ],
             ),
           ),
-          AppSpacing.vertical(20),
-          _buildSelectedCategorySummary(isDark),
-          AppSpacing.vertical(24),
-          _buildYearInputFields(),
-          AppSpacing.vertical(24),
+          const SizedBox(height: 24),
           Row(
             children: [
               Expanded(
-                child: _buildSecondaryButton(
-                  'Back',
-                  onTap: () => setState(() => _currentStep = 0),
-                  isDark: isDark,
+                flex: 1,
+                child: OutlinedButton(
+                  onPressed: () => setState(() => _currentStep = 0),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: textSecondary,
+                    side: BorderSide(color: borderLight, width: isDark ? 0.5 : 1.0),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    minimumSize: const Size(0, 48),
+                    textStyle: AppTextStyles.bodyMd.copyWith(fontSize: 14),
+                  ),
+                  child: const Text("Back"),
                 ),
               ),
-              AppSpacing.horizontal(12),
+              const SizedBox(width: 12),
               Expanded(
-                child: _buildPrimaryButton(
-                  'Continue',
-                  enabled: _isYearInputValid,
-                  onTap: () => setState(() => _currentStep = 2),
+                flex: 2,
+                child: ElevatedButton(
+                  onPressed: inputFilled ? () => setState(() => _currentStep = 2) : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: inputFilled ? brandPrimary : borderLight,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    minimumSize: const Size(0, 48),
+                    textStyle: AppTextStyles.bodyMd.copyWith(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  child: const Text("Continue"),
                 ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildToggleOption(String label, IconData icon, bool isActive, VoidCallback onTap, bool isDark) {
+    final brandPrimary = isDark ? Colors.white : const Color(0xFF141414);
+    final textSecondary = isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+    final textTertiary = textSecondary.withValues(alpha: 0.6);
+
+    return InkWell(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        margin: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: isActive ? brandPrimary : Colors.transparent,
+          borderRadius: BorderRadius.circular(7),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 14, color: isActive ? Colors.white : textTertiary),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppTextStyles.bodyMd.copyWith(
+                fontSize: 12, fontWeight: FontWeight.w500,
+                color: isActive ? Colors.white : textSecondary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildStep3(bool isDark) {
+    final bgSurface = isDark ? const Color(0xFF1C1C1C) : AppTokens.lightBgSurface;
+    final bgPage = isDark ? const Color(0xFF0A0A0A) : AppTokens.lightBgPage;
+    final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
+    final textPrimary = isDark ? Colors.white : AppTokens.lightTextPrimary;
+    final textSecondary = isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+    final textTertiary = textSecondary.withValues(alpha: 0.6);
+    final brandPrimary = isDark ? Colors.white : const Color(0xFF141414);
+
+    final category = _selectedCategory;
+    final mainCategoryName = _selectedSubId != null
+        ? _categories.firstWhere((c) => c.id == _selectedCategoryId, orElse: () => category!).name
+        : category?.name ?? 'Unknown';
+
     return SingleChildScrollView(
       key: const ValueKey('step3'),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Confirm & Save',
-            style: AppTextStyles.playfairDisplay.copyWith(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.darkText : AppColors.charcoal,
-            ),
-          ),
-          AppSpacing.vertical(4),
-          Text(
-            'Review details before saving',
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 13,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.7)
-                  : AppColors.charcoal.withValues(alpha: 0.5),
-            ),
-          ),
-          AppSpacing.vertical(20),
-          _buildConfirmationSummary(isDark),
-          AppSpacing.vertical(20),
-          if (_isUploading) _buildUploadProgress(isDark),
-          AppSpacing.vertical(20),
-          Row(
-            children: [
-              Expanded(
-                child: _buildSecondaryButton(
-                  'Back',
-                  enabled: !_isUploading,
-                  onTap: () => setState(() => _currentStep = 1),
-                  isDark: isDark,
-                ),
-              ),
-              AppSpacing.horizontal(12),
-              Expanded(
-                child: _buildPrimaryButton(
-                  _isUploading ? 'Saving...' : 'Save Document',
-                  enabled: !_isUploading,
-                  onTap: _uploadDocument,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  bool get _isYearInputValid {
-    if (_yearInputType == 'single') {
-      return _yearController.text.trim().length == 4;
-    }
-    if (_yearInputType == 'range') {
-      return _fromYearController.text.trim().length == 4 &&
-          _toYearController.text.trim().length == 4;
-    }
-    return _fromYearController.text.trim().length == 4;
-  }
-
-  Widget _buildSourceFileInfo(bool isDark) {
-    final sizeStr = widget.fileSize != null
-        ? '${(widget.fileSize! / 1048576).toStringAsFixed(1)} MB'
-        : '${widget.pageCount} pages scanned';
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkCard
-            : AppColors.navyDark.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Row(
-        children: [
+          Text("Confirm & Save", style: AppTextStyles.bodyMd.copyWith(fontSize: 20, fontWeight: FontWeight.w600, color: textPrimary)),
+          const SizedBox(height: 4),
+          Text("Review document details before saving to vault", style: TextStyle(fontSize: 13, color: textSecondary)),
+          const SizedBox(height: 20),
           Container(
-            width: 36,
-            height: 36,
             decoration: BoxDecoration(
-              color: AppColors.catBoard.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.picture_as_pdf,
-              size: 18,
-              color: AppColors.catBoard,
-            ),
-          ),
-          AppSpacing.horizontal(10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.fileName,
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.darkText : AppColors.charcoal,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  sizeStr,
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 11,
-                    color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                        .withValues(alpha: 0.45),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: widget.source == 'scanner'
-                  ? AppColors.catBoard.withValues(alpha: 0.1)
-                  : AppColors.gdaGreen.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              widget.source == 'scanner' ? 'SCANNED' : 'IMPORTED',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 8,
-                fontWeight: FontWeight.bold,
-                color: widget.source == 'scanner'
-                    ? AppColors.catBoard
-                    : AppColors.gdaGreen,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryTile(CategoryModel category, bool isDark) {
-    final isSelected = _selectedCategoryId == category.id;
-    final children = _childrenOf(category.id);
-    return Column(
-      children: [
-        AnimatedContainer(
-          margin: const EdgeInsets.only(bottom: 10),
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? category.color.withValues(alpha: 0.08)
-                : (isDark ? AppColors.darkCard : Colors.white),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isSelected ? category.color : AppColors.divider,
-              width: isSelected ? 1.5 : 0.8,
-            ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
+              color: bgSurface,
               borderRadius: BorderRadius.circular(14),
-              onTap: () => setState(() {
-                _selectedCategoryId = category.id;
-                _selectedSubId = null;
-              }),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: category.color.withValues(
-                          alpha: isSelected ? 0.15 : 0.08,
-                        ),
-                        borderRadius: BorderRadius.circular(11),
-                      ),
-                      child: Icon(
-                        category.iconData,
-                        size: 20,
-                        color: category.color,
-                      ),
-                    ),
-                    AppSpacing.horizontal(12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  category.name,
-                                  style: AppTextStyles.dmSans.copyWith(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark
-                                        ? AppColors.darkText
-                                        : AppColors.charcoal,
-                                  ),
-                                ),
-                              ),
-                              if (children.isNotEmpty) ...[
-                                AppSpacing.horizontal(6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.gold.withValues(
-                                      alpha: 0.1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    '${children.length} sub',
-                                    style: AppTextStyles.dmSans.copyWith(
-                                      fontSize: 8,
-                                      color: AppColors.gold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                          AppSpacing.vertical(2),
-                          Text(
-                            '${category.docCount} docs · ${category.yearRange}',
-                            style: AppTextStyles.dmSans.copyWith(
-                              fontSize: 11,
-                              color:
-                                  (isDark
-                                          ? AppColors.darkText
-                                          : AppColors.charcoal)
-                                      .withValues(alpha: 0.4),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isSelected ? category.color : Colors.transparent,
-                        border: Border.all(
-                          color: isSelected
-                              ? category.color
-                              : AppColors.divider.withValues(alpha: 0.8),
-                          width: 2,
-                        ),
-                      ),
-                      child: isSelected
-                          ? const Center(
-                              child: Icon(
-                                Icons.check_rounded,
-                                size: 12,
-                                color: Colors.white,
-                              ),
-                            )
-                          : null,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        if (isSelected && children.isNotEmpty)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            margin: const EdgeInsets.only(top: 4, left: 16),
-            padding: const EdgeInsets.only(left: 16),
-            decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(
-                  color: category.color.withValues(alpha: 0.3),
-                  width: 2,
-                ),
-              ),
+              border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2)),
+              ],
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Select sub-type:',
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 11,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.6)
-                        : AppColors.charcoal.withValues(alpha: 0.5),
-                  ),
-                ),
-                AppSpacing.vertical(8),
-                ...children.map((sub) {
-                  final subSelected = _selectedSubId == sub.id;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedSubId = sub.id),
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: subSelected
-                            ? category.color.withValues(alpha: 0.08)
-                            : (isDark ? AppColors.darkCard : Colors.white),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: subSelected
-                              ? category.color
-                              : AppColors.divider,
-                          width: subSelected ? 1.2 : 0.8,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: subSelected
-                                  ? category.color
-                                  : AppColors.divider,
-                            ),
-                          ),
-                          AppSpacing.horizontal(10),
-                          Expanded(
-                            child: Text(
-                              sub.name,
-                              style: AppTextStyles.dmSans.copyWith(
-                                fontSize: 13,
-                                color: isDark
-                                    ? AppColors.darkText
-                                    : AppColors.charcoal,
-                              ),
-                            ),
-                          ),
-                          if (subSelected)
-                            Icon(
-                              Icons.check_circle,
-                              size: 16,
-                              color: category.color,
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
+                _buildReviewRow(Icons.folder_outlined, "CATEGORY", mainCategoryName, bgPage, borderLight, textPrimary, textTertiary),
+                Divider(height: 1, color: borderLight),
+                _buildReviewRow(Icons.subdirectory_arrow_right, "SUB-CATEGORY", _selectedSubId != null ? category!.name : "None", bgPage, borderLight, textPrimary, textTertiary),
+                Divider(height: 1, color: borderLight),
+                if (_isYearMode)
+                  _buildReviewRow(Icons.calendar_today_outlined, "YEAR", _yearController.text.trim(), bgPage, borderLight, textPrimary, textTertiary)
+                else
+                  _buildReviewRow(Icons.title_outlined, "FILE NAME", _finalDocumentName, bgPage, borderLight, textPrimary, textTertiary),
+                Divider(height: 1, color: borderLight),
+                _buildReviewRow(Icons.description_outlined, "FILE", widget.fileName, bgPage, borderLight, textPrimary, textTertiary),
+                Divider(height: 1, color: borderLight),
+                _buildReviewRow(Icons.menu_book_outlined, "PAGES", "${widget.pageCount} pages", bgPage, borderLight, textPrimary, textTertiary),
               ],
             ),
           ),
-      ],
-    );
-  }
-
-  Widget _buildSelectedCategorySummary(bool isDark) {
-    final category = _selectedCategory;
-    if (category == null) return const SizedBox.shrink();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: category.color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: category.color.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          Icon(category.iconData, size: 16, color: category.color),
-          AppSpacing.horizontal(8),
-          Expanded(
-            child: Text(
-              _selectedSubId != null
-                  ? _categories.firstWhere((c) => c.id == _selectedSubId).name
-                  : category.name,
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.darkText : AppColors.charcoal,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          TextButton(
-            onPressed: () => setState(() => _currentStep = 0),
-            child: Text(
-              'Change',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 11,
-                color: AppColors.gold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildYearInputFields() {
-    return _buildYearTextField(
-      controller: _yearController,
-      label: 'Year',
-      hint: 'e.g. 1996',
-    );
-  }
-
-  Widget _buildYearTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return TextFormField(
-      controller: controller,
-      onChanged: (_) => setState(() {}),
-      keyboardType: TextInputType.number,
-      maxLength: 4,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      style: AppTextStyles.dmSans.copyWith(
-        fontSize: 14,
-        color: isDark ? AppColors.darkText : AppColors.charcoal,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(
-          color: isDark
-              ? AppColors.darkText.withValues(alpha: 0.7)
-              : AppColors.charcoal.withValues(alpha: 0.7),
-        ),
-        hintText: hint,
-        hintStyle: TextStyle(
-          color: isDark
-              ? AppColors.darkText.withValues(alpha: 0.3)
-              : AppColors.charcoal.withValues(alpha: 0.3),
-        ),
-        counterText: '',
-        filled: true,
-        fillColor: isDark ? AppColors.darkCard : Colors.white,
-        prefixIcon: const Icon(
-          Icons.calendar_today,
-          size: 18,
-          color: AppColors.gold,
-        ),
-        suffixIcon: controller.text.length == 4
-            ? const Icon(
-                Icons.check_circle,
-                size: 18,
-                color: AppColors.gdaGreen,
-              )
-            : null,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : AppColors.divider,
-          ),
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.divider),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.gold, width: 1.5),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildConfirmationSummary(bool isDark) {
-    final category = _selectedCategory;
-    if (category == null) return const SizedBox.shrink();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.12)
-              : AppColors.divider,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            height: 6,
-            decoration: BoxDecoration(
-              color: category.color,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              children: [
-                _buildDetailRow(
-                  icon: Icons.folder_rounded,
-                  label: 'Category',
-                  value: _selectedCategoryId != null
-                      ? _categories
-                            .firstWhere((c) => c.id == _selectedCategoryId)
-                            .name
-                      : category.name,
-                  valueColor: isDark ? Colors.white : category.color,
-                  isDark: isDark,
-                ),
-                const Divider(height: 1),
-                _buildDetailRow(
-                  icon: Icons.subdirectory_arrow_right,
-                  label: 'Sub-category',
-                  value: _selectedSubId != null
-                      ? _categories
-                            .firstWhere((c) => c.id == _selectedSubId)
-                            .name
-                      : '—',
-                  isDark: isDark,
-                ),
-                const Divider(height: 1),
-                _buildDetailRow(
-                  icon: Icons.calendar_today_rounded,
-                  label: 'Year',
-                  value: _finalYearLabel,
-                  isDark: isDark,
-                ),
-                const Divider(height: 1),
-                _buildDetailRow(
-                  icon: Icons.description_rounded,
-                  label: 'File',
-                  value: widget.fileName,
-                  maxLines: 2,
-                  isDark: isDark,
-                ),
-                const Divider(height: 1),
-                _buildDetailRow(
-                  icon: Icons.menu_book_rounded,
-                  label: 'Pages',
-                  value: '${widget.pageCount} pages',
-                  isDark: isDark,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow({
-    required IconData icon,
-    required String label,
-    required String value,
-    Color? valueColor,
-    int maxLines = 1,
-    required bool isDark,
-  }) {
-    final themeColor =
-        valueColor ?? (isDark ? AppColors.darkText : AppColors.charcoal);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: themeColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 16, color: themeColor),
-          ),
-          AppSpacing.horizontal(12),
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 12,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.6)
-                    : AppColors.charcoal.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: themeColor,
-              ),
-              maxLines: maxLines,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUploadProgress(bool isDark) {
-    final bytesSentStr = _bytesSent != null
-        ? DocumentUploadService.formatBytes(_bytesSent!)
-        : '0 B';
-    final totalBytesStr = _totalBytes != null
-        ? DocumentUploadService.formatBytes(_totalBytes!)
-        : '...';
-    final percent = ((_rawUploadFraction ?? _uploadProgress) * 100).toInt();
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : AppColors.divider,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          const SizedBox(height: 24),
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.gold.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.cloud_upload_rounded,
-                  color: AppColors.gold,
-                  size: 20,
-                ),
-              ),
-              AppSpacing.horizontal(12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Uploading Document',
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? AppColors.darkText : AppColors.charcoal,
-                      ),
-                    ),
-                    Text(
-                      _uploadStatus,
-                      style: AppTextStyles.dmSans.copyWith(
-                        fontSize: 12,
-                        color:
-                            (isDark ? AppColors.darkText : AppColors.charcoal)
-                                .withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ],
+                flex: 1,
+                child: OutlinedButton(
+                  onPressed: _isUploading ? null : () => setState(() => _currentStep = 1),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: textSecondary,
+                    side: BorderSide(color: borderLight, width: isDark ? 0.5 : 1.0),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    minimumSize: const Size(0, 48),
+                    textStyle: AppTextStyles.bodyMd.copyWith(fontSize: 14),
+                  ),
+                  child: const Text("Back"),
                 ),
               ),
-              Text(
-                '$percent%',
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.gold,
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton.icon(
+                  onPressed: _isUploading ? null : _uploadDocument,
+                  icon: _isUploading 
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.cloud_upload_outlined, size: 16, color: Colors.white),
+                  label: Text(
+                    _isUploading ? "Saving..." : "Save Document",
+                    style: AppTextStyles.bodyMd.copyWith(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: brandPrimary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    minimumSize: const Size(0, 48),
+                  ),
                 ),
               ),
             ],
           ),
-          AppSpacing.vertical(20),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return Stack(
-                children: [
-                  Container(
-                    height: 8,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : AppColors.divider.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    height: 8,
-                    width:
-                        constraints.maxWidth *
-                        (_rawUploadFraction ?? _uploadProgress),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.gold, Color(0xFFFFD700)],
-                      ),
-                      borderRadius: BorderRadius.circular(4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.gold.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          AppSpacing.vertical(12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '$bytesSentStr of $totalBytesStr',
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                      .withValues(alpha: 0.6),
-                ),
-              ),
-              if (_rawUploadFraction != null)
-                Text(
-                  'Processing...',
-                  style: AppTextStyles.dmSans.copyWith(
-                    fontSize: 11,
-                    fontStyle: FontStyle.italic,
-                    color: AppColors.gdaGreen,
-                  ),
-                ),
-            ],
-          ),
+          if (_isUploading) ...[
+             const SizedBox(height: 20),
+             Text(_uploadStatus, style: TextStyle(fontSize: 12, color: textSecondary)),
+             const SizedBox(height: 8),
+             LinearProgressIndicator(value: _rawUploadFraction ?? _uploadProgress, backgroundColor: borderLight, color: brandPrimary),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildPrimaryButton(
-    String label, {
-    required bool enabled,
-    required VoidCallback onTap,
-  }) {
-    return AnimatedOpacity(
-      opacity: enabled ? 1.0 : 0.5,
-      duration: const Duration(milliseconds: 200),
-      child: GestureDetector(
-        onTap: enabled ? onTap : null,
-        child: Container(
-          height: 52,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: enabled
-                  ? [AppColors.navyDark, const Color(0xFF1A3A6B)]
-                  : [
-                      AppColors.charcoal.withValues(alpha: 0.3),
-                      AppColors.charcoal.withValues(alpha: 0.2),
-                    ],
-            ),
-            borderRadius: BorderRadius.circular(13),
-            boxShadow: enabled
-                ? [
-                    BoxShadow(
-                      color: AppColors.navyDark.withValues(alpha: 0.25),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : [],
+  Widget _buildReviewRow(IconData icon, String label, String value, Color bgPage, Color borderLight, Color textPrimary, Color textTertiary) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 32, height: 32,
+            decoration: BoxDecoration(color: bgPage, borderRadius: BorderRadius.circular(8), border: Border.all(color: borderLight, width: isDark ? 0.5 : 1.0)),
+            child: Center(child: Icon(icon, size: 15, color: textTertiary)),
           ),
-          child: Center(
-            child: Text(
-              label,
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.5, color: textTertiary)),
+              const SizedBox(height: 2),
+              SizedBox(
+                width: 200,
+                child: Text(
+                  value,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
+            ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSecondaryButton(
-    String label, {
-    bool enabled = true,
-    required VoidCallback onTap,
-    required bool isDark,
-  }) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: AppColors.divider, width: 1.2),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 14,
-              color: (isDark ? AppColors.darkText : AppColors.charcoal)
-                  .withValues(alpha: 0.6),
-            ),
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -1491,11 +1550,15 @@ class _SuccessBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgSurface = isDark ? const Color(0xFF1C1C1C) : AppTokens.lightBgSurface;
+    final textPrimary = isDark ? Colors.white : AppTokens.lightTextPrimary;
+    final textSecondary = isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+    final brandPrimary = isDark ? Colors.white : const Color(0xFF141414);
 
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
+        color: bgSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -1505,39 +1568,26 @@ class _SuccessBottomSheet extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: AppColors.gdaGreen.withValues(alpha: 0.1),
+              color: brandPrimary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.gdaGreen.withValues(alpha: 0.2),
-                width: 2,
-              ),
+              border: Border.all(color: brandPrimary.withValues(alpha: 0.2), width: 2),
             ),
-            child: const Center(
-              child: Icon(
-                Icons.check_circle_rounded,
-                size: 40,
-                color: AppColors.gdaGreen,
-              ),
+            child: Center(
+              child: Icon(Icons.check_circle_rounded, size: 40, color: brandPrimary),
             ),
           ),
-          AppSpacing.vertical(16),
+          const SizedBox(height: 16),
           Text(
             'Document Saved!',
-            style: AppTextStyles.playfairDisplay.copyWith(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTextStyles.bodyMd.copyWith(fontSize: 22, fontWeight: FontWeight.bold, color: textPrimary),
           ),
-          AppSpacing.vertical(8),
+          const SizedBox(height: 8),
           Text(
             'Successfully added to $categoryName',
             textAlign: TextAlign.center,
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 13,
-              color: AppColors.charcoal.withValues(alpha: 0.5),
-            ),
+            style: AppTextStyles.bodyMd.copyWith(fontSize: 13, color: textSecondary),
           ),
-          AppSpacing.vertical(12),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
@@ -1547,69 +1597,31 @@ class _SuccessBottomSheet extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: categoryColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                AppSpacing.horizontal(8),
-                Text(
-                  '$finalYearLabel · $pageCount pages',
-                  style: AppTextStyles.dmSans.copyWith(fontSize: 12),
-                ),
+                Container(width: 8, height: 8, decoration: BoxDecoration(color: categoryColor, shape: BoxShape.circle)),
+                const SizedBox(width: 8),
+                Text('$finalYearLabel · $pageCount pages', style: AppTextStyles.bodyMd.copyWith(fontSize: 12, color: textPrimary)),
               ],
             ),
           ),
-          AppSpacing.vertical(28),
-          _buildPrimaryButton('View Document', onTap: onView),
-          AppSpacing.vertical(10),
+          const SizedBox(height: 28),
+          ElevatedButton(
+            onPressed: onView,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: brandPrimary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              minimumSize: const Size(double.infinity, 48),
+            ),
+            child: const Text('View Document', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+          ),
+          const SizedBox(height: 10),
           TextButton(
             onPressed: onHome,
             child: Text(
               'Back to Home',
-              style: AppTextStyles.dmSans.copyWith(
-                fontSize: 13,
-                color: AppColors.gold,
-              ),
+              style: AppTextStyles.bodyMd.copyWith(fontSize: 13, color: brandPrimary),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPrimaryButton(String label, {required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 52,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.navyDark, Color(0xFF1A3A6B)],
-          ),
-          borderRadius: BorderRadius.circular(13),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.navyDark.withValues(alpha: 0.25),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
       ),
     );
   }

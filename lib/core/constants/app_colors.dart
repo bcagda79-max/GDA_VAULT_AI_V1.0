@@ -1,51 +1,107 @@
-// lib/core/constants/app_colors.dart
 import 'package:flutter/material.dart';
 
-/// Defines the color palette for the GDA Vault AI application.
-class AppColors {
-  // Brand Colors (Recommendations)
-  static const Color primaryBlue = Color(0xFF1D4ED8); // Primary Button
-  static const Color secondaryBlueDark = Color(
-    0xFF1E3A5F,
-  ); // Secondary Button (Dark)
-  static const Color secondarySlate = Color(
-    0xFF374151,
-  ); // Secondary Button (Light)
+/// Enterprise Design System Tokens
+class AppTokens {
+  // LIGHT MODE ──────────────────────────────────────────
+  
+  // Backgrounds
+  static const Color lightBgPage = Color(0xFFF5F5F5);
+  static const Color lightBgSurface = Color(0xFFFFFFFF);
+  static const Color lightBgSidebar = Color(0xFF111111);
+  static const Color lightBgTopBar = Color(0xFFFFFFFF);
 
-  static const Color goldDark = Color(0xFFC9962A); // Header Badge (Dark)
-  static const Color goldLightBrand = Color(0xFFB8860B); // Header Badge (Light)
+  // Borders
+  static const Color lightBorderLight = Color(0xFFE4E7EC);
+  static const Color lightBorderMedium = Color(0xFFD0D5DD);
 
-  static const Color lightBg = Color(0xFFEEF2F7);
-  static const Color white = Color(0xFFFFFFFF);
-  static const Color lightText = Color(0xFF0F172A);
+  // Text
+  static const Color lightTextPrimary = Color(0xFF101828);
+  static const Color lightTextSecondary = Color(0xFF475467);
+  static const Color lightTextTertiary = Color(0xFF98A2B3);
+  static const Color lightTextSidebar = Color(0xFF8899B0);
+  static const Color lightTextSidebarActive = Color(0xFFFFFFFF);
 
-  // Neutrals - Dark Mode
-  static const Color darkBg = Color(0xFF0B1120);
-  static const Color darkCard = Color(0xFF141E30);
-  static const Color darkTextPrimary = Color(0xFFE8EDF5);
-  static const Color darkIcon = Color(0xFF60A5FA);
+  // Brand / Action
+  static const Color lightBrandPrimary = Color(0xFF141414); // Sleek neutral dark
+  static const Color lightBrandHover = Color(0xFF272727);
+  static const Color lightBrandSurface = Color(0xFFF3F4F6);
 
-  // Legacy Aliases (to prevent breaking existing code)
-  static const Color navyDark = Color(0xFF0B1120); // Mapped to darkBg
-  static const Color navyMid = Color(0xFF141E30); // Mapped to darkCard
-  static const Color navyLight = Color(
-    0xFF1E3A5F,
-  ); // Mapped to secondaryBlueDark
-  static const Color gold = goldDark;
-  static const Color gdaGold = goldDark;
-  static const Color paper = lightBg;
-  static const Color charcoal = lightText;
-  static const Color darkText = darkTextPrimary;
-  static const Color darkSurface = darkCard;
-  static const Color divider = Color(0xFFDDE1EC);
-  static const Color slate = secondarySlate;
-  static const Color gdaGreen = primaryBlue;
-  static const Color gdaGreenMid = primaryBlue;
+  // Status
+  static const Color lightStatusSuccess = Color(0xFF12B76A);
+  static const Color lightStatusError = Color(0xFFF04438);
+  static const Color lightStatusWarn = Color(0xFFF79009);
 
-  // Category Colors (Simplified or mapped to brand)
-  static const Color catBoard = primaryBlue;
-  static const Color catTrust = Color(0xFF1A6B3A);
-  static const Color catTown = Color(0xFF8B4513);
-  static const Color catAdmin = secondaryBlueDark;
-  static const Color catPrivate = Color(0xFF6B1A1A);
+  // Shadows
+  static const List<BoxShadow> lightShadowSm = [
+    BoxShadow(color: Color(0x1A101828), offset: Offset(0, 1), blurRadius: 3),
+    BoxShadow(color: Color(0x0F101828), offset: Offset(0, 1), blurRadius: 2),
+  ];
+  static const List<BoxShadow> lightShadowMd = [
+    BoxShadow(color: Color(0x14101828), offset: Offset(0, 4), blurRadius: 8),
+    BoxShadow(color: Color(0x0A101828), offset: Offset(0, 2), blurRadius: 4),
+  ];
+  static const List<BoxShadow> lightShadowXs = [
+    BoxShadow(color: Color(0x0D101828), offset: Offset(0, 1), blurRadius: 2),
+  ];
+
+  // DARK MODE ───────────────────────────────────────────
+  
+  // Backgrounds
+  static const Color darkBgPage = Color(0xFF0A0A0A);
+  static const Color darkBgSurface = Color(0xFF141414);
+  static const Color darkBgSurface2 = Color(0xFF1C1C1C);
+  static const Color darkBgSidebar = Color(0xFF0A0A0A);
+  static const Color darkBgTopBar = Color(0xFF141414);
+  static const Color darkHeaderBg = Color(0xFF0A0A0A);
+  static const Color darkInputFill = Color(0xFF111111);
+
+  // Borders
+  static const Color darkBorderLight = Color(0xFF272727);
+  static const Color darkBorderMedium = Color(0xFF333333);
+
+  // Text
+  static const Color darkTextPrimary = Color(0xFFEBEBEB);
+  static const Color darkTextSecondary = Color(0xFF8A8A8A);
+  static const Color darkTextTertiary = Color(0xFF555555);
+  static const Color darkTextSidebar = Color(0xFF64748B);
+  static const Color darkTextSidebarActive = Color(0xFFFFFFFF);
+
+  // Brand / Action
+  static const Color darkBrandPrimary = Color(0xFFEBEBEB); // Soft white for dark mode
+  static const Color darkBrandHover = Color(0xFFFFFFFF);
+  static const Color darkBrandSurface = Color(0xFF272727);
+
+  // Status
+  static const Color darkStatusSuccess = Color(0xFF32D583);
+  static const Color darkStatusError = Color(0xFFF97066);
+  static const Color darkStatusWarn = Color(0xFFF79009); // Added for consistency
+
+  // Shadows
+  static const List<BoxShadow> darkShadowSm = [
+    BoxShadow(color: Color(0x66000000), offset: Offset(0, 1), blurRadius: 3),
+  ];
+  static const List<BoxShadow> darkShadowMd = [
+    BoxShadow(color: Color(0x4D000000), offset: Offset(0, 4), blurRadius: 8),
+  ];
+  static const List<BoxShadow> darkShadowXs = [
+    BoxShadow(color: Color(0x4D000000), offset: Offset(0, 1), blurRadius: 2),
+  ];
+
+  // SPACING (8px grid) ──────────────────────────────────
+  static const double sp4 = 4.0;
+  static const double sp8 = 8.0;
+  static const double sp12 = 12.0;
+  static const double sp16 = 16.0;
+  static const double sp20 = 20.0;
+  static const double sp24 = 24.0;
+  static const double sp32 = 32.0;
+  static const double sp40 = 40.0;
+  static const double sp48 = 48.0;
+
+  // BORDER RADIUS ───────────────────────────────────────
+  static const double radiusSm = 6.0;
+  static const double radiusMd = 8.0;
+  static const double radiusLg = 12.0;
+  static const double radiusXl = 16.0;
+  static const double radiusFull = 999.0;
 }

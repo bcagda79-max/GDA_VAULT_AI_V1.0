@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Represents a single document file (Supabase-compatible).
 class DocumentModel {
   final String id;
   final String categoryId;
@@ -8,7 +7,6 @@ class DocumentModel {
   final int yearStart;
   final String fileName;
 
-  /// Supabase Storage path (relative), or a local file path for local-only PDFs.
   final String storagePath;
 
   final String processingStatus;
@@ -16,7 +14,6 @@ class DocumentModel {
   final int? pageCount;
   final DateTime uploadedAt;
 
-  // UI helpers (not from DB — joined or computed)
   final String? categoryName;
   final Color? categoryColor;
   final String? categorySlug;
@@ -80,7 +77,6 @@ class DocumentModel {
     );
   }
 
-  /// Year label for display
   String get yearLabel => yearStart.toString();
 
   bool get isLocalPath {

@@ -1,12 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 
-// ── Scanned Page Model ──
 class ScannedPage {
   final String id;
-  final String originalPath;   // path before any filter
-  String currentPath;          // path after filter applied
-  String activeFilter;         // 'original','magic','bw','gray','lighten','darken'
+  final String originalPath;
+  String currentPath;
+  String activeFilter;
   bool isProcessing;
 
   ScannedPage({
@@ -32,29 +31,31 @@ class ScannedPage {
   }
 }
 
-// ── Scanner Filter Definition ──
 class ScanFilter {
   final String id;
   final String label;
   final IconData icon;
 
-  const ScanFilter({
-    required this.id,
-    required this.label,
-    required this.icon,
-  });
+  const ScanFilter({required this.id, required this.label, required this.icon});
 }
 
 const List<ScanFilter> kScanFilters = [
-  ScanFilter(id: 'original', label: 'Original',    icon: Icons.image_rounded),
-  ScanFilter(id: 'magic',    label: 'Magic Color', icon: Icons.auto_fix_high_rounded),
-  ScanFilter(id: 'bw',       label: 'B & W',       icon: Icons.filter_b_and_w_rounded),
-  ScanFilter(id: 'gray',     label: 'Grayscale',   icon: Icons.gradient_rounded),
-  ScanFilter(id: 'lighten',  label: 'Lighten',     icon: Icons.brightness_high_rounded),
-  ScanFilter(id: 'darken',   label: 'Darken',      icon: Icons.brightness_low_rounded),
+  ScanFilter(id: 'original', label: 'Original', icon: Icons.image_rounded),
+  ScanFilter(
+    id: 'magic',
+    label: 'Magic Color',
+    icon: Icons.auto_fix_high_rounded,
+  ),
+  ScanFilter(id: 'bw', label: 'B & W', icon: Icons.filter_b_and_w_rounded),
+  ScanFilter(id: 'gray', label: 'Grayscale', icon: Icons.gradient_rounded),
+  ScanFilter(
+    id: 'lighten',
+    label: 'Lighten',
+    icon: Icons.brightness_high_rounded,
+  ),
+  ScanFilter(id: 'darken', label: 'Darken', icon: Icons.brightness_low_rounded),
 ];
 
-// ── Scanned Pages Notifier ──
 class ScannedPagesNotifier extends Notifier<List<ScannedPage>> {
   @override
   List<ScannedPage> build() => [];
@@ -83,16 +84,14 @@ class ScannedPagesNotifier extends Notifier<List<ScannedPage>> {
     state = [];
   }
 
-  List<String> get allCurrentPaths =>
-    state.map((p) => p.currentPath).toList();
+  List<String> get allCurrentPaths => state.map((p) => p.currentPath).toList();
 }
 
 final scannedPagesProvider =
-  NotifierProvider<ScannedPagesNotifier, List<ScannedPage>>(
-    ScannedPagesNotifier.new,
-  );
+    NotifierProvider<ScannedPagesNotifier, List<ScannedPage>>(
+      ScannedPagesNotifier.new,
+    );
 
-// ── Legacy compatibility (keep for other files) ──
 class ScanImagesNotifier extends Notifier<List<String>> {
   @override
   List<String> build() => [];
@@ -101,5 +100,6 @@ class ScanImagesNotifier extends Notifier<List<String>> {
   void clear() => state = [];
 }
 
-final scanImagesProvider =
-  NotifierProvider<ScanImagesNotifier, List<String>>(ScanImagesNotifier.new);
+final scanImagesProvider = NotifierProvider<ScanImagesNotifier, List<String>>(
+  ScanImagesNotifier.new,
+);

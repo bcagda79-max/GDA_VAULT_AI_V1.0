@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/features/splash/splash_screen.dart';
 import 'package:gda_vault_ai/features/dashboard/dashboard_screen.dart';
 import 'package:gda_vault_ai/core/utils/responsive_helper.dart';
-import 'package:gda_vault_ai/features/dashboard/desktop_shell.dart';
 import 'package:gda_vault_ai/features/categories/categories_screen.dart';
 import 'package:gda_vault_ai/features/categories/subcategory_screen.dart';
 import 'package:gda_vault_ai/features/categories/year_list_screen.dart';
@@ -21,6 +20,8 @@ import 'package:gda_vault_ai/features/recent_scans/recent_scans_list_screen.dart
 import 'package:gda_vault_ai/features/offline/offline_documents_screen.dart';
 import 'package:gda_vault_ai/features/offline/offline_browser_screen.dart';
 import 'package:gda_vault_ai/models/document_model.dart';
+import 'package:gda_vault_ai/features/login/login_screen.dart';
+import 'package:gda_vault_ai/features/login/signup_screen.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -31,15 +32,19 @@ class AppRouter {
         name: 'splash',
         builder: (context, state) => const SplashScreen(),
       ),
+      GoRoute(
+        path: '/login',
+        name: 'login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/signup',
+        name: 'signup',
+        builder: (context, state) => const SignupScreen(),
+      ),
 
       ShellRoute(
         builder: (context, state, child) {
-          if (ResponsiveHelper.isDesktop(context)) {
-            return DesktopShell(
-              currentRoute: state.matchedLocation,
-              child: child,
-            );
-          }
           return DashboardScreen(child: child);
         },
         routes: [

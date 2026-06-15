@@ -1,11 +1,9 @@
-// lib/features/dashboard/widgets/gda_bottom_nav.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 
 /// GDA Vault AI — Floating Bubble Notch Bottom Navigation
-/// Active item rises above bar inside a white circle.
+/// Active item rises above bar inside a themed circle.
 /// Notch slides smoothly with bezier curves on tab switch.
 class GdaBottomNav extends StatefulWidget {
   final int currentIndex;
@@ -173,6 +171,11 @@ class _GdaBottomNavState extends State<GdaBottomNav>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navBg = isDark ? const Color(0xFF141414) : Colors.white;
+    final borderTop = isDark ? const Color(0xFF272727) : const Color(0xFFE4E7EC);
+    final activeColor = isDark ? const Color(0xFF63B3ED) : const Color(0xFF2C5282);
+
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final effectiveWidth = constraints.maxWidth - _horizontalInset * 2;
@@ -216,8 +219,8 @@ class _GdaBottomNavState extends State<GdaBottomNav>
                         notchX: notchX,
                         notchRadius: _bubbleRadius + 6,
                         barHeight: _barHeight,
-                        barColor: AppColors.navyDark,
-                        borderColor: Colors.white.withValues(alpha: 0.12),
+                        barColor: navBg,
+                        borderColor: borderTop,
                       ),
                     ),
                   ),
@@ -235,7 +238,7 @@ class _GdaBottomNavState extends State<GdaBottomNav>
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.white.withValues(alpha: 0.04),
+                              activeColor.withValues(alpha: 0.04),
                               Colors.transparent,
                             ],
                           ),
@@ -259,7 +262,7 @@ class _GdaBottomNavState extends State<GdaBottomNav>
                       child: Row(
                         children: List.generate(
                           _count,
-                          (i) => _buildSlot(i, notchX),
+                          (i) => _buildSlot(i, notchX, isDark),
                         ),
                       ),
                     ),
@@ -272,7 +275,7 @@ class _GdaBottomNavState extends State<GdaBottomNav>
                       offset: Offset(0, _liftAnim.value),
                       child: Transform.scale(
                         scale: _popAnim.value,
-                        child: _buildBubble(glow),
+                        child: _buildBubble(glow, isDark, activeColor),
                       ),
                     ),
                   ),
@@ -285,88 +288,144 @@ class _GdaBottomNavState extends State<GdaBottomNav>
     );
   }
 
-  Widget _buildSlot(int index, double notchX) {
+  Widget _buildSlot(int index, double notchX, bool isDark) {
     final isActive = index == widget.currentIndex;
     final tab = _tabs[index];
+    
+    final activeColor = isDark ? const Color(0xFF63B3ED) : const Color(0xFF2C5282);
+    final inactiveColor = isDark ? const Color(0xFF8899B0) : const Color(0xFF64748B);
 
     return Expanded(
-      child: GestureDetector(
+      child: _HoverTabItem(
+        isActive: isActive,
+        tab: tab,
+        activeColor: activeColor,
+        inactiveColor: inactiveColor,
+        tapScale: _tapScales[index],
         onTap: () => _handleTap(index),
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (isActive) ...[
-              SizedBox(height: _bubbleLift + _bubbleRadius * 0.4),
-              const SizedBox(height: 2),
-              Text(
-                tab.label.toUpperCase(),
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 8.5,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.gold,
-                  letterSpacing: 0.6,
-                ),
-              ),
-            ] else ...[
-              Transform.scale(
-                scale: _tapScales[index].value,
-                child: Icon(
-                  tab.icon,
-                  size: 24,
-                  color: Colors.white.withValues(alpha: 0.6),
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                tab.label,
-                style: AppTextStyles.dmSans.copyWith(
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withValues(alpha: 0.5),
-                  letterSpacing: 0.1,
-                ),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }
 
-  Widget _buildBubble(double glow) {
+  Widget _buildBubble(double glow, bool isDark, Color activeColor) {
     final tab = _tabs[widget.currentIndex];
+    
+    final gradientColors = isDark 
+        ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+        : [const Color(0xFF2C5282), const Color(0xFF1A365D)];
+
+    final iconColor = isDark ? activeColor : Colors.white;
 
     return Container(
       width: _bubbleRadius * 2,
       height: _bubbleRadius * 2,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.navyMid, AppColors.navyDark],
+          colors: gradientColors,
         ),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
+          color: activeColor.withValues(alpha: 0.3),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: AppColors.gold.withValues(alpha: 0.1 + glow * 0.1),
-            blurRadius: 8 + glow * 4,
-            spreadRadius: glow * 1,
+            color: activeColor.withValues(alpha: 0.1 + glow * 0.15),
+            blurRadius: 6 + glow * 4,
+            spreadRadius: glow * 1.5,
           ),
         ],
       ),
       child: Transform.rotate(
         angle: _rotateAnim.value,
-        child: Icon(tab.icon, size: 26, color: AppColors.gold),
+        child: Icon(tab.icon, size: 24, color: iconColor),
+      ),
+    );
+  }
+}
+
+class _HoverTabItem extends StatefulWidget {
+  final bool isActive;
+  final _TabItem tab;
+  final Color activeColor;
+  final Color inactiveColor;
+  final Animation<double> tapScale;
+  final VoidCallback onTap;
+
+  const _HoverTabItem({
+    required this.isActive,
+    required this.tab,
+    required this.activeColor,
+    required this.inactiveColor,
+    required this.tapScale,
+    required this.onTap,
+  });
+
+  @override
+  State<_HoverTabItem> createState() => _HoverTabItemState();
+}
+
+class _HoverTabItemState extends State<_HoverTabItem> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final hoverColor = widget.activeColor.withValues(alpha: 0.8);
+    final color = widget.isActive
+        ? widget.activeColor
+        : (_isHovered ? hoverColor : widget.inactiveColor);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (widget.isActive) ...[
+              const SizedBox(height: 38), // Space for the bubble
+              const SizedBox(height: 2),
+              Text(
+                widget.tab.label.toUpperCase(),
+                style: AppTextStyles.labelSm.copyWith(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ] else ...[
+              Transform.scale(
+                scale: _isHovered ? 1.05 : widget.tapScale.value,
+                child: Icon(
+                  widget.tab.icon,
+                  size: 24,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                widget.tab.label,
+                style: AppTextStyles.labelSm.copyWith(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: color,
+                  letterSpacing: 0.1,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -391,7 +450,7 @@ class _NotchedBarPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final path = _path(size);
 
-    canvas.drawShadow(path, Colors.black.withValues(alpha: 0.20), 10, false);
+    canvas.drawShadow(path, Colors.black.withValues(alpha: 0.05), 8, false);
 
     canvas.drawPath(
       path,

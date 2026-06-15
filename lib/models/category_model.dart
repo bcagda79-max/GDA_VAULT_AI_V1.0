@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Represents a document category (Supabase-compatible).
 class CategoryModel {
   final String id;
   final String name;
@@ -53,16 +52,13 @@ class CategoryModel {
   factory CategoryModel.fromMap(Map<String, dynamic> map) {
     Color catColor = const Color(0xFF1A3A6B);
     
-    // Unified Professional Brand Palette (Rich Executive Navy)
-    // We use a single, premium navy for all categories as requested to keep it "Simple & Proper"
+   
     catColor = const Color(0xFF1A3A6B); 
     
-    // Fallback logic (Unlikely to be used now but kept for safety)
+   
     final hex = map['color_hex'] as String?;
     if (hex != null && hex.isNotEmpty && hex != '#000000') {
       try {
-        // If a specific color is explicitly provided in DB, we can still honor it
-        // but by default, we use the unified brand navy above.
       } catch (_) {}
     }
 

@@ -5,12 +5,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 
 const List<String> _suggestedQuestions = [
-  'When was the land trust formed?',
-  'What does Resolution 47 say?',
-  'Show Plot 47-A records',
-  'Latest board resolutions 2024',
-  'Admin orders about staff transfers',
-  'Private property transfers in 2008',
+  'What was discussed in 2006 BOA meeting?',
+  'Show Trust Minutes from 1996',
+  'List all Administration files',
 ];
 
 class SuggestedQuestions extends ConsumerWidget {
@@ -21,88 +18,56 @@ class SuggestedQuestions extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final chatState = ref.watch(chatProvider);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            "Try asking:",
-            style: AppTextStyles.dmSans.copyWith(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.charcoal.withValues(alpha: 0.4),
-              letterSpacing: 0.8,
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _suggestedQuestions.map((question) {
-              return GestureDetector(
-                onTap: () {
-                  final notifier = ref.read(chatProvider.notifier);
-                  notifier.updateInput(question);
-                  if (chatState.categoriesSelected) {
-                    notifier.sendMessage(question);
-                  } else {
-                    // Auto-select all if nothing selected to help the user
-                    notifier.selectAllCategories();
-                    notifier.sendMessage(question);
-                  }
-                },
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 240),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkCard : Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: isDark ? Colors.white.withValues(alpha: 0.15) : AppColors.divider,
-                      width: 0.8,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.navyDark.withValues(alpha: 0.04),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.chat_bubble_outline_rounded,
-                        size: 13,
-                        color: isDark ? Colors.white.withValues(alpha: 0.4) : AppColors.charcoal.withValues(alpha: 0.35),
-                      ),
-                      const SizedBox(width: 7),
-                      Flexible(
-                        child: Text(
-                          question,
-                          style: AppTextStyles.dmSans.copyWith(
-                            fontSize: 12,
-                            color: isDark ? Colors.white.withValues(alpha: 0.8) : AppColors.charcoal.withValues(alpha: 0.65),
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+    final bgSurface = isDark ? AppTokens.darkBgSurface : AppTokens.lightBgSurface;
+    final borderLight = isDark ? AppTokens.darkBorderLight : AppTokens.lightBorderLight;
+    final textSecondary = isDark ? AppTokens.darkTextSecondary : AppTokens.lightTextSecondary;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: _suggestedQuestions.map((question) {
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () {
+                final notifier = ref.read(chatProvider.notifier);
+                notifier.updateInput(question);
+                if (chatState.categoriesSelected) {
+                  notifier.sendMessage(question);
+                } else {
+                  // Auto-select all if nothing selected to help the user
+                  notifier.selectAllCategories();
+                  notifier.sendMessage(question);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: bgSurface,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: borderLight,
+                    width: 1,
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
+                child: Text(
+                  question,
+                  style: AppTextStyles.bodyMd.copyWith(
+                    fontSize: 12,
+                    color: textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }
+

@@ -15,18 +15,19 @@ class SourceCitationCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = citation.categoryColor ?? AppColors.navyDark;
+    final color = citation.categoryColor ?? AppTokens.lightBrandPrimary;
+
+    final bgSurface = isDark ? const Color(0xFF1C1C1C) : AppTokens.lightBgSurface;
+    final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
 
     return Container(
       width: double.infinity, // Force full width
       margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2638) : Colors.white,
+        color: bgSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : AppColors.divider.withValues(alpha: 0.5),
+          color: borderLight,
           width: 1,
         ),
         boxShadow: [
@@ -79,10 +80,10 @@ class SourceCitationCard extends ConsumerWidget {
                       children: [
                         Text(
                           citation.effectiveFileName,
-                          style: AppTextStyles.dmSans.copyWith(
+                          style: AppTextStyles.bodyMd.copyWith(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : AppColors.navyDark,
+                            color: isDark ? Colors.white : AppTokens.lightBrandPrimary,
                             height: 1.3,
                             letterSpacing: 0.1,
                           ),
@@ -110,7 +111,7 @@ class SourceCitationCard extends ConsumerWidget {
                               ),
                               child: Text(
                                 citation.categoryName.toUpperCase(),
-                                style: AppTextStyles.dmSans.copyWith(
+                                style: AppTextStyles.bodyMd.copyWith(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w900,
                                   color: color,
@@ -143,7 +144,7 @@ class SourceCitationCard extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.05)
-                          : AppColors.charcoal.withValues(alpha: 0.05),
+                          : AppTokens.lightBrandPrimary.withValues(alpha: 0.05),
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
@@ -154,7 +155,7 @@ class SourceCitationCard extends ConsumerWidget {
                       size: 20,
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.4)
-                          : AppColors.charcoal.withValues(alpha: 0.4),
+                          : AppTokens.lightBrandPrimary.withValues(alpha: 0.4),
                     ),
                   ),
                 ],
@@ -172,7 +173,7 @@ class SourceCitationCard extends ConsumerWidget {
     required bool isDark,
     bool isGold = false,
   }) {
-    final color = isGold ? AppColors.gold : (isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.charcoal.withValues(alpha: 0.5));
+    final color = isGold ? AppTokens.lightBrandPrimary : (isDark ? Colors.white.withValues(alpha: 0.5) : AppTokens.lightBrandPrimary.withValues(alpha: 0.5));
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -183,7 +184,7 @@ class SourceCitationCard extends ConsumerWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: AppTextStyles.dmSans.copyWith(
+            style: AppTextStyles.bodyMd.copyWith(
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: color,
@@ -251,7 +252,7 @@ class SourceCitationCard extends ConsumerWidget {
             'categoryColor':
                 doc.categoryColor ??
                 citation.categoryColor ??
-                AppColors.navyDark,
+                AppTokens.lightBrandPrimary,
             'categoryName': doc.categoryName ?? citation.categoryName,
             'initialPage': citation.pageNumber,
           },
@@ -276,3 +277,4 @@ class SourceCitationCard extends ConsumerWidget {
     }
   }
 }
+
