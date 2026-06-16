@@ -132,6 +132,14 @@ class ChatState {
   final String? errorMessage;
   final String? yearFrom;
   final String? yearTo;
+  final String? fileName;
+  
+  // Cascading Selection State
+  final String? selectedMainCategoryId;
+  final String? selectedSubCategoryId;
+  final String? selectedDocumentId;
+  final List<Map<String, dynamic>> categoryDocuments;
+
   final String inputText;
   final bool showFilterSheet;
 
@@ -147,15 +155,30 @@ class ChatState {
     this.errorMessage,
     this.yearFrom,
     this.yearTo,
+    this.fileName,
+    this.selectedMainCategoryId,
+    this.selectedSubCategoryId,
+    this.selectedDocumentId,
+    this.categoryDocuments = const [],
     this.inputText = '',
     this.showFilterSheet = false,
   });
 
   bool get canSendMessage =>
-      categoriesSelected && inputText.trim().isNotEmpty && !isLoading;
+      selectedMainCategoryId != null && inputText.trim().isNotEmpty && !isLoading;
 
-  List<ChatCategory> get selectedCategories =>
-      categories.where((c) => c.isSelected).toList();
+  List<ChatCategory> get selectedCategories {
+    final list = <ChatCategory>[];
+    if (selectedMainCategoryId != null) {
+      final mainCat = categories.cast<ChatCategory?>().firstWhere((c) => c?.id == selectedMainCategoryId, orElse: () => null);
+      if (mainCat != null) list.add(mainCat);
+    }
+    if (selectedSubCategoryId != null) {
+      final subCat = categories.cast<ChatCategory?>().firstWhere((c) => c?.id == selectedSubCategoryId, orElse: () => null);
+      if (subCat != null) list.add(subCat);
+    }
+    return list;
+  }
 
   ChatState copyWith({
     String? sessionId,
@@ -171,6 +194,15 @@ class ChatState {
     bool clearYearFrom = false,
     String? yearTo,
     bool clearYearTo = false,
+    String? fileName,
+    bool clearFileName = false,
+    String? selectedMainCategoryId,
+    bool clearMainCategory = false,
+    String? selectedSubCategoryId,
+    bool clearSubCategory = false,
+    String? selectedDocumentId,
+    bool clearDocument = false,
+    List<Map<String, dynamic>>? categoryDocuments,
     String? inputText,
     bool? showFilterSheet,
   }) {
@@ -186,6 +218,11 @@ class ChatState {
       errorMessage: errorMessage,
       yearFrom: clearYearFrom ? null : (yearFrom ?? this.yearFrom),
       yearTo: clearYearTo ? null : (yearTo ?? this.yearTo),
+      fileName: clearFileName ? null : (fileName ?? this.fileName),
+      selectedMainCategoryId: clearMainCategory ? null : (selectedMainCategoryId ?? this.selectedMainCategoryId),
+      selectedSubCategoryId: clearSubCategory ? null : (selectedSubCategoryId ?? this.selectedSubCategoryId),
+      selectedDocumentId: clearDocument ? null : (selectedDocumentId ?? this.selectedDocumentId),
+      categoryDocuments: categoryDocuments ?? this.categoryDocuments,
       inputText: inputText ?? this.inputText,
       showFilterSheet: showFilterSheet ?? this.showFilterSheet,
     );

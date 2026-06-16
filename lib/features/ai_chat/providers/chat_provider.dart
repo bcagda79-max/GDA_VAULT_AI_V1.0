@@ -25,7 +25,7 @@ class ChatNotifier extends Notifier<ChatState> {
     return ChatState(
       sessionId: _uuid.v4(),
       messages: const [],
-      categories: _buildInitialCategories(),
+      categories: const [],
       isLoading: false,
       categoriesSelected: false,
     );
@@ -36,124 +36,21 @@ class ChatNotifier extends Notifier<ChatState> {
     state = state.copyWith(recentSessions: sessions);
   }
 
-  List<ChatCategory> _buildInitialCategories() {
-    return [
-      ChatCategory(
-        id: SupabaseConstants.idBoardOfAuthority,
-        name: 'Board of Authority',
-        shortName: 'BOARD',
-        color: AppTokens.lightBrandPrimary,
-        icon: Icons.gavel_rounded,
-        isSelected: false,
-        docCount: 0,
-      ),
-      ChatCategory(
-        id: SupabaseConstants.idBoardAuthorityMinutes,
-        name: 'Board Authority Minutes',
-        shortName: 'MINUTES',
-        color: AppTokens.lightBrandPrimary,
-        icon: Icons.history_edu_rounded,
-        parentId: SupabaseConstants.idBoardOfAuthority,
-        isSelected: false,
-        docCount: 0,
-      ),
-      ChatCategory(
-        id: SupabaseConstants.idTrustMinutes,
-        name: 'Trust Minutes Archive',
-        shortName: 'TRUST',
-        color: AppTokens.lightBrandPrimary,
-        icon: Icons.handshake_rounded,
-        parentId: SupabaseConstants.idBoardOfAuthority,
-        isSelected: false,
-        docCount: 0,
-      ),
-      ChatCategory(
-        id: SupabaseConstants.idTownPlots,
-        name: 'Town (Plot) Files',
-        shortName: 'TOWNS',
-        color: AppTokens.lightBrandPrimary,
-        icon: Icons.location_city_rounded,
-        isSelected: false,
-        docCount: 0,
-      ),
-      ChatCategory(
-        id: SupabaseConstants.idAdministration,
-        name: 'Administration',
-        shortName: 'ADMIN',
-        color: AppTokens.lightStatusWarn,
-        icon: Icons.admin_panel_settings_rounded,
-        isSelected: false,
-        docCount: 0,
-      ),
-      ChatCategory(
-        id: SupabaseConstants.idPrivateProperties,
-        name: 'Private Properties',
-        shortName: 'PRIVATE',
-        color: AppTokens.lightStatusError,
-        icon: Icons.home_work_rounded,
-        isSelected: false,
-        docCount: 0,
-      ),
-    ];
-  }
-
   Future<void> syncCategories() async {
     try {
       final rows = await ApiService.instance.getAllCategories();
       if (rows.isEmpty) return;
 
-      final updatedCategories = state.categories.map((cat) {
-        final dbRow = rows.firstWhere(
-          (row) => row['id'].toString() == cat.id,
-          orElse: () => <String, dynamic>{},
-        );
-
-        int aggregatedChildren = 0;
-        for (final row in rows) {
-          if (row['parent_id']?.toString() == cat.id) {
-            aggregatedChildren += (row['document_count'] as num?)?.toInt() ?? 0;
-          }
-        }
-
-        if (cat.id == SupabaseConstants.idBoardOfAuthority &&
-            aggregatedChildren > 0) {
-          return ChatCategory(
-            id: cat.id,
-            name: cat.name,
-            shortName: cat.shortName,
-            color: cat.color,
-            icon: cat.icon,
-            parentId: cat.parentId,
-            docCount: aggregatedChildren,
-            isSelected: cat.isSelected,
-          );
-        }
-
-        if (dbRow.isEmpty) {
-          if (aggregatedChildren > 0) {
-            return ChatCategory(
-              id: cat.id,
-              name: cat.name,
-              shortName: cat.shortName,
-              color: cat.color,
-              icon: cat.icon,
-              parentId: cat.parentId,
-              docCount: aggregatedChildren,
-              isSelected: cat.isSelected,
-            );
-          }
-          return cat;
-        }
-
+      final updatedCategories = rows.map((row) {
         return ChatCategory(
-          id: cat.id,
-          name: cat.name,
-          shortName: cat.shortName,
-          color: cat.color,
-          icon: cat.icon,
-          parentId: cat.parentId,
-          docCount: (dbRow['document_count'] as num?)?.toInt() ?? 0,
-          isSelected: cat.isSelected,
+          id: row['id'].toString(),
+          name: row['name']?.toString() ?? 'Unknown',
+          shortName: row['slug']?.toString() ?? 'UNK',
+          color: _parseColor(row['hex_color']),
+          icon: _parseIcon(row['icon']),
+          parentId: row['parent_id']?.toString(),
+          docCount: (row['document_count'] as num?)?.toInt() ?? 0,
+          isSelected: false,
         );
       }).toList();
 
@@ -172,46 +69,108 @@ class ChatNotifier extends Notifier<ChatState> {
     }
   }
 
-  void _applyDefaultCategories(List<String> ids) {
-    final limited = ids.take(2).toSet();
-    final updatedCategories = state.categories.map((cat) {
-      return ChatCategory(
-        id: cat.id,
-        name: cat.name,
-        shortName: cat.shortName,
-        color: cat.color,
-        icon: cat.icon,
-        parentId: cat.parentId,
-        docCount: cat.docCount,
-        isSelected: limited.contains(cat.id),
-      );
-    }).toList();
+  Color _parseColor(dynamic hexStr) {
+    if (hexStr == null) return AppTokens.lightBrandPrimary;
+    final str = hexStr.toString().replaceAll('#', '');
+    if (str.length == 6) return Color(int.parse('0xFF$str'));
+    if (str.length == 8) return Color(int.parse('0x$str'));
+    return AppTokens.lightBrandPrimary;
+  }
 
-    state = state.copyWith(
-      categories: updatedCategories,
-      categoriesSelected: updatedCategories.any((c) => c.isSelected),
-    );
+  IconData _parseIcon(dynamic iconStr) {
+    final str = iconStr?.toString().toLowerCase() ?? '';
+    if (str.contains('admin')) return Icons.admin_panel_settings_rounded;
+    if (str.contains('book')) return Icons.menu_book_rounded;
+    if (str.contains('gavel')) return Icons.gavel_rounded;
+    if (str.contains('location') || str.contains('plot')) return Icons.location_city_rounded;
+    if (str.contains('file') || str.contains('doc')) return Icons.insert_drive_file_rounded;
+    return Icons.folder_rounded;
+  }
+
+  void _applyDefaultCategories(List<String> ids) {
+    // We don't need this anymore with cascading dropdowns, keep minimal
   }
 
   void _applySelectedCategories(List<String> ids) {
-    final selectedIds = ids.take(2).toSet();
-    final updatedCategories = state.categories.map((cat) {
-      return ChatCategory(
-        id: cat.id,
-        name: cat.name,
-        shortName: cat.shortName,
-        color: cat.color,
-        icon: cat.icon,
-        parentId: cat.parentId,
-        docCount: cat.docCount,
-        isSelected: selectedIds.contains(cat.id),
-      );
-    }).toList();
+    // Keep minimal
+  }
 
+  void selectMainCategory(String? categoryId) {
     state = state.copyWith(
-      categories: updatedCategories,
-      categoriesSelected: updatedCategories.any((c) => c.isSelected),
+      selectedMainCategoryId: categoryId,
+      clearMainCategory: categoryId == null,
+      selectedSubCategoryId: null,
+      clearSubCategory: true,
+      selectedDocumentId: null,
+      clearDocument: true,
+      categoryDocuments: const [],
+      fileName: null,
+      clearFileName: true,
+      yearFrom: null,
+      clearYearFrom: true,
+      yearTo: null,
+      clearYearTo: true,
     );
+
+    // If no subcategories exist for this main category, fetch docs directly
+    if (categoryId != null) {
+      final subCategories = state.categories.where((c) => c.parentId == categoryId).toList();
+      if (subCategories.isEmpty) {
+        _fetchDocumentsForSelection(categoryId, null);
+      }
+    }
+  }
+
+  void selectSubCategory(String? subCategoryId) {
+    state = state.copyWith(
+      selectedSubCategoryId: subCategoryId,
+      clearSubCategory: subCategoryId == null,
+      selectedDocumentId: null,
+      clearDocument: true,
+      categoryDocuments: const [],
+      fileName: null,
+      clearFileName: true,
+      yearFrom: null,
+      clearYearFrom: true,
+      yearTo: null,
+      clearYearTo: true,
+    );
+    
+    if (subCategoryId != null && state.selectedMainCategoryId != null) {
+      _fetchDocumentsForSelection(state.selectedMainCategoryId!, subCategoryId);
+    } else if (subCategoryId == null && state.selectedMainCategoryId != null) {
+      // Re-fetch parent docs if cleared
+      final subCategories = state.categories.where((c) => c.parentId == state.selectedMainCategoryId).toList();
+      if (subCategories.isEmpty) {
+        _fetchDocumentsForSelection(state.selectedMainCategoryId!, null);
+      }
+    }
+  }
+
+  void selectDocument(String? documentId) {
+    state = state.copyWith(
+      selectedDocumentId: documentId,
+      clearDocument: documentId == null,
+    );
+    // When a document is specifically selected, also update the fileName for the AI backend filter
+    if (documentId != null) {
+      final doc = state.categoryDocuments.firstWhere((d) => d['id'].toString() == documentId, orElse: () => {});
+      if (doc.isNotEmpty && doc['file_name'] != null) {
+        updateFileName(doc['file_name'].toString());
+      }
+    } else {
+      updateFileName(null);
+    }
+  }
+
+  Future<void> _fetchDocumentsForSelection(String categoryId, String? subCategoryId) async {
+    try {
+      final docs = await ApiService.instance.getDocumentsByCategory(categoryId, subCategoryId: subCategoryId);
+      state = state.copyWith(categoryDocuments: docs);
+    } catch (e) {
+      debugPrint("Error fetching documents for selection: $e");
+      state = state.copyWith(categoryDocuments: const []);
+    }
   }
 
   Future<void> updateDefaultCategoryIds(List<String> ids) async {
@@ -325,6 +284,16 @@ class ChatNotifier extends Notifier<ChatState> {
       clearYearFrom: from == null,
       yearTo: to,
       clearYearTo: to == null,
+      clearFileName: true, // Mutually exclusive with fileName
+    );
+  }
+
+  void updateFileName(String? name) {
+    state = state.copyWith(
+      fileName: name?.isEmpty == true ? null : name,
+      clearFileName: name == null || name.isEmpty,
+      clearYearFrom: true, // Mutually exclusive with year
+      clearYearTo: true,
     );
   }
 
@@ -337,6 +306,7 @@ class ChatNotifier extends Notifier<ChatState> {
       inputText: '',
       clearYearFrom: true,
       clearYearTo: true,
+      clearFileName: true,
     );
 
     if (state.defaultCategoryIds.isNotEmpty) {
@@ -432,6 +402,7 @@ class ChatNotifier extends Notifier<ChatState> {
         sessionTitle: title,
         yearFrom: effectiveYearFrom,
         yearTo: effectiveYearTo,
+        fileName: state.fileName,
       );
     }
 
@@ -461,8 +432,9 @@ class ChatNotifier extends Notifier<ChatState> {
         sessionId: state.sessionId,
         categoryId: mainId,
         subCategoryId: subId,
-        yearFrom: effectiveYearFrom,
-        yearTo: effectiveYearTo,
+        yearFrom: state.fileName == null ? effectiveYearFrom : null,
+        yearTo: state.fileName == null ? effectiveYearTo : null,
+        fileName: state.fileName,
       );
 
       final answer = response['answer']?.toString() ?? 'No response from AI.';

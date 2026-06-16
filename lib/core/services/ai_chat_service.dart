@@ -13,6 +13,7 @@ class AiChatService {
     String? subCategoryId,
     String? yearFrom,
     String? yearTo,
+    String? fileName,
   }) async {
     final payload = {
       'message': message,
@@ -21,6 +22,7 @@ class AiChatService {
       'sub_category_id': subCategoryId,
       'year_from': yearFrom,
       'year_to': yearTo,
+      'file_name': fileName,
     }..removeWhere((key, value) => value == null);
 
     try {

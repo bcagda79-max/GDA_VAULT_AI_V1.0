@@ -123,328 +123,250 @@ class CategorySelectorSheet extends ConsumerWidget {
             ),
           ),
 
-          // Year Range Selector - Enhanced professional styling
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white : Colors.black.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.white : Colors.black.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.calendar_month_rounded,
-                          size: 13,
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        "Select Year",
-                        style: AppTextStyles.bodyMd.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : Colors.black,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildYearDropdown(
-                        context,
-                        ref,
-                        label: "From Year",
-                        value: chatState.yearFrom,
-                        onChanged: (val) => ref
-                            .read(chatProvider.notifier)
-                            .updateYearRange(val, chatState.yearTo),
-                        isDark: isDark,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: _buildYearDropdown(
-                        context,
-                        ref,
-                        label: "To Year",
-                        value: chatState.yearTo,
-                        onChanged: (val) => ref
-                            .read(chatProvider.notifier)
-                            .updateYearRange(chatState.yearFrom, val),
-                        isDark: isDark,
-                      ),
-                    ),
-                  ],
-                ),
-                if (chatState.yearFrom != null || chatState.yearTo != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12.0),
-                    child: GestureDetector(
-                      onTap: () => ref
-                          .read(chatProvider.notifier)
-                          .updateYearRange(null, null),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.white : Colors.black.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isDark ? Colors.white : Colors.black.withValues(alpha: 0.25),
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.close_rounded,
-                              size: 13,
-                              color: isDark ? Colors.white : Colors.black.withValues(alpha: 0.8),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              "Clear Year Filter",
-                              style: AppTextStyles.bodyMd.copyWith(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white : Colors.black.withValues(
-                                  alpha: 0.9,
-                                ),
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          Container(
-            height: 1.2,
-            margin: EdgeInsets.zero,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTokens.lightBorderLight.withValues(alpha: 0),
-                  AppTokens.lightBorderLight.withValues(alpha: 0.8),
-                  AppTokens.lightBorderLight.withValues(alpha: 0),
-                ],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-            ),
-          ),
-          // Category Selection Status
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: bgPage,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: borderLight,
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Text(
-                    "$selectedCount of 5 selected",
-                    style: AppTextStyles.bodyMd.copyWith(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : AppTokens.lightTextPrimary,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () =>
-                      ref.read(chatProvider.notifier).clearAllCategories(),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: borderLight,
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Text(
-                      "Clear All",
-                      style: AppTextStyles.bodyMd.copyWith(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: textSecondary,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Category List (scrollable to avoid overflow on small screens)
+          // Cascading Filters (Main Category -> Subcategory -> File)
           Flexible(
             child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      children: chatState.categories
-                          .where((c) => c.parentId == null)
-                          .map((cat) {
-                            final children = chatState.categories
-                                .where((c) => c.parentId == cat.id)
-                                .toList();
-                            return Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 10.0),
-                                  child: _buildCategoryRow(
-                                    context,
-                                    ref,
-                                    cat,
-                                    isDark,
-                                  ),
-                                ),
-                                if (cat.isSelected && children.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 16,
-                                      bottom: 10,
-                                    ),
-                                    child: Column(
-                                      children: children.map((sub) {
-                                        return Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 8.0,
-                                          ),
-                                          child: _buildCategoryRow(
-                                            context,
-                                            ref,
-                                            sub,
-                                            isDark,
-                                            isSub: true,
-                                          ),
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ),
-                              ],
-                            );
-                          })
-                          .toList(),
+                  // 1. MAIN CATEGORY
+                  Text(
+                    "Main Category",
+                    style: AppTextStyles.bodyMd.copyWith(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white.withValues(alpha: 0.6) : AppTokens.lightTextSecondary,
+                      letterSpacing: 0.3,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Search Scope Summary
-                  if (selectedCount > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        left: 20,
-                        right: 20,
-                        bottom: 28,
+                  const SizedBox(height: 8),
+                  _buildDropdown<String?>(
+                    context: context,
+                    isDark: isDark,
+                    value: chatState.selectedMainCategoryId,
+                    hint: "Select Category",
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text("All Categories")),
+                      ...chatState.categories.where((c) => c.parentId == null).map((cat) {
+                        return DropdownMenuItem(
+                          value: cat.id,
+                          child: Text(cat.name),
+                        );
+                      }),
+                    ],
+                    onChanged: (val) {
+                      ref.read(chatProvider.notifier).selectMainCategory(val);
+                    },
+                  ),
+
+                  // 2. SUBCATEGORY (Only show if Main Category has subcategories)
+                  if (chatState.selectedMainCategoryId != null &&
+                      chatState.categories.any((c) => c.parentId == chatState.selectedMainCategoryId)) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      "Subcategory",
+                      style: AppTextStyles.bodyMd.copyWith(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white.withValues(alpha: 0.6) : AppTokens.lightTextSecondary,
+                        letterSpacing: 0.3,
                       ),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: bgPage,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: borderLight,
-                            width: 1.1,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildDropdown<String?>(
+                      context: context,
+                      isDark: isDark,
+                      value: chatState.selectedSubCategoryId,
+                      hint: "Select Subcategory",
+                      items: [
+                        const DropdownMenuItem(value: null, child: Text("All Subcategories")),
+                        ...chatState.categories.where((c) => c.parentId == chatState.selectedMainCategoryId).map((cat) {
+                          return DropdownMenuItem(
+                            value: cat.id,
+                            child: Text(cat.name),
+                          );
+                        }),
+                      ],
+                      onChanged: (val) {
+                        ref.read(chatProvider.notifier).selectSubCategory(val);
+                      },
+                    ),
+                  ],
+
+                  // Divider for specific document vs year filtering
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Row(
+                      children: [
+                        Expanded(child: Divider(color: borderLight)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            "FILTER BY (Optional)",
+                            style: AppTextStyles.bodyMd.copyWith(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: textSecondary,
+                              letterSpacing: 0.5,
+                            ),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
                         ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF141414) : const Color(0xFFF0F0F0),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                Icons.check_circle_rounded,
-                                size: 16,
-                                color: isDark ? Colors.white : Colors.black,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Search Scope",
-                                    style: AppTextStyles.bodyMd.copyWith(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark ? Colors.white : AppTokens.lightTextPrimary,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "$selectedCount ${selectedCount == 1 ? 'category' : 'categories'}: $selectedCatNames",
-                                    style: AppTextStyles.bodyMd.copyWith(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: textSecondary,
-                                      height: 1.3,
-                                    ),
-                                    maxLines: 3,
-                                  ),
-                                ],
-                              ),
-                            ),
+                        Expanded(child: Divider(color: borderLight)),
+                      ],
+                    ),
+                  ),
+
+                  // 3. FILE SELECTION
+                  Opacity(
+                    opacity: (chatState.yearFrom != null || chatState.yearTo != null) ? 0.4 : 1.0,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Specific File",
+                          style: AppTextStyles.bodyMd.copyWith(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white.withValues(alpha: 0.6) : AppTokens.lightTextSecondary,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildDropdown<String?>(
+                          context: context,
+                          isDark: isDark,
+                          value: chatState.selectedDocumentId,
+                          hint: chatState.selectedMainCategoryId == null 
+                            ? "Select a category first" 
+                            : "Select File",
+                          items: [
+                            const DropdownMenuItem(value: null, child: Text("Any File")),
+                            ...chatState.categoryDocuments.map((doc) {
+                              return DropdownMenuItem(
+                                value: doc['id'].toString(),
+                                child: Text(doc['file_name']?.toString() ?? 'Unnamed File'),
+                              );
+                            }),
                           ],
+                          onChanged: (chatState.yearFrom == null && chatState.yearTo == null && chatState.selectedMainCategoryId != null)
+                              ? (val) => ref.read(chatProvider.notifier).selectDocument(val)
+                              : null,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // OR divider
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Row(
+                      children: [
+                        Expanded(child: Divider(color: borderLight)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            "OR",
+                            style: AppTextStyles.bodyMd.copyWith(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: textSecondary,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: borderLight)),
+                      ],
+                    ),
+                  ),
+
+                  // 4. YEAR FILTER
+                  Opacity(
+                    opacity: chatState.selectedDocumentId != null ? 0.4 : 1.0,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildYearDropdown(
+                            context,
+                            ref,
+                            label: "From Year",
+                            value: chatState.yearFrom,
+                            onChanged: (val) {
+                              if (chatState.selectedDocumentId != null) return;
+                              ref
+                                  .read(chatProvider.notifier)
+                                  .updateYearRange(val, chatState.yearTo);
+                            },
+                            isDark: isDark,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: _buildYearDropdown(
+                            context,
+                            ref,
+                            label: "To Year",
+                            value: chatState.yearTo,
+                            onChanged: (val) {
+                              if (chatState.selectedDocumentId != null) return;
+                              ref
+                                  .read(chatProvider.notifier)
+                                  .updateYearRange(chatState.yearFrom, val);
+                            },
+                            isDark: isDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  
+                  // Clear Filters Button
+                  if (chatState.selectedMainCategoryId != null || chatState.yearFrom != null || chatState.yearTo != null)
+                    Center(
+                      child: GestureDetector(
+                        onTap: () {
+                          ref.read(chatProvider.notifier).selectMainCategory(null);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white : Colors.black.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isDark ? Colors.white : Colors.black.withValues(alpha: 0.25),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.close_rounded,
+                                size: 14,
+                                color: isDark ? Colors.white : Colors.black.withValues(alpha: 0.8),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                "Clear All Filters",
+                                style: AppTextStyles.bodyMd.copyWith(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : Colors.black.withValues(
+                                    alpha: 0.9,
+                                  ),
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
+                  
                   SizedBox(height: MediaQuery.of(context).padding.bottom + 12),
                 ],
               ),
@@ -455,144 +377,67 @@ class CategorySelectorSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildCategoryRow(
-    BuildContext context,
-    WidgetRef ref,
-    ChatCategory cat,
-    bool isDark, {
-    bool isSub = false,
+  Widget _buildDropdown<T>({
+    required BuildContext context,
+    required bool isDark,
+    required T value,
+    required String hint,
+    required List<DropdownMenuItem<T>> items,
+    required Function(T?)? onChanged,
   }) {
-    // Calculate combined doc count for Board of Authority parent
-    int displayDocCount = cat.docCount;
-    if (cat.name.contains("Board of Authority") && cat.parentId == null) {
-      final children = ref
-          .watch(chatProvider)
-          .categories
-          .where((c) => c.parentId == cat.id)
-          .toList();
-      displayDocCount = children.fold(0, (sum, c) => sum + c.docCount);
-    }
-
-    final bgSurface = isDark ? const Color(0xFF141414) : AppTokens.lightBgSurface;
-    final borderLight = isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight;
-
-    return GestureDetector(
-      onTap: () => ref.read(chatProvider.notifier).toggleCategory(cat.id),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(
-          horizontal: isSub ? 12 : 14,
-          vertical: isSub ? 11 : 14,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark ? const Color(0xFF272727) : AppTokens.lightBorderLight,
+          width: 0.9,
         ),
-        decoration: BoxDecoration(
-          color: cat.isSelected
-              ? cat.color.withValues(alpha: isDark ? 0.12 : 0.08)
-              : bgSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: cat.isSelected
-                ? cat.color.withValues(alpha: isDark ? 0.45 : 0.3)
-                : borderLight,
-            width: cat.isSelected ? 1.3 : 0.9,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: isDark ? 0.2 : 0.02,
+            ),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
           ),
-          boxShadow: cat.isSelected
-              ? [
-                  BoxShadow(
-                    color: cat.color.withValues(alpha: 0.12),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [
-                  if (isDark)
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                ],
-        ),
-        child: Row(
-          children: [
-            // Category icon - enhanced styling
-            Container(
-              width: isSub ? 32 : 40,
-              height: isSub ? 32 : 40,
-              decoration: BoxDecoration(
-                color: cat.color.withValues(
-                  alpha: cat.isSelected ? (isDark ? 0.25 : 0.15) : 0.07,
-                ),
-                borderRadius: BorderRadius.circular(isSub ? 8 : 10),
-              ),
-              child: Center(
-                child: Icon(
-                  cat.icon,
-                  size: isSub ? 16 : 20,
-                  color: cat.color.withValues(
-                    alpha: cat.isSelected ? 1.0 : 0.7,
-                  ),
-                ),
-              ),
+        ],
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          hint: Text(
+            hint,
+            style: AppTextStyles.bodyMd.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: isDark
+                  ? AppTokens.darkTextSecondary
+                  : AppTokens.lightTextSecondary,
+              letterSpacing: 0.2,
             ),
-            const SizedBox(width: 12),
-            // Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    cat.name,
-                    style: AppTextStyles.bodyMd.copyWith(
-                      fontSize: isSub ? 13 : 14,
-                      fontWeight: cat.isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      color: cat.isSelected
-                          ? (isDark ? Colors.white : AppTokens.lightTextPrimary)
-                          : (isDark
-                                ? const Color(0xFF8A8A8A)
-                                : AppTokens.lightTextSecondary),
-                      letterSpacing: cat.isSelected ? 0.1 : 0,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    "${_formatCount(displayDocCount)} docs",
-                    style: AppTextStyles.bodyMd.copyWith(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: isDark
-                          ? const Color(0xFF555555)
-                          : AppTokens.lightTextTertiary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Checkbox - refined styling
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: cat.isSelected ? cat.color : Colors.transparent,
-                border: Border.all(
-                  color: cat.isSelected ? cat.color : AppTokens.lightBorderLight,
-                  width: cat.isSelected ? 2 : 1.5,
-                ),
-              ),
-              child: cat.isSelected
-                  ? const Center(
-                      child: Icon(
-                        Icons.check_rounded,
-                        size: 13,
-                        color: Colors.white,
-                      ),
-                    )
-                  : null,
-            ),
-          ],
+          ),
+          isExpanded: true,
+          icon: Icon(
+            Icons.expand_more_rounded,
+            size: 18,
+            color: isDark
+                ? AppTokens.darkTextSecondary
+                : AppTokens.lightTextSecondary,
+          ),
+          style: AppTextStyles.bodyMd.copyWith(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isDark
+                ? Colors.white
+                : AppTokens.lightTextPrimary,
+            letterSpacing: 0.2,
+          ),
+          dropdownColor: isDark ? const Color(0xFF1C1C1C) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          items: items,
+          onChanged: onChanged,
         ),
       ),
     );

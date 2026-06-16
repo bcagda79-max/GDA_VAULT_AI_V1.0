@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../models/chat_state.dart';
 import '../providers/chat_provider.dart';
+import 'category_selector_sheet.dart';
 
 class AiChatDrawer extends ConsumerWidget {
   const AiChatDrawer({super.key});
@@ -74,37 +75,71 @@ class AiChatDrawer extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          InkWell(
-            onTap: () {
-              // Existing search callback or open search
-            },
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: searchBg,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: searchBorder),
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    // Existing search callback or open search
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: searchBg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: searchBorder),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.search,
+                          size: 16,
+                          color: isDark ? const Color(0xFF555555) : textSecondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Search',
+                          style: AppTextStyles.bodyMd.copyWith(
+                            fontSize: 13,
+                            color: isDark ? const Color(0xFF555555) : textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.search,
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () {
+                  // Close drawer and open filter sheet
+                  Navigator.pop(context);
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (ctx) => const CategorySelectorSheet(),
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  height: 36,
+                  width: 36,
+                  decoration: BoxDecoration(
+                    color: searchBg,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: searchBorder),
+                  ),
+                  child: Icon(
+                    Icons.tune_rounded,
                     size: 16,
                     color: isDark ? const Color(0xFF555555) : textSecondary,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Search',
-                    style: AppTextStyles.bodyMd.copyWith(
-                      fontSize: 13,
-                      color: isDark ? const Color(0xFF555555) : textSecondary,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),
