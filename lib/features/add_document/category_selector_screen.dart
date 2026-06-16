@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/core/constants/app_colors.dart';
 import 'package:gda_vault_ai/core/constants/app_text_styles.dart';
 import 'package:gda_vault_ai/core/services/document_upload_service.dart';
 import 'package:gda_vault_ai/core/services/api_service.dart';
+import 'package:gda_vault_ai/core/utils/file_transfer.dart';
 import 'package:gda_vault_ai/models/category_model.dart';
 
 class CategorySelectorScreen extends StatefulWidget {
@@ -15,6 +17,7 @@ class CategorySelectorScreen extends StatefulWidget {
   final int? fileSize;
   final List<String> imagePaths;
   final String? filePath;
+  final Uint8List? fileBytes;
 
   const CategorySelectorScreen({
     super.key,
@@ -24,6 +27,7 @@ class CategorySelectorScreen extends StatefulWidget {
     this.fileSize,
     this.imagePaths = const [],
     this.filePath,
+    this.fileBytes,
   });
 
   @override
@@ -177,11 +181,10 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           },
         );
       } else {
-        final filePath = widget.filePath;
-        if (filePath == null || filePath.isEmpty) {
+        if (!kIsWeb && (widget.filePath == null || widget.filePath!.isEmpty)) {
           throw StateError('Missing file path for imported PDF');
         }
-        final pdfFile = File(filePath);
+        final pdfFile = kIsWeb ? File('') : File(widget.filePath!);
         result = await DocumentUploadService.instance.uploadPdfFile(
           pdfFile: pdfFile,
           category: mainCategoryId,
@@ -190,6 +193,8 @@ class _CategorySelectorScreenState extends State<CategorySelectorScreen> {
           year: yearStart,
           fileName: docName,
           pageCount: widget.pageCount,
+          fileSizeBytes: widget.fileSize,
+          fileBytes: widget.fileBytes ?? FileTransfer.currentFileBytes,
           onProgress: (phase, progress, {bytesSent, totalBytes}) {
             if (!mounted) return;
             setState(() {
@@ -1561,9 +1566,10 @@ class _SuccessBottomSheet extends StatelessWidget {
         color: bgSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           Container(
             width: 72,
             height: 72,
@@ -1622,6 +1628,7 @@ class _SuccessBottomSheet extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

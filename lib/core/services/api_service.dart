@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:gda_vault_ai/core/services/api_client.dart';
 import 'package:gda_vault_ai/core/constants/supabase_constants.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:dio/dio.dart' as dio;
 
 class ApiService {
   ApiService._();
@@ -226,7 +227,23 @@ class ApiService {
     required String storagePath,
     void Function(int sent, int total)? onProgress,
   }) async {
-    return storagePath;
+    try {
+      final formData = dio.FormData.fromMap({
+        'storage_path': storagePath,
+        'file': await dio.MultipartFile.fromFile(file.path, filename: storagePath.split('/').last),
+      });
+      final response = await _apiClient.dio.post(
+        '/upload',
+        data: formData,
+        onSendProgress: onProgress,
+      );
+      if (response.statusCode == 200) {
+        return storagePath;
+      }
+    } catch (e) {
+      debugPrint('uploadPdf error: $e');
+    }
+    return null;
   }
 
   Future<String?> uploadPdfBytes({
@@ -234,7 +251,23 @@ class ApiService {
     required String storagePath,
     void Function(int sent, int total)? onProgress,
   }) async {
-    return storagePath;
+    try {
+      final formData = dio.FormData.fromMap({
+        'storage_path': storagePath,
+        'file': dio.MultipartFile.fromBytes(bytes, filename: storagePath.split('/').last),
+      });
+      final response = await _apiClient.dio.post(
+        '/upload',
+        data: formData,
+        onSendProgress: onProgress,
+      );
+      if (response.statusCode == 200) {
+        return storagePath;
+      }
+    } catch (e) {
+      debugPrint('uploadPdfBytes error: $e');
+    }
+    return null;
   }
 
   Future<Map<String, dynamic>?> insertDocument({
@@ -246,6 +279,22 @@ class ApiService {
     required int fileSizeBytes,
     required int pageCount,
   }) async {
-    return {'id': 'dummy-id', 'page_count': pageCount};
+    try {
+      final response = await _apiClient.post('/documents', data: {
+        'category': category,
+        'sub_category': subCategory,
+        'year': year,
+        'file_name': fileName,
+        'storage_path': storagePath,
+        'file_size_bytes': fileSizeBytes,
+        'page_count': pageCount,
+      });
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('insertDocument error: $e');
+    }
+    return null;
   }
 }

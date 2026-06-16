@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,7 @@ import 'package:gda_vault_ai/core/constants/app_spacing.dart';
 import 'package:gda_vault_ai/core/services/document_upload_service.dart';
 import 'package:gda_vault_ai/core/utils/pdf_utils.dart';
 import 'package:gda_vault_ai/core/utils/responsive_app_bar.dart';
+import 'package:gda_vault_ai/core/utils/file_transfer.dart';
 import 'package:gda_vault_ai/providers/profile_provider.dart';
 
 class AddScreen extends ConsumerWidget {
@@ -19,6 +21,7 @@ class AddScreen extends ConsumerWidget {
         type: FileType.custom,
         allowedExtensions: ['pdf'],
         allowMultiple: false,
+        withData: kIsWeb,
       );
 
       if (result != null && result.files.isNotEmpty) {
@@ -41,6 +44,8 @@ class AddScreen extends ConsumerWidget {
 
         if (!context.mounted) return;
 
+        FileTransfer.currentFileBytes = file.bytes;
+
         context.push(
           '/dashboard/add/select-category',
           extra: {
@@ -48,6 +53,7 @@ class AddScreen extends ConsumerWidget {
             'fileName': file.name,
             'fileSize': file.size,
             'filePath': file.path,
+            'fileBytes': file.bytes,
             'pageCount': actualPageCount,
           },
         );

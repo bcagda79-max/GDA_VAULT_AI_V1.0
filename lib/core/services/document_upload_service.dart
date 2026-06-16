@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -50,6 +51,8 @@ class DocumentUploadService {
     required int year,
     required String fileName,
     int? pageCount,
+    int? fileSizeBytes,
+    Uint8List? fileBytes,
     void Function(String phase, double progress, {int? bytesSent, int? totalBytes})?
         onProgress,
   }) async {
@@ -73,31 +76,53 @@ class DocumentUploadService {
 
       // Phase 2: Upload to storage
       onProgress?.call('Uploading to GDA Vault...', 0.3);
-      final fileSizeBytes = await pdfFile.length();
-      if (fileSizeBytes > maxPdfUploadSizeBytes) {
+      int actualFileSizeBytes = fileSizeBytes ?? 0;
+      if (actualFileSizeBytes == 0 && !kIsWeb) {
+        try {
+          actualFileSizeBytes = await pdfFile.length();
+        } catch (_) {}
+      }
+
+      if (actualFileSizeBytes > maxPdfUploadSizeBytes) {
         return UploadResult(
           success: false,
           errorMessage:
-              'PDF is ${formatBytes(fileSizeBytes)}. Maximum upload size is $maxPdfUploadSizeLabel.',
+              'PDF is ${formatBytes(actualFileSizeBytes)}. Maximum upload size is $maxPdfUploadSizeLabel.',
         );
       }
-      final uploaded = await _api.uploadPdf(
-        file: pdfFile,
-        storagePath: storagePath,
-        onProgress: (sent, total) {
-          // Map raw byte progress to the UI progress range (0.3 → 0.75)
-          final fraction = total > 0 ? (sent / total) : 0.0;
-          final uiProgress = 0.3 + (fraction * 0.45);
-          try {
-            onProgress?.call(
-              'Uploading to GDA Vault...',
-              uiProgress,
-              bytesSent: sent,
-              totalBytes: total,
+      final uploaded = fileBytes != null
+          ? await _api.uploadPdfBytes(
+              bytes: fileBytes,
+              storagePath: storagePath,
+              onProgress: (sent, total) {
+                final fraction = total > 0 ? (sent / total) : 0.0;
+                final uiProgress = 0.3 + (fraction * 0.45);
+                try {
+                  onProgress?.call(
+                    'Uploading to GDA Vault...',
+                    uiProgress,
+                    bytesSent: sent,
+                    totalBytes: total,
+                  );
+                } catch (_) {}
+              },
+            )
+          : await _api.uploadPdf(
+              file: pdfFile,
+              storagePath: storagePath,
+              onProgress: (sent, total) {
+                final fraction = total > 0 ? (sent / total) : 0.0;
+                final uiProgress = 0.3 + (fraction * 0.45);
+                try {
+                  onProgress?.call(
+                    'Uploading to GDA Vault...',
+                    uiProgress,
+                    bytesSent: sent,
+                    totalBytes: total,
+                  );
+                } catch (_) {}
+              },
             );
-          } catch (_) {}
-        },
-      );
 
       if (uploaded == null) {
         return const UploadResult(
@@ -115,7 +140,7 @@ class DocumentUploadService {
         year: year,
         fileName: fileName,
         storagePath: storagePath,
-        fileSizeBytes: fileSizeBytes,
+        fileSizeBytes: actualFileSizeBytes,
         pageCount: actualPageCount == 0 ? 1 : actualPageCount,
       );
 

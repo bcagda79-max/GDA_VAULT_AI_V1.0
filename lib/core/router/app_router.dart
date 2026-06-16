@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gda_vault_ai/features/splash/splash_screen.dart';
@@ -231,6 +232,7 @@ class AppRouter {
             fileName: extra['fileName'] as String,
             fileSize: extra['fileSize'] as int?,
             filePath: extra['filePath'] as String?,
+            fileBytes: extra['fileBytes'] as Uint8List?,
             imagePaths: List<String>.from(
               extra['imagePaths'] as List? ?? const [],
             ),
